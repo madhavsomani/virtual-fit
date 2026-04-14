@@ -18,6 +18,8 @@ export default function MirrorPage() {
   const [savedGarments, setSavedGarments] = useState<Array<{name: string, dataUrl: string}>>([]);
   const [estimatedSize, setEstimatedSize] = useState<string | null>(null);
   const [handsVisible, setHandsVisible] = useState<{left: boolean, right: boolean}>({left: false, right: false});
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Load saved garments from localStorage on mount
   useEffect(() => {
@@ -590,6 +592,32 @@ export default function MirrorPage() {
     }, "image/png");
   }, []);
 
+  // Toggle fullscreen mode
+  const toggleFullscreen = useCallback(() => {
+    if (!containerRef.current) return;
+    
+    if (!document.fullscreenElement) {
+      containerRef.current.requestFullscreen().then(() => {
+        setIsFullscreen(true);
+      }).catch(() => {
+        setStatus("Fullscreen not available");
+      });
+    } else {
+      document.exitFullscreen().then(() => {
+        setIsFullscreen(false);
+      });
+    }
+  }, []);
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
   // Cleanup
   useEffect(() => {
     return () => {
@@ -602,7 +630,7 @@ export default function MirrorPage() {
   }, []);
 
   return (
-    <div style={{ background: "#111", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", padding: 20 }}>
+    <div ref={containerRef} style={{ background: "#111", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", padding: 20 }}>
       <h1 style={{ color: "#fff", fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
         🪞 Virtual Try-On
       </h1>
@@ -712,6 +740,18 @@ export default function MirrorPage() {
             }}
           >
             📸 Screenshot
+          </button>
+
+          {/* Fullscreen button */}
+          <button
+            onClick={toggleFullscreen}
+            style={{
+              padding: "12px 24px", fontSize: 16, fontWeight: 600,
+              background: "#7c3aed", color: "#fff", border: "1px solid #8b5cf6",
+              borderRadius: 10, cursor: "pointer",
+            }}
+          >
+            {isFullscreen ? "↩️ Exit" : "⛶ Fullscreen"}
           </button>
         </div>
       )}
