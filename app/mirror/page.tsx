@@ -26,6 +26,9 @@ export default function MirrorPage() {
   const [garmentScale, setGarmentScale] = useState(1.0);
   const [isMirrored, setIsMirrored] = useState(true);
   const [garmentYOffset, setGarmentYOffset] = useState(0);
+  const [garmentXOffset, setGarmentXOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
   const [showControls, setShowControls] = useState(true);
   const [lowLightWarning, setLowLightWarning] = useState(false);
   const [garmentBrightness, setGarmentBrightness] = useState(1.0);
@@ -133,6 +136,7 @@ export default function MirrorPage() {
       setGarmentOpacity(0.9);
       setGarmentScale(1.0);
       setGarmentYOffset(0);
+      setGarmentXOffset(0);
       setGarmentBrightness(1.0);
       setGarmentHue(0);
       setShowClearConfirm(false);
@@ -345,7 +349,7 @@ export default function MirrorPage() {
     const sp = smoothPos.current;
 
     // Position & scale the 3D mesh
-    mesh.position.set(sp.x, sp.y + sp.h * 0.45 + garmentYOffset * sp.h * 0.01, 0);
+    mesh.position.set(sp.x + garmentXOffset * sp.w * 0.01, sp.y + sp.h * 0.45 + garmentYOffset * sp.h * 0.01, 0);
     const scaleX = sp.w * 1.35 * sp.depth * garmentScale;
     const scaleY = sp.h * 1.1 * sp.depth * garmentScale;
     mesh.scale.set(scaleX, scaleY, scaleX * 0.3);
@@ -1411,8 +1415,28 @@ export default function MirrorPage() {
             top: 0, left: 0,
             width: "100%", height: "100%",
             transform: isMirrored ? "scaleX(-1)" : "none",
-            pointerEvents: "none",
+            pointerEvents: "auto",
+            cursor: isDragging ? "grabbing" : "grab",
           }}
+          onMouseDown={(e) => {
+            if (!cameraOn) return;
+            setIsDragging(true);
+            dragStartRef.current = { 
+              x: e.clientX, 
+              y: e.clientY, 
+              offsetX: garmentXOffset, 
+              offsetY: garmentYOffset 
+            };
+          }}
+          onMouseMove={(e) => {
+            if (!isDragging) return;
+            const dx = e.clientX - dragStartRef.current.x;
+            const dy = e.clientY - dragStartRef.current.y;
+            setGarmentXOffset(dragStartRef.current.offsetX + dx * 0.5);
+            setGarmentYOffset(dragStartRef.current.offsetY + dy * 0.5);
+          }}
+          onMouseUp={() => setIsDragging(false)}
+          onMouseLeave={() => setIsDragging(false)}
         />
 
         {/* Debug overlay canvas */}
@@ -1993,12 +2017,13 @@ export default function MirrorPage() {
       )}
 
       {/* Reset Settings Button */}
-      {cameraOn && (garmentOpacity !== 0.9 || garmentScale !== 1.0 || garmentYOffset !== 0 || garmentBrightness !== 1.0 || garmentHue !== 0) && (
+      {cameraOn && (garmentOpacity !== 0.9 || garmentScale !== 1.0 || garmentYOffset !== 0 || garmentXOffset !== 0 || garmentBrightness !== 1.0 || garmentHue !== 0) && (
         <button
           onClick={() => {
             setGarmentOpacity(0.9);
             setGarmentScale(1.0);
             setGarmentYOffset(0);
+            setGarmentXOffset(0);
             setGarmentBrightness(1.0);
             setGarmentHue(0);
           }}
