@@ -27,6 +27,7 @@ export default function MirrorPage() {
   const [isPaused, setIsPaused] = useState(false);
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
   const [isOnline, setIsOnline] = useState(true);
+  const [screenshotCountdown, setScreenshotCountdown] = useState<number | null>(null);
   const [debugMode, setDebugMode] = useState(false);
   const [garmentScale, setGarmentScale] = useState(1.0);
   const [isMirrored, setIsMirrored] = useState(true);
@@ -854,8 +855,8 @@ export default function MirrorPage() {
     setStatus(`Renamed to "${newName.trim()}"`);
   }, [savedGarments]);
 
-  // Capture screenshot of try-on result
-  const captureScreenshot = useCallback(() => {
+  // Immediate screenshot capture
+  const doScreenshotCapture = useCallback(() => {
     if (!videoRef.current || !threeCanvasRef.current) {
       setStatus("Cannot capture - camera not ready");
       return;
@@ -872,8 +873,12 @@ export default function MirrorPage() {
 
     // Draw mirrored video first
     ctx.save();
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, -compositeCanvas.width, 0, compositeCanvas.width, compositeCanvas.height);
+    if (isMirrored) {
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, -compositeCanvas.width, 0, compositeCanvas.width, compositeCanvas.height);
+    } else {
+      ctx.drawImage(video, 0, 0, compositeCanvas.width, compositeCanvas.height);
+    }
     ctx.restore();
 
     // Draw Three.js overlay on top
@@ -888,10 +893,35 @@ export default function MirrorPage() {
       a.download = `virtualfit-${Date.now()}.png`;
       a.click();
       URL.revokeObjectURL(url);
-      vibrate(25); // haptic feedback on capture
+      vibrate(25);
       setStatus("📸 Screenshot saved!");
     }, "image/png");
-  }, [vibrate]);
+  }, [isMirrored, vibrate]);
+
+  // Capture screenshot with 3-second countdown
+  const captureScreenshot = useCallback(() => {
+    if (!videoRef.current || !threeCanvasRef.current) {
+      setStatus("Cannot capture - camera not ready");
+      return;
+    }
+    if (screenshotCountdown !== null) return; // Already counting down
+
+    setScreenshotCountdown(3);
+    vibrate(50);
+    
+    const countdown = setInterval(() => {
+      setScreenshotCountdown(prev => {
+        if (prev === null || prev <= 1) {
+          clearInterval(countdown);
+          setScreenshotCountdown(null);
+          doScreenshotCapture();
+          return null;
+        }
+        vibrate(30);
+        return prev - 1;
+      });
+    }, 1000);
+  }, [screenshotCountdown, vibrate, doScreenshotCapture]);
 
   // Copy screenshot to clipboard
   const copyToClipboard = useCallback(async () => {
@@ -1741,6 +1771,30 @@ export default function MirrorPage() {
           }}>
             <span>{showGarment ? GARMENTS[selectedGarment].emoji : "👁️‍🗨️"}</span>
             <span>{showGarment ? GARMENTS[selectedGarment].name : "Garment Hidden"}</span>
+          </div>
+        )}
+
+        {/* Screenshot countdown overlay */}
+        {screenshotCountdown !== null && (
+          <div style={{
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 12,
+            zIndex: 50,
+          }}>
+            <div style={{
+              fontSize: 120,
+              fontWeight: 700,
+              color: "#fff",
+              textShadow: "0 4px 20px rgba(0,0,0,0.5)",
+              animation: "pulse 0.5s ease-in-out",
+            }}>
+              {screenshotCountdown}
+            </div>
           </div>
         )}
 
