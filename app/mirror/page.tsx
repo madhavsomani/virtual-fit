@@ -26,6 +26,7 @@ export default function MirrorPage() {
   const lastPoseDetectedRef = useRef(Date.now());
   const [isPaused, setIsPaused] = useState(false);
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
+  const [isOnline, setIsOnline] = useState(true);
   const [debugMode, setDebugMode] = useState(false);
   const [garmentScale, setGarmentScale] = useState(1.0);
   const [isMirrored, setIsMirrored] = useState(true);
@@ -76,6 +77,19 @@ export default function MirrorPage() {
         });
       }).catch(() => {});
     }
+  }, []);
+
+  // Network status detection
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
   }, []);
 
   // Load saved garments from localStorage on mount
@@ -1359,6 +1373,23 @@ export default function MirrorPage() {
       gap: isLandscape ? 24 : 0,
       padding: isLandscape ? 12 : 20 
     }}>
+      {/* Offline warning banner */}
+      {!isOnline && (
+        <div style={{
+          position: "fixed",
+          top: 0, left: 0, right: 0,
+          background: "#dc2626",
+          color: "#fff",
+          padding: "8px 16px",
+          textAlign: "center",
+          fontSize: 13,
+          fontWeight: 600,
+          zIndex: 300,
+        }}>
+          📴 You&apos;re offline — some features may not work
+        </div>
+      )}
+
       {/* Onboarding Overlay for First-Time Users */}
       {showOnboarding && (
         <div
