@@ -1663,6 +1663,27 @@ export default function MirrorPage() {
           </div>
         )}
 
+        {/* Current garment name badge */}
+        {cameraOn && GARMENTS[selectedGarment] && (
+          <div style={{
+            position: "absolute",
+            top: 12, left: 12,
+            background: "rgba(108, 92, 231, 0.8)",
+            padding: "6px 12px",
+            borderRadius: 8,
+            color: "#fff",
+            fontSize: 12,
+            fontWeight: 600,
+            pointerEvents: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}>
+            <span>{GARMENTS[selectedGarment].emoji}</span>
+            <span>{GARMENTS[selectedGarment].name}</span>
+          </div>
+        )}
+
         {/* Pause overlay */}
         {cameraOn && isPaused && (
           <div style={{
