@@ -1453,9 +1453,19 @@ export default function MirrorPage() {
       {/* Garment Gallery */}
       {cameraOn && showControls && (
         <div style={{ marginTop: 16, width: "100%", maxWidth: 640 }}>
-          <p style={{ color: "#888", fontSize: 14, marginBottom: 8, textAlign: "center" }}>Try these garments:</p>
+          <p style={{ color: "#888", fontSize: 14, marginBottom: 8, textAlign: "center" }}>
+            Try these garments: {favoriteGarments.length > 0 && <span style={{ color: "#f59e0b" }}>(⭐ favorites first)</span>}
+          </p>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-            {GARMENTS.map((garment, idx) => (
+            {[...GARMENTS.map((g, i) => ({ ...g, originalIndex: i }))]
+              .sort((a, b) => {
+                const aFav = favoriteGarments.includes(a.originalIndex);
+                const bFav = favoriteGarments.includes(b.originalIndex);
+                if (aFav && !bFav) return -1;
+                if (!aFav && bFav) return 1;
+                return 0;
+              })
+              .map(({ originalIndex: idx, ...garment }) => (
               <div key={garment.path} style={{ position: "relative" }}>
                 <button
                   onClick={() => switchGarment(idx)}
