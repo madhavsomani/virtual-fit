@@ -25,6 +25,7 @@ export default function MirrorPage() {
   const [trackingConfidence, setTrackingConfidence] = useState(0);
   const lastPoseDetectedRef = useRef(Date.now());
   const [isPaused, setIsPaused] = useState(false);
+  const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
   const [debugMode, setDebugMode] = useState(false);
   const [garmentScale, setGarmentScale] = useState(1.0);
   const [isMirrored, setIsMirrored] = useState(true);
@@ -62,6 +63,20 @@ export default function MirrorPage() {
   const [showHelp, setShowHelp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Battery status for mobile
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const nav = navigator as any;
+    if ('getBattery' in nav) {
+      nav.getBattery().then((battery: { level: number; addEventListener: (event: string, cb: () => void) => void }) => {
+        setBatteryLevel(Math.round(battery.level * 100));
+        battery.addEventListener('levelchange', () => {
+          setBatteryLevel(Math.round(battery.level * 100));
+        });
+      }).catch(() => {});
+    }
+  }, []);
 
   // Load saved garments from localStorage on mount
   useEffect(() => {
@@ -1669,6 +1684,11 @@ export default function MirrorPage() {
           }}>
             ⏱️ {Math.floor((Date.now() - sessionStartTime) / 60000)}:{String(Math.floor(((Date.now() - sessionStartTime) % 60000) / 1000)).padStart(2, "0")}
             {debugMode && ` | 🎬 ${totalFramesRef.current.toLocaleString()}f`}
+            {batteryLevel !== null && batteryLevel <= 20 && (
+              <span style={{ color: batteryLevel <= 10 ? "#ef4444" : "#eab308" }}>
+                {" | "}🔋 {batteryLevel}%
+              </span>
+            )}
           </div>
         )}
 
