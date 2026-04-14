@@ -23,6 +23,7 @@ export default function MirrorPage() {
   const [trackingConfidence, setTrackingConfidence] = useState(0);
   const [debugMode, setDebugMode] = useState(false);
   const [garmentScale, setGarmentScale] = useState(1.0);
+  const [isMirrored, setIsMirrored] = useState(true);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -726,6 +727,9 @@ export default function MirrorPage() {
         case 'd': // Toggle debug mode
           setDebugMode(prev => !prev);
           break;
+        case 'm': // Toggle mirror mode
+          setIsMirrored(prev => !prev);
+          break;
       }
     };
     document.addEventListener("keydown", handleKeyDown);
@@ -824,6 +828,8 @@ export default function MirrorPage() {
               <span>Toggle this help</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>D</kbd>
               <span>Toggle debug landmarks</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>M</kbd>
+              <span>Toggle mirror mode</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>Esc</kbd>
               <span>Close help / exit fullscreen</span>
             </div>
@@ -861,7 +867,7 @@ export default function MirrorPage() {
       <div style={{ position: "relative", width: "100%", maxWidth: 640 }}>
         <video
           ref={videoRef}
-          style={{ width: "100%", transform: "scaleX(-1)", borderRadius: 12, background: "#000" }}
+          style={{ width: "100%", transform: isMirrored ? "scaleX(-1)" : "none", borderRadius: 12, background: "#000" }}
           playsInline
           muted
         />
@@ -871,7 +877,7 @@ export default function MirrorPage() {
             position: "absolute",
             top: 0, left: 0,
             width: "100%", height: "100%",
-            transform: "scaleX(-1)",
+            transform: isMirrored ? "scaleX(-1)" : "none",
             pointerEvents: "none",
           }}
         />
@@ -1046,6 +1052,18 @@ export default function MirrorPage() {
             }}
           >
             🔄 {facingMode === "user" ? "Back Cam" : "Front Cam"}
+          </button>
+
+          {/* Mirror toggle */}
+          <button
+            onClick={() => setIsMirrored(prev => !prev)}
+            style={{
+              padding: "12px 24px", fontSize: 16, fontWeight: 600,
+              background: isMirrored ? "#7c3aed" : "#374151", color: "#fff", border: "1px solid #8b5cf6",
+              borderRadius: 10, cursor: "pointer",
+            }}
+          >
+            🪞 {isMirrored ? "Mirror ON" : "Mirror OFF"}
           </button>
         </div>
       )}
