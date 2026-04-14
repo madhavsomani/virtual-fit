@@ -20,6 +20,7 @@ export default function MirrorPage() {
   const [garmentOpacity, setGarmentOpacity] = useState(0.9);
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [handsVisible, setHandsVisible] = useState<{left: boolean, right: boolean}>({left: false, right: false});
+  const [trackingConfidence, setTrackingConfidence] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -264,6 +265,11 @@ export default function MirrorPage() {
       left: (leftWrist?.visibility ?? 0) > 0.5,
       right: (rightWrist?.visibility ?? 0) > 0.5,
     });
+
+    // Calculate overall tracking confidence from key landmarks
+    const keyLandmarks = [ls, rs, lh, rh, leftWrist, rightWrist];
+    const avgConfidence = keyLandmarks.reduce((sum, lm) => sum + (lm?.visibility ?? 0), 0) / keyLandmarks.length;
+    setTrackingConfidence(Math.round(avgConfidence * 100));
   }, []);
 
   // Start camera + pose detection
@@ -875,7 +881,15 @@ export default function MirrorPage() {
 
       {/* Status */}
       <p style={{ color: "#aaa", fontSize: 16, marginTop: 12, fontFamily: "monospace" }}>
-        {status} {cameraOn && fps > 0 && <span style={{ color: fps >= 24 ? "#22c55e" : fps >= 15 ? "#eab308" : "#ef4444" }}>({fps} FPS)</span>}
+        {status} {cameraOn && fps > 0 && (
+          <>
+            <span style={{ color: fps >= 24 ? "#22c55e" : fps >= 15 ? "#eab308" : "#ef4444" }}>({fps} FPS)</span>
+            {" "}
+            <span style={{ color: trackingConfidence >= 70 ? "#22c55e" : trackingConfidence >= 40 ? "#eab308" : "#ef4444" }}>
+              [{trackingConfidence}% conf]
+            </span>
+          </>
+        )}
       </p>
 
       {/* Controls */}
