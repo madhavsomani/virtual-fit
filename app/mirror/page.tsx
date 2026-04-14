@@ -1461,6 +1461,24 @@ export default function MirrorPage() {
           onMouseLeave={() => setIsDragging(false)}
         />
 
+        {/* Position indicator during drag */}
+        {isDragging && (garmentXOffset !== 0 || garmentYOffset !== 0) && (
+          <div style={{
+            position: "absolute",
+            top: 12, left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(0,0,0,0.7)",
+            color: "#fff",
+            padding: "6px 12px",
+            borderRadius: 8,
+            fontSize: 12,
+            fontFamily: "monospace",
+            pointerEvents: "none",
+          }}>
+            X: {garmentXOffset.toFixed(0)} | Y: {garmentYOffset.toFixed(0)}
+          </div>
+        )}
+
         {/* Debug overlay canvas */}
         {debugMode && (
           <canvas
