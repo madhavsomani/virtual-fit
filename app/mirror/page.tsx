@@ -22,6 +22,8 @@ export default function MirrorPage() {
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [handsVisible, setHandsVisible] = useState<{left: boolean, right: boolean}>({left: false, right: false});
   const [trackingConfidence, setTrackingConfidence] = useState(0);
+  const lastPoseDetectedRef = useRef(Date.now());
+  const [isPaused, setIsPaused] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const [garmentScale, setGarmentScale] = useState(1.0);
   const [isMirrored, setIsMirrored] = useState(true);
@@ -395,6 +397,18 @@ export default function MirrorPage() {
     const avgConfidence = keyLandmarks.reduce((sum, lm) => sum + (lm?.visibility ?? 0), 0) / keyLandmarks.length;
     const confidencePercent = Math.round(avgConfidence * 100);
     setTrackingConfidence(confidencePercent);
+    
+    // Update last pose detected time
+    if (confidencePercent > 20) {
+      lastPoseDetectedRef.current = Date.now();
+      if (isPaused) setIsPaused(false);
+    } else {
+      // Auto-pause if no pose for 10 seconds
+      if (Date.now() - lastPoseDetectedRef.current > 10000 && !isPaused) {
+        setIsPaused(true);
+        setStatus("⏸️ Paused — no pose detected. Move into frame to resume.");
+      }
+    }
 
     // Detect sustained low confidence for lighting warning
     if (confidencePercent < 30) {
@@ -1630,6 +1644,24 @@ export default function MirrorPage() {
             pointerEvents: "none",
           }}>
             ⏱️ {Math.floor((Date.now() - sessionStartTime) / 60000)}:{String(Math.floor(((Date.now() - sessionStartTime) % 60000) / 1000)).padStart(2, "0")}
+          </div>
+        )}
+
+        {/* Pause overlay */}
+        {cameraOn && isPaused && (
+          <div style={{
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 12,
+          }}>
+            <span style={{ fontSize: 48, marginBottom: 12 }}>⏸️</span>
+            <span style={{ color: "#fff", fontSize: 16 }}>Paused — No pose detected</span>
+            <span style={{ color: "#9ca3af", fontSize: 13, marginTop: 8 }}>Move into frame to resume</span>
           </div>
         )}
 
