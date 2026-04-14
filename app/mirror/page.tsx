@@ -848,6 +848,45 @@ export default function MirrorPage() {
     }, "image/png");
   }, [vibrate]);
 
+  // Copy screenshot to clipboard
+  const copyToClipboard = useCallback(async () => {
+    if (!videoRef.current || !threeCanvasRef.current) {
+      setStatus("Cannot copy - camera not ready");
+      return;
+    }
+
+    const video = videoRef.current;
+    const threeCanvas = threeCanvasRef.current;
+    const compositeCanvas = document.createElement("canvas");
+    compositeCanvas.width = video.videoWidth || 640;
+    compositeCanvas.height = video.videoHeight || 480;
+    const ctx = compositeCanvas.getContext("2d");
+    if (!ctx) return;
+
+    if (isMirrored) {
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, -compositeCanvas.width, 0, compositeCanvas.width, compositeCanvas.height);
+      ctx.restore();
+    } else {
+      ctx.drawImage(video, 0, 0, compositeCanvas.width, compositeCanvas.height);
+    }
+    ctx.drawImage(threeCanvas, 0, 0, compositeCanvas.width, compositeCanvas.height);
+
+    compositeCanvas.toBlob(async (blob) => {
+      if (!blob) return;
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({ "image/png": blob })
+        ]);
+        vibrate(25);
+        setStatus("📋 Copied to clipboard!");
+      } catch {
+        setStatus("❌ Clipboard access denied");
+      }
+    }, "image/png");
+  }, [isMirrored, vibrate]);
+
   // Share try-on result using Web Share API
   const shareResult = useCallback(async () => {
     if (!videoRef.current || !threeCanvasRef.current) {
@@ -1136,6 +1175,9 @@ export default function MirrorPage() {
         case 's': // Screenshot
           if (cameraOn) captureScreenshot();
           break;
+        case 'c': // Copy to clipboard
+          if (cameraOn) copyToClipboard();
+          break;
         case 'arrowright': // Next garment
         case 'n':
           if (cameraOn) {
@@ -1182,7 +1224,7 @@ export default function MirrorPage() {
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, switchGarment, GARMENTS.length]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -1343,6 +1385,8 @@ export default function MirrorPage() {
               <span>Toggle fullscreen</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>S</kbd>
               <span>Take screenshot</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>C</kbd>
+              <span>Copy to clipboard</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>← / P</kbd>
               <span>Previous garment</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>→ / N</kbd>
