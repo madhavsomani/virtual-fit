@@ -1369,14 +1369,36 @@ export default function MirrorPage() {
         style={{ position: "relative", width: "100%", maxWidth: 640 }}
         onTouchStart={(e) => {
           touchStartXRef.current = e.touches[0].clientX;
+          // Two-finger touch starts drag mode
+          if (e.touches.length === 2) {
+            const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            dragStartRef.current = { x: midX, y: midY, offsetX: garmentXOffset, offsetY: garmentYOffset };
+            setIsDragging(true);
+          }
+        }}
+        onTouchMove={(e) => {
+          // Two-finger drag for positioning
+          if (isDragging && e.touches.length === 2) {
+            const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+            const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+            const dx = midX - dragStartRef.current.x;
+            const dy = midY - dragStartRef.current.y;
+            setGarmentXOffset(dragStartRef.current.offsetX + dx * 0.3);
+            setGarmentYOffset(dragStartRef.current.offsetY + dy * 0.3);
+          }
         }}
         onTouchEnd={(e) => {
+          if (isDragging) {
+            setIsDragging(false);
+            return;
+          }
           if (!cameraOn) return;
           const touchEndX = e.changedTouches[0].clientX;
           const swipeDistance = touchEndX - touchStartXRef.current;
           const minSwipe = 50; // minimum swipe distance
           
-          // Swipe detection
+          // Swipe detection (single finger only)
           if (Math.abs(swipeDistance) > minSwipe) {
             vibrate(15); // haptic feedback on swipe
             if (swipeDistance > 0) {
