@@ -1164,6 +1164,14 @@ export default function MirrorPage() {
         case 'g': // Toggle garment visibility (before/after)
           setShowGarment(prev => !prev);
           break;
+        case '1': case '2': case '3': case '4': case '5': // Quick garment select
+          {
+            const idx = parseInt(e.key) - 1;
+            if (idx < GARMENTS.length && cameraOn) {
+              switchGarment(idx);
+            }
+          }
+          break;
       }
     };
     document.addEventListener("keydown", handleKeyDown);
@@ -1338,6 +1346,8 @@ export default function MirrorPage() {
               <span>Toggle debug landmarks</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>M</kbd>
               <span>Toggle mirror mode</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>1-5</kbd>
+              <span>Quick select garment 1-5</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>Esc</kbd>
               <span>Close help / exit fullscreen</span>
             </div>
