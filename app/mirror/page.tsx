@@ -28,6 +28,8 @@ export default function MirrorPage() {
   const [showControls, setShowControls] = useState(true);
   const [lowLightWarning, setLowLightWarning] = useState(false);
   const [garmentBrightness, setGarmentBrightness] = useState(1.0);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const lowConfidenceCountRef = useRef(0);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -723,6 +725,52 @@ export default function MirrorPage() {
     }, "image/png");
   }, [captureScreenshot]);
 
+  // Start/stop recording video clip
+  const toggleRecording = useCallback(() => {
+    if (!videoRef.current) return;
+
+    if (isRecording && mediaRecorderRef.current) {
+      // Stop recording
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      setStatus("⏹ Saving video...");
+    } else {
+      // Start recording
+      const stream = videoRef.current.srcObject as MediaStream;
+      if (!stream) {
+        setStatus("❌ Cannot record - camera not ready");
+        return;
+      }
+
+      const chunks: Blob[] = [];
+      const mimeType = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") 
+        ? "video/webm;codecs=vp9" 
+        : "video/webm";
+      
+      const recorder = new MediaRecorder(stream, { mimeType });
+      
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+      
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `virtualfit-${Date.now()}.webm`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setStatus("🎬 Video saved!");
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+      setStatus("🔴 Recording... Press again to stop");
+    }
+  }, [isRecording]);
+
   // Toggle fullscreen mode
   const toggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
@@ -1159,6 +1207,21 @@ export default function MirrorPage() {
             🚀 Share
           </button>
 
+          {/* Record button */}
+          <button
+            onClick={toggleRecording}
+            style={{
+              padding: "12px 24px", fontSize: 16, fontWeight: 600,
+              background: isRecording ? "#dc2626" : "#ec4899", 
+              color: "#fff", 
+              border: isRecording ? "1px solid #ef4444" : "1px solid #f472b6",
+              borderRadius: 10, cursor: "pointer",
+              animation: isRecording ? "pulse 1s infinite" : "none",
+            }}
+          >
+            {isRecording ? "⏹ Stop Recording" : "🎬 Record"}
+          </button>
+
           {/* Fullscreen button */}
           <button
             onClick={toggleFullscreen}
@@ -1451,6 +1514,10 @@ export default function MirrorPage() {
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.7; }
         }
       `}</style>
     </div>
