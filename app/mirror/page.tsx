@@ -1365,7 +1365,12 @@ export default function MirrorPage() {
               <p style={{ margin: "0 0 8px", fontSize: 14, color: "#ccc" }}>1️⃣ Click &quot;Start Camera&quot; and allow camera access</p>
               <p style={{ margin: "0 0 8px", fontSize: 14, color: "#ccc" }}>2️⃣ Stand back so your shoulders and torso are visible</p>
               <p style={{ margin: "0 0 8px", fontSize: 14, color: "#ccc" }}>3️⃣ Select a garment from the gallery or upload your own</p>
-              <p style={{ margin: 0, fontSize: 14, color: "#ccc" }}>4️⃣ Use sliders to adjust, pinch to resize, double-tap to switch!</p>
+              <p style={{ margin: "0 0 16px", fontSize: 14, color: "#ccc" }}>4️⃣ Adjust the fit using controls below the video</p>
+              <p style={{ margin: "0 0 8px", fontSize: 14, color: "#a78bfa" }}><strong>📱 Touch Gestures:</strong></p>
+              <p style={{ margin: "0 0 6px", fontSize: 13, color: "#9ca3af" }}>👈👉 Swipe left/right to change garments</p>
+              <p style={{ margin: "0 0 6px", fontSize: 13, color: "#9ca3af" }}>👆👆 Double-tap to cycle to next garment</p>
+              <p style={{ margin: "0 0 6px", fontSize: 13, color: "#9ca3af" }}>🤏 Pinch with 2 fingers to resize</p>
+              <p style={{ margin: 0, fontSize: 13, color: "#9ca3af" }}>✋ Two-finger drag to reposition</p>
             </div>
             <button
               style={{
