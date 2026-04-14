@@ -22,6 +22,7 @@ export default function MirrorPage() {
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const garmentMeshRef = useRef<THREE.Mesh | null>(null);
   const garmentTextureRef = useRef<THREE.Texture | null>(null);
+  const defaultTextureRef = useRef<THREE.Texture | null>(null);
 
   // Pose refs
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,16 +53,18 @@ export default function MirrorPage() {
     }
     geo.computeVertexNormals();
 
+    // Use texture if provided, otherwise use default texture or fallback to solid color
+    const textureToUse = texture || defaultTextureRef.current;
     let mat: THREE.Material;
-    if (texture) {
+    if (textureToUse) {
       mat = new THREE.MeshStandardMaterial({
-        map: texture,
+        map: textureToUse,
         side: THREE.DoubleSide,
         transparent: true,
         alphaTest: 0.1,
       });
     } else {
-      // Default yellow shirt
+      // Fallback to solid yellow if texture not loaded yet
       mat = new THREE.MeshStandardMaterial({
         color: 0xf0c040,
         side: THREE.DoubleSide,
@@ -76,6 +79,34 @@ export default function MirrorPage() {
     mesh.visible = false;
     return mesh;
   }, []);
+
+  // Load default yellow shirt texture
+  const loadDefaultTexture = useCallback(() => {
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      "/garments/yellow-shirt-nobg.png",
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        defaultTextureRef.current = texture;
+        // Update existing mesh if it exists with solid color fallback
+        if (garmentMeshRef.current && sceneRef.current) {
+          const oldMesh = garmentMeshRef.current;
+          const newMesh = createShirtMesh(texture);
+          newMesh.visible = oldMesh.visible;
+          newMesh.position.copy(oldMesh.position);
+          newMesh.scale.copy(oldMesh.scale);
+          newMesh.rotation.copy(oldMesh.rotation);
+          sceneRef.current.remove(oldMesh);
+          oldMesh.geometry.dispose();
+          (oldMesh.material as THREE.Material).dispose();
+          sceneRef.current.add(newMesh);
+          garmentMeshRef.current = newMesh;
+        }
+      },
+      undefined,
+      (err) => console.warn("Failed to load default shirt texture:", err)
+    );
+  }, [createShirtMesh]);
 
   // Init Three.js scene
   const initThree = useCallback((canvas: HTMLCanvasElement, w: number, h: number) => {
@@ -94,7 +125,7 @@ export default function MirrorPage() {
     dirLight.position.set(0, 1, 2);
     scene.add(dirLight);
 
-    // Create default shirt
+    // Create default shirt (will start with solid color, then swap to texture when loaded)
     const shirt = createShirtMesh();
     scene.add(shirt);
 
@@ -102,7 +133,10 @@ export default function MirrorPage() {
     cameraRef.current = camera;
     rendererRef.current = renderer;
     garmentMeshRef.current = shirt;
-  }, [createShirtMesh]);
+
+    // Load the default yellow shirt texture
+    loadDefaultTexture();
+  }, [createShirtMesh, loadDefaultTexture]);
 
   // Update garment mesh position based on body landmarks
   const updateGarmentFromLandmarks = useCallback((landmarks: PoseResultLandmark[]) => {
@@ -354,10 +388,11 @@ export default function MirrorPage() {
                 sceneRef.current.remove(garmentMeshRef.current);
                 garmentMeshRef.current.geometry.dispose();
                 (garmentMeshRef.current.material as THREE.Material).dispose();
-                const newMesh = createShirtMesh();
+                const newMesh = createShirtMesh(defaultTextureRef.current || undefined);
                 sceneRef.current.add(newMesh);
                 garmentMeshRef.current = newMesh;
-                setStatus("Default shirt loaded");
+                garmentTextureRef.current = null;
+                setStatus("Default yellow shirt loaded");
               }
             }}
             style={{
