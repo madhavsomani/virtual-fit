@@ -142,6 +142,13 @@ export default function MirrorPage() {
     }
   }, []);
 
+  // Haptic feedback helper (mobile)
+  const vibrate = useCallback((pattern: number | number[] = 10) => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  }, []);
+
   // Garment gallery
   const GARMENTS = [
     { name: "Yellow Shirt", path: "/garments/yellow-shirt-nobg.png", emoji: "👕" },
@@ -794,9 +801,10 @@ export default function MirrorPage() {
       a.download = `virtualfit-${Date.now()}.png`;
       a.click();
       URL.revokeObjectURL(url);
+      vibrate(25); // haptic feedback on capture
       setStatus("📸 Screenshot saved!");
     }, "image/png");
-  }, []);
+  }, [vibrate]);
 
   // Share try-on result using Web Share API
   const shareResult = useCallback(async () => {
@@ -1338,6 +1346,7 @@ export default function MirrorPage() {
           
           // Swipe detection
           if (Math.abs(swipeDistance) > minSwipe) {
+            vibrate(15); // haptic feedback on swipe
             if (swipeDistance > 0) {
               // Swipe right - previous garment
               switchGarment((selectedGarment - 1 + GARMENTS.length) % GARMENTS.length);
@@ -1353,6 +1362,7 @@ export default function MirrorPage() {
           const now = Date.now();
           if (now - lastTapTimeRef.current < 300) {
             // Double tap detected - cycle to next garment
+            vibrate([10, 30, 10]); // haptic pattern for double-tap
             switchGarment((selectedGarment + 1) % GARMENTS.length);
             lastTapTimeRef.current = 0;
           } else {
