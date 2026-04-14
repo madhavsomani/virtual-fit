@@ -1175,6 +1175,28 @@ export default function MirrorPage() {
         </div>
       )}
 
+      {/* Reset Settings Button */}
+      {cameraOn && (garmentOpacity !== 0.9 || garmentScale !== 1.0) && (
+        <button
+          onClick={() => {
+            setGarmentOpacity(0.9);
+            setGarmentScale(1.0);
+          }}
+          style={{
+            marginTop: 8,
+            padding: "8px 16px",
+            fontSize: 13,
+            background: "transparent",
+            color: "#888",
+            border: "1px solid #444",
+            borderRadius: 6,
+            cursor: "pointer",
+          }}
+        >
+          ↩ Reset to Defaults
+        </button>
+      )}
+
       {/* Hand Visibility Indicators */}
       {cameraOn && (
         <div style={{
