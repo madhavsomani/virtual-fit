@@ -19,6 +19,7 @@ export default function MirrorPage() {
   const [estimatedSize, setEstimatedSize] = useState<string | null>(null);
   const [handsVisible, setHandsVisible] = useState<{left: boolean, right: boolean}>({left: false, right: false});
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Load saved garments from localStorage on mount
@@ -645,16 +646,22 @@ export default function MirrorPage() {
             switchGarment(prevIdx);
           }
           break;
-        case 'escape': // Exit fullscreen
-          if (isFullscreen) {
+        case 'escape': // Exit fullscreen or close help
+          if (showHelp) {
+            setShowHelp(false);
+          } else if (isFullscreen) {
             document.exitFullscreen();
           }
+          break;
+        case 'h': // Toggle help
+        case '?':
+          setShowHelp(prev => !prev);
           break;
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, toggleFullscreen, captureScreenshot, switchGarment, GARMENTS.length]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, switchGarment, GARMENTS.length]);
 
   // Cleanup
   useEffect(() => {
@@ -669,6 +676,68 @@ export default function MirrorPage() {
 
   return (
     <div ref={containerRef} style={{ background: "#111", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", padding: 20 }}>
+      {/* Help Overlay */}
+      {showHelp && (
+        <div
+          onClick={() => setShowHelp(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.85)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#1f2937",
+              borderRadius: 16,
+              padding: 32,
+              maxWidth: 400,
+              color: "#fff",
+            }}
+          >
+            <h2 style={{ margin: "0 0 16px", fontSize: 22 }}>⌨️ Keyboard Shortcuts</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "8px 16px", fontSize: 15 }}>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>F</kbd>
+              <span>Toggle fullscreen</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>S</kbd>
+              <span>Take screenshot</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>← / P</kbd>
+              <span>Previous garment</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>→ / N</kbd>
+              <span>Next garment</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>H / ?</kbd>
+              <span>Toggle this help</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>Esc</kbd>
+              <span>Close help / exit fullscreen</span>
+            </div>
+            <p style={{ marginTop: 16, fontSize: 13, color: "#9ca3af" }}>
+              👋 Swipe gestures also work with your hand!
+            </p>
+            <button
+              onClick={() => setShowHelp(false)}
+              style={{
+                marginTop: 16,
+                width: "100%",
+                padding: "10px",
+                background: "#6C5CE7",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                fontSize: 15,
+                cursor: "pointer",
+              }}
+            >
+              Got it!
+            </button>
+          </div>
+        </div>
+      )}
+
       <h1 style={{ color: "#fff", fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
         🪞 Virtual Try-On
       </h1>
@@ -790,6 +859,18 @@ export default function MirrorPage() {
             }}
           >
             {isFullscreen ? "↩️ Exit" : "⛶ Fullscreen"}
+          </button>
+
+          {/* Help button */}
+          <button
+            onClick={() => setShowHelp(true)}
+            style={{
+              padding: "12px 24px", fontSize: 16, fontWeight: 600,
+              background: "#374151", color: "#fff", border: "1px solid #4b5563",
+              borderRadius: 10, cursor: "pointer",
+            }}
+          >
+            ❓ Help
           </button>
         </div>
       )}
