@@ -9,6 +9,21 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "VirtualFit",
   },
+  openGraph: {
+    title: "VirtualFit - Virtual Try-On",
+    description: "Upload any clothing photo and see it on you in real-time with 3D body tracking",
+    type: "website",
+    locale: "en_US",
+    siteName: "VirtualFit",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "VirtualFit - Virtual Try-On",
+    description: "Try on clothes virtually with AI-powered 3D body tracking",
+  },
+  keywords: ["virtual try-on", "AR", "clothes", "fashion", "3D", "MediaPipe", "body tracking"],
+  authors: [{ name: "VirtualFit" }],
+  robots: "index, follow",
 };
 
 export const viewport: Viewport = {
