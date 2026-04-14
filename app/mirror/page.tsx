@@ -32,6 +32,7 @@ export default function MirrorPage() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const lastTouchDistanceRef = useRef<number | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [favoriteGarments, setFavoriteGarments] = useState<number[]>([]);
   const lowConfidenceCountRef = useRef(0);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -61,6 +62,11 @@ export default function MirrorPage() {
       if (!hasSeenOnboarding) {
         setShowOnboarding(true);
       }
+      // Load favorite garments
+      const savedFavorites = localStorage.getItem("virtualfit-favorites");
+      if (savedFavorites) {
+        setFavoriteGarments(JSON.parse(savedFavorites));
+      }
     } catch {
       console.warn("Failed to load saved garments");
     }
@@ -79,6 +85,21 @@ export default function MirrorPage() {
       // Ignore storage errors
     }
   }, [garmentOpacity, garmentScale, garmentYOffset, garmentBrightness]);
+
+  // Toggle favorite status for a garment
+  const toggleFavorite = useCallback((index: number) => {
+    setFavoriteGarments(prev => {
+      const updated = prev.includes(index)
+        ? prev.filter(i => i !== index)
+        : [...prev, index];
+      try {
+        localStorage.setItem("virtualfit-favorites", JSON.stringify(updated));
+      } catch {
+        // Ignore
+      }
+      return updated;
+    });
+  }, []);
 
   // Garment gallery
   const GARMENTS = [
@@ -1402,23 +1423,42 @@ export default function MirrorPage() {
           <p style={{ color: "#888", fontSize: 14, marginBottom: 8, textAlign: "center" }}>Try these garments:</p>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
             {GARMENTS.map((garment, idx) => (
-              <button
-                key={garment.path}
-                onClick={() => switchGarment(idx)}
-                style={{
-                  padding: "10px 16px",
-                  fontSize: 14,
-                  fontWeight: selectedGarment === idx ? 700 : 500,
-                  background: selectedGarment === idx ? "#6C5CE7" : "#222",
-                  color: "#fff",
-                  border: selectedGarment === idx ? "2px solid #8B7CF0" : "1px solid #444",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                }}
-              >
-                {garment.emoji} {garment.name}
-              </button>
+              <div key={garment.path} style={{ position: "relative" }}>
+                <button
+                  onClick={() => switchGarment(idx)}
+                  style={{
+                    padding: "10px 16px",
+                    paddingRight: 36,
+                    fontSize: 14,
+                    fontWeight: selectedGarment === idx ? 700 : 500,
+                    background: selectedGarment === idx ? "#6C5CE7" : "#222",
+                    color: "#fff",
+                    border: selectedGarment === idx ? "2px solid #8B7CF0" : "1px solid #444",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {garment.emoji} {garment.name}
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleFavorite(idx); }}
+                  style={{
+                    position: "absolute",
+                    right: 4,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    padding: 4,
+                  }}
+                  title={favoriteGarments.includes(idx) ? "Remove from favorites" : "Add to favorites"}
+                >
+                  {favoriteGarments.includes(idx) ? "⭐" : "☆"}
+                </button>
+              </div>
             ))}
           </div>
         </div>
