@@ -25,6 +25,8 @@ export default function MirrorPage() {
   const [garmentScale, setGarmentScale] = useState(1.0);
   const [isMirrored, setIsMirrored] = useState(true);
   const [garmentYOffset, setGarmentYOffset] = useState(0);
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -678,6 +680,30 @@ export default function MirrorPage() {
     }
   }, [garmentOpacity]);
 
+  // Auto-hide controls after 5 seconds of inactivity in fullscreen
+  const resetControlsTimer = useCallback(() => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    if (isFullscreen) {
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 5000);
+    }
+  }, [isFullscreen]);
+
+  useEffect(() => {
+    if (!isFullscreen) {
+      setShowControls(true);
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    } else {
+      resetControlsTimer();
+    }
+  }, [isFullscreen, resetControlsTimer]);
+
   // Listen for fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -686,6 +712,17 @@ export default function MirrorPage() {
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
+
+  // Show controls on mouse/touch activity
+  useEffect(() => {
+    const handleActivity = () => resetControlsTimer();
+    document.addEventListener("mousemove", handleActivity);
+    document.addEventListener("touchstart", handleActivity);
+    return () => {
+      document.removeEventListener("mousemove", handleActivity);
+      document.removeEventListener("touchstart", handleActivity);
+    };
+  }, [resetControlsTimer]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -949,7 +986,7 @@ export default function MirrorPage() {
       </p>
 
       {/* Controls */}
-      {cameraOn && (
+      {cameraOn && showControls && (
         <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap", justifyContent: "center" }}>
           {/* Upload button */}
           <label style={{
@@ -1070,7 +1107,7 @@ export default function MirrorPage() {
       )}
 
       {/* Garment Gallery */}
-      {cameraOn && (
+      {cameraOn && showControls && (
         <div style={{ marginTop: 16, width: "100%", maxWidth: 640 }}>
           <p style={{ color: "#888", fontSize: 14, marginBottom: 8, textAlign: "center" }}>Try these garments:</p>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
