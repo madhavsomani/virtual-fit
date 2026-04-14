@@ -39,6 +39,7 @@ export default function MirrorPage() {
   const [favoriteGarments, setFavoriteGarments] = useState<number[]>([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const lastTapTimeRef = useRef(0);
+  const touchStartXRef = useRef(0);
   const lowConfidenceCountRef = useRef(0);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -1253,8 +1254,29 @@ export default function MirrorPage() {
       {/* Camera + Three.js overlay */}
       <div 
         style={{ position: "relative", width: "100%", maxWidth: 640 }}
-        onTouchEnd={() => {
+        onTouchStart={(e) => {
+          touchStartXRef.current = e.touches[0].clientX;
+        }}
+        onTouchEnd={(e) => {
           if (!cameraOn) return;
+          const touchEndX = e.changedTouches[0].clientX;
+          const swipeDistance = touchEndX - touchStartXRef.current;
+          const minSwipe = 50; // minimum swipe distance
+          
+          // Swipe detection
+          if (Math.abs(swipeDistance) > minSwipe) {
+            if (swipeDistance > 0) {
+              // Swipe right - previous garment
+              switchGarment((selectedGarment - 1 + GARMENTS.length) % GARMENTS.length);
+            } else {
+              // Swipe left - next garment
+              switchGarment((selectedGarment + 1) % GARMENTS.length);
+            }
+            touchStartXRef.current = 0;
+            return;
+          }
+          
+          // Double tap detection (if no swipe)
           const now = Date.now();
           if (now - lastTapTimeRef.current < 300) {
             // Double tap detected - cycle to next garment
