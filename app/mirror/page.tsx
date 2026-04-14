@@ -15,6 +15,7 @@ export default function MirrorPage() {
   const [uploading, setUploading] = useState(false);
   const [selectedGarment, setSelectedGarment] = useState(0);
   const [savedGarments, setSavedGarments] = useState<Array<{name: string, dataUrl: string}>>([]);
+  const [estimatedSize, setEstimatedSize] = useState<string | null>(null);
 
   // Load saved garments from localStorage on mount
   useEffect(() => {
@@ -231,6 +232,20 @@ export default function MirrorPage() {
     mesh.rotation.z = sp.tilt;
     
     mesh.visible = true;
+
+    // Estimate garment size based on shoulder width ratio
+    // Shoulder width as fraction of frame width (typical range 0.2-0.5)
+    const shoulderRatio = shoulderW / vw;
+    // Map to clothing sizes (rough estimates based on average webcam framing)
+    // These ratios assume user is ~1-2m from camera, shoulders fill 25-45% of frame
+    let size: string;
+    if (shoulderRatio < 0.22) size = "XS";
+    else if (shoulderRatio < 0.27) size = "S";
+    else if (shoulderRatio < 0.32) size = "M";
+    else if (shoulderRatio < 0.38) size = "L";
+    else if (shoulderRatio < 0.45) size = "XL";
+    else size = "XXL";
+    setEstimatedSize(size);
   }, []);
 
   // Start camera + pose detection
@@ -750,6 +765,21 @@ export default function MirrorPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Size Recommendation Badge */}
+      {cameraOn && estimatedSize && (
+        <div style={{
+          marginTop: 16,
+          padding: "12px 24px",
+          background: "linear-gradient(135deg, #10b981, #059669)",
+          borderRadius: 12,
+          textAlign: "center",
+        }}>
+          <p style={{ margin: 0, fontSize: 14, color: "#d1fae5" }}>Estimated Size</p>
+          <p style={{ margin: "4px 0 0", fontSize: 28, fontWeight: 700, color: "#fff" }}>{estimatedSize}</p>
+          <p style={{ margin: "4px 0 0", fontSize: 11, color: "#a7f3d0" }}>Based on shoulder width</p>
         </div>
       )}
 
