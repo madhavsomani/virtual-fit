@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as THREE from "three";
 import { smoothScalar } from "./smoothing-utils";
+import { detectLeftSwipeIntent, detectRightSwipeIntent, detectGestureCooldownWindow } from "./gesture-intent";
 
 type PoseResultLandmark = { x: number; y: number; z?: number; visibility?: number };
 
@@ -52,6 +53,12 @@ export default function MirrorPage() {
 
   // Video dimensions
   const videoDims = useRef({ w: 640, h: 480 });
+
+  // Gesture detection refs
+  const lastWristX = useRef<number | null>(null);
+  const lastGestureTime = useRef<number>(0);
+  const lastFrameTime = useRef<number>(0);
+  const detectGestureRef = useRef<((landmarks: PoseResultLandmark[]) => void) | null>(null);
 
   // Build a 3D shirt mesh (curved plane that wraps around body)
   const createShirtMesh = useCallback((texture?: THREE.Texture) => {
@@ -277,6 +284,7 @@ export default function MirrorPage() {
           const result = poseLandmarkerRef.current.detectForVideo(videoRef.current, now);
           if (result?.landmarks?.[0]) {
             updateGarmentFromLandmarks(result.landmarks[0]);
+            detectGestureRef.current?.(result.landmarks[0]);
           }
         } catch { /* skip frame */ }
 
@@ -384,6 +392,75 @@ export default function MirrorPage() {
       }
     );
   }, [createShirtMesh]);
+
+  // Detect hand swipe gestures from wrist landmarks
+  const detectGesture = useCallback((landmarks: PoseResultLandmark[]) => {
+    // Use right wrist (landmark 16) for gesture detection
+    const rightWrist = landmarks[16];
+    if (!rightWrist || (rightWrist.visibility ?? 0) < 0.5) {
+      lastWristX.current = null;
+      return;
+    }
+
+    const now = performance.now();
+    const deltaTimeMs = lastFrameTime.current > 0 ? now - lastFrameTime.current : 0;
+    lastFrameTime.current = now;
+
+    // Check cooldown
+    const cooldown = detectGestureCooldownWindow({
+      lastGestureAtMs: lastGestureTime.current,
+      nowMs: now,
+      cooldownMs: 800,
+    });
+
+    if (cooldown.inCooldown) {
+      lastWristX.current = rightWrist.x;
+      return;
+    }
+
+    if (lastWristX.current !== null && deltaTimeMs > 0) {
+      // Check for left swipe (next garment) - mirrored view, so left swipe = rightward X movement
+      const leftSwipe = detectLeftSwipeIntent({
+        previousX: lastWristX.current,
+        currentX: rightWrist.x,
+        deltaTimeMs,
+        handPresenceMetric: rightWrist.visibility ?? 0,
+        minDeltaX: 0.08,
+        minVelocityX: 0.0008,
+      });
+
+      if (leftSwipe.detected) {
+        const nextIdx = (selectedGarment + 1) % GARMENTS.length;
+        switchGarment(nextIdx);
+        lastGestureTime.current = now;
+        setStatus("👈 Swipe: next garment");
+      }
+
+      // Check for right swipe (previous garment)
+      const rightSwipe = detectRightSwipeIntent({
+        previousX: lastWristX.current,
+        currentX: rightWrist.x,
+        deltaTimeMs,
+        handPresenceMetric: rightWrist.visibility ?? 0,
+        minDeltaX: 0.08,
+        minVelocityX: 0.0008,
+      });
+
+      if (rightSwipe.detected) {
+        const prevIdx = (selectedGarment - 1 + GARMENTS.length) % GARMENTS.length;
+        switchGarment(prevIdx);
+        lastGestureTime.current = now;
+        setStatus("👉 Swipe: previous garment");
+      }
+    }
+
+    lastWristX.current = rightWrist.x;
+  }, [selectedGarment, switchGarment, GARMENTS]);
+
+  // Keep detectGesture ref updated
+  useEffect(() => {
+    detectGestureRef.current = detectGesture;
+  }, [detectGesture]);
 
   // Load a saved garment from localStorage
   const loadSavedGarment = useCallback((index: number) => {
