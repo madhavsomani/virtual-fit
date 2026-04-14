@@ -1544,6 +1544,31 @@ export default function MirrorPage() {
           </div>
         )}
 
+        {/* Fit quality indicator */}
+        {cameraOn && trackingConfidence > 0 && (
+          <div style={{
+            position: "absolute",
+            bottom: 12, right: 12,
+            background: "rgba(0,0,0,0.6)",
+            padding: "6px 10px",
+            borderRadius: 8,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            pointerEvents: "none",
+          }}>
+            <span style={{
+              width: 8, height: 8,
+              borderRadius: "50%",
+              background: trackingConfidence >= 70 ? "#22c55e" : trackingConfidence >= 40 ? "#eab308" : "#ef4444",
+              boxShadow: `0 0 6px ${trackingConfidence >= 70 ? "#22c55e" : trackingConfidence >= 40 ? "#eab308" : "#ef4444"}`,
+            }} />
+            <span style={{ color: "#fff", fontSize: 11 }}>
+              {trackingConfidence >= 70 ? "✨ Great fit" : trackingConfidence >= 40 ? "👍 Good" : "👀 Move closer"}
+            </span>
+          </div>
+        )}
+
         {/* Debug overlay canvas */}
         {debugMode && (
           <canvas
