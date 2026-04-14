@@ -15,6 +15,16 @@ export default function MirrorPage() {
   const [status, setStatus] = useState("Click Start to begin");
   const [cameraOn, setCameraOn] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [selectedGarment, setSelectedGarment] = useState(0);
+
+  // Garment gallery
+  const GARMENTS = [
+    { name: "Yellow Shirt", path: "/garments/yellow-shirt-nobg.png", emoji: "👕" },
+    { name: "Blue T-Shirt", path: "/garments/tshirt-blue.png", emoji: "👔" },
+    { name: "Green Polo", path: "/garments/polo-green.png", emoji: "🎽" },
+    { name: "Red Hoodie", path: "/garments/hoodie-red.png", emoji: "🧥" },
+    { name: "Black Jacket", path: "/garments/jacket-black.png", emoji: "🧥" },
+  ];
 
   // Three.js refs
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -292,6 +302,49 @@ export default function MirrorPage() {
     }
   }, [createShirtMesh]);
 
+  // Switch to a garment from the gallery
+  const switchGarment = useCallback((index: number) => {
+    if (!sceneRef.current || !garmentMeshRef.current) return;
+    
+    const garment = GARMENTS[index];
+    if (!garment) return;
+    
+    setSelectedGarment(index);
+    setStatus(`Loading ${garment.name}...`);
+    
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      garment.path,
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        
+        if (sceneRef.current && garmentMeshRef.current) {
+          const oldMesh = garmentMeshRef.current;
+          const newMesh = createShirtMesh(texture);
+          newMesh.visible = oldMesh.visible;
+          newMesh.position.copy(oldMesh.position);
+          newMesh.scale.copy(oldMesh.scale);
+          newMesh.rotation.copy(oldMesh.rotation);
+          
+          sceneRef.current.remove(oldMesh);
+          oldMesh.geometry.dispose();
+          (oldMesh.material as THREE.Material).dispose();
+          
+          sceneRef.current.add(newMesh);
+          garmentMeshRef.current = newMesh;
+          garmentTextureRef.current = texture;
+          
+          setStatus(`✅ ${garment.name} loaded!`);
+        }
+      },
+      undefined,
+      (err) => {
+        console.error("Failed to load garment:", err);
+        setStatus(`Failed to load ${garment.name}`);
+      }
+    );
+  }, [createShirtMesh]);
+
   // Cleanup
   useEffect(() => {
     return () => {
@@ -403,6 +456,34 @@ export default function MirrorPage() {
           >
             👕 Default Shirt
           </button>
+        </div>
+      )}
+
+      {/* Garment Gallery */}
+      {cameraOn && (
+        <div style={{ marginTop: 16, width: "100%", maxWidth: 640 }}>
+          <p style={{ color: "#888", fontSize: 14, marginBottom: 8, textAlign: "center" }}>Try these garments:</p>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+            {GARMENTS.map((garment, idx) => (
+              <button
+                key={garment.path}
+                onClick={() => switchGarment(idx)}
+                style={{
+                  padding: "10px 16px",
+                  fontSize: 14,
+                  fontWeight: selectedGarment === idx ? 700 : 500,
+                  background: selectedGarment === idx ? "#6C5CE7" : "#222",
+                  color: "#fff",
+                  border: selectedGarment === idx ? "2px solid #8B7CF0" : "1px solid #444",
+                  borderRadius: 8,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                {garment.emoji} {garment.name}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
