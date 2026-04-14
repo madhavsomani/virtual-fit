@@ -27,6 +27,7 @@ export default function MirrorPage() {
   const [garmentYOffset, setGarmentYOffset] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [lowLightWarning, setLowLightWarning] = useState(false);
+  const [garmentBrightness, setGarmentBrightness] = useState(1.0);
   const lowConfidenceCountRef = useRef(0);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -750,6 +751,20 @@ export default function MirrorPage() {
     }
   }, [garmentOpacity]);
 
+  // Update garment brightness when slider changes
+  useEffect(() => {
+    if (garmentMeshRef.current) {
+      const material = garmentMeshRef.current.material as THREE.MeshBasicMaterial | THREE.MeshStandardMaterial;
+      // For MeshBasicMaterial, we can use color multiplier
+      // Brightness 1.0 = normal, <1 darker, >1 brighter
+      if ('color' in material && material.color) {
+        const brightness = garmentBrightness;
+        material.color.setRGB(brightness, brightness, brightness);
+        material.needsUpdate = true;
+      }
+    }
+  }, [garmentBrightness]);
+
   // Auto-hide controls after 5 seconds of inactivity in fullscreen
   const resetControlsTimer = useCallback(() => {
     setShowControls(true);
@@ -1350,13 +1365,33 @@ export default function MirrorPage() {
         </div>
       )}
 
+      {/* Garment Brightness Slider */}
+      {cameraOn && (
+        <div style={{ marginTop: 8, width: "100%", maxWidth: 300 }}>
+          <label style={{ color: "#888", fontSize: 14, display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+            <span>☀️ Brightness</span>
+            <span>{Math.round(garmentBrightness * 100)}%</span>
+          </label>
+          <input
+            type="range"
+            min="0.5"
+            max="1.5"
+            step="0.05"
+            value={garmentBrightness}
+            onChange={(e) => setGarmentBrightness(parseFloat(e.target.value))}
+            style={{ width: "100%", accentColor: "#eab308" }}
+          />
+        </div>
+      )}
+
       {/* Reset Settings Button */}
-      {cameraOn && (garmentOpacity !== 0.9 || garmentScale !== 1.0 || garmentYOffset !== 0) && (
+      {cameraOn && (garmentOpacity !== 0.9 || garmentScale !== 1.0 || garmentYOffset !== 0 || garmentBrightness !== 1.0) && (
         <button
           onClick={() => {
             setGarmentOpacity(0.9);
             setGarmentScale(1.0);
             setGarmentYOffset(0);
+            setGarmentBrightness(1.0);
           }}
           style={{
             marginTop: 8,
