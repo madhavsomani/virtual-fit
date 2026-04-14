@@ -35,6 +35,7 @@ export default function MirrorPage() {
   const lastTouchDistanceRef = useRef<number | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [favoriteGarments, setFavoriteGarments] = useState<number[]>([]);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   const lowConfidenceCountRef = useRef(0);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -101,6 +102,26 @@ export default function MirrorPage() {
       }
       return updated;
     });
+  }, []);
+
+  // Clear all app data and reset to defaults
+  const clearAllData = useCallback(() => {
+    try {
+      localStorage.removeItem("virtualfit-saved-garments");
+      localStorage.removeItem("virtualfit-adjustments");
+      localStorage.removeItem("virtualfit-favorites");
+      localStorage.removeItem("virtualfit-onboarding-seen");
+      setSavedGarments([]);
+      setFavoriteGarments([]);
+      setGarmentOpacity(0.9);
+      setGarmentScale(1.0);
+      setGarmentYOffset(0);
+      setGarmentBrightness(1.0);
+      setShowClearConfirm(false);
+      setStatus("🧹 All data cleared!");
+    } catch {
+      setStatus("❌ Failed to clear data");
+    }
   }, []);
 
   // Garment gallery
@@ -1676,7 +1697,7 @@ export default function MirrorPage() {
 
       {/* Version footer */}
       <div style={{ marginTop: 32, color: "#444", fontSize: 11, textAlign: "center" }}>
-        <p>VirtualFit v2.0.0 • 38 features • Built with Next.js + Three.js + MediaPipe</p>
+        <p>VirtualFit v2.0.0 • 40 features • Built with Next.js + Three.js + MediaPipe</p>
         <p style={{ marginTop: 4 }}>
           <a href="#" onClick={(e) => { e.preventDefault(); setShowHelp(true); }} style={{ color: "#6C5CE7", textDecoration: "none" }}>
             ❓ Help
@@ -1685,8 +1706,60 @@ export default function MirrorPage() {
           <a href="#" onClick={(e) => { e.preventDefault(); setShowOnboarding(true); }} style={{ color: "#6C5CE7", textDecoration: "none" }}>
             📖 Tutorial
           </a>
+          {" • "}
+          <a href="#" onClick={(e) => { e.preventDefault(); setShowClearConfirm(true); }} style={{ color: "#ef4444", textDecoration: "none" }}>
+            🗑️ Clear Data
+          </a>
         </p>
       </div>
+
+      {/* Clear Data Confirmation Modal */}
+      {showClearConfirm && (
+        <div
+          onClick={() => setShowClearConfirm(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 200,
+            background: "rgba(0,0,0,0.8)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#1f2937", borderRadius: 16, padding: 24,
+              maxWidth: 400, textAlign: "center", color: "#fff",
+            }}
+          >
+            <h2 style={{ fontSize: 24, marginBottom: 16 }}>🗑️ Clear All Data?</h2>
+            <p style={{ color: "#9ca3af", marginBottom: 24 }}>
+              This will delete all saved garments, favorites, and settings. This cannot be undone.
+            </p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                style={{
+                  padding: "12px 24px", fontSize: 16, fontWeight: 600,
+                  background: "#374151", color: "#fff", border: "none",
+                  borderRadius: 10, cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={clearAllData}
+                style={{
+                  padding: "12px 24px", fontSize: 16, fontWeight: 600,
+                  background: "#dc2626", color: "#fff", border: "none",
+                  borderRadius: 10, cursor: "pointer",
+                }}
+              >
+                Yes, Clear All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* CSS for spinner animation */}
       <style>{`
