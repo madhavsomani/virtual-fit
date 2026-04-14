@@ -1539,9 +1539,10 @@ export default function MirrorPage() {
                 <button
                   onClick={() => switchGarment(idx)}
                   style={{
-                    padding: "10px 16px",
+                    padding: "8px 12px",
                     paddingRight: 36,
-                    fontSize: 14,
+                    paddingLeft: 8,
+                    fontSize: 13,
                     fontWeight: selectedGarment === idx ? 700 : 500,
                     background: selectedGarment === idx ? "#6C5CE7" : "#222",
                     color: "#fff",
@@ -1549,9 +1550,24 @@ export default function MirrorPage() {
                     borderRadius: 8,
                     cursor: "pointer",
                     transition: "all 0.2s",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
                   }}
                 >
-                  {garment.emoji} {garment.name}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img 
+                    src={garment.path} 
+                    alt={garment.name}
+                    style={{ 
+                      width: 28, 
+                      height: 28, 
+                      objectFit: "contain",
+                      borderRadius: 4,
+                      background: "rgba(255,255,255,0.1)"
+                    }} 
+                  />
+                  {garment.name}
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); toggleFavorite(idx); }}
