@@ -681,6 +681,23 @@ export default function MirrorPage() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, switchGarment, GARMENTS.length]);
 
+  // Stop camera and clean up
+  const stopCamera = useCallback(() => {
+    cancelAnimationFrame(animFrameRef.current);
+    if (videoRef.current?.srcObject) {
+      (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+      videoRef.current.srcObject = null;
+    }
+    if (garmentMeshRef.current) {
+      garmentMeshRef.current.visible = false;
+    }
+    setCameraOn(false);
+    setFps(0);
+    setEstimatedSize(null);
+    setHandsVisible({ left: false, right: false });
+    setStatus("Camera stopped. Click Start to begin again.");
+  }, []);
+
   // Cleanup
   useEffect(() => {
     return () => {
@@ -905,6 +922,18 @@ export default function MirrorPage() {
             }}
           >
             ❓ Help
+          </button>
+
+          {/* Stop Camera button */}
+          <button
+            onClick={stopCamera}
+            style={{
+              padding: "12px 24px", fontSize: 16, fontWeight: 600,
+              background: "#dc2626", color: "#fff", border: "1px solid #ef4444",
+              borderRadius: 10, cursor: "pointer",
+            }}
+          >
+            ⏹ Stop
           </button>
         </div>
       )}
