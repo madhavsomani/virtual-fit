@@ -1795,7 +1795,7 @@ export default function MirrorPage() {
       {cameraOn && showControls && (
         <div style={{ marginTop: 16, width: "100%", maxWidth: 640 }}>
           <p style={{ color: "#888", fontSize: 14, marginBottom: 8, textAlign: "center" }}>
-            Try these garments: {favoriteGarments.length > 0 && <span style={{ color: "#f59e0b" }}>(⭐ favorites first)</span>}
+            Try these garments ({GARMENTS.length + savedGarments.length} total): {favoriteGarments.length > 0 && <span style={{ color: "#f59e0b" }}>(⭐ favorites first)</span>}
           </p>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
             {[...GARMENTS.map((g, i) => ({ ...g, originalIndex: i }))]
