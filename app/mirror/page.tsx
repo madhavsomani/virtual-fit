@@ -28,6 +28,7 @@ export default function MirrorPage() {
   const [showControls, setShowControls] = useState(true);
   const [lowLightWarning, setLowLightWarning] = useState(false);
   const [garmentBrightness, setGarmentBrightness] = useState(1.0);
+  const [garmentHue, setGarmentHue] = useState(0); // 0-360 degrees hue rotation
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -118,6 +119,7 @@ export default function MirrorPage() {
       setGarmentScale(1.0);
       setGarmentYOffset(0);
       setGarmentBrightness(1.0);
+      setGarmentHue(0);
       setShowClearConfirm(false);
       setStatus("🧹 All data cleared!");
     } catch {
@@ -893,15 +895,37 @@ export default function MirrorPage() {
   useEffect(() => {
     if (garmentMeshRef.current) {
       const material = garmentMeshRef.current.material as THREE.MeshBasicMaterial | THREE.MeshStandardMaterial;
-      // For MeshBasicMaterial, we can use color multiplier
-      // Brightness 1.0 = normal, <1 darker, >1 brighter
+      // For MeshBasicMaterial, we can use color multiplier with hue shift
       if ('color' in material && material.color) {
         const brightness = garmentBrightness;
-        material.color.setRGB(brightness, brightness, brightness);
+        // Apply hue rotation (0-360) with brightness
+        if (garmentHue === 0) {
+          material.color.setRGB(brightness, brightness, brightness);
+        } else {
+          // Convert hue to RGB tint
+          const h = garmentHue / 360;
+          const s = 0.5; // saturation for tint
+          const l = brightness * 0.5;
+          // HSL to RGB conversion
+          const hue2rgb = (p: number, q: number, t: number) => {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1/6) return p + (q - p) * 6 * t;
+            if (t < 1/2) return q;
+            if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+            return p;
+          };
+          const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+          const p = 2 * l - q;
+          const r = hue2rgb(p, q, h + 1/3);
+          const g = hue2rgb(p, q, h);
+          const b = hue2rgb(p, q, h - 1/3);
+          material.color.setRGB(r * 2, g * 2, b * 2); // scale up for visibility
+        }
         material.needsUpdate = true;
       }
     }
-  }, [garmentBrightness]);
+  }, [garmentBrightness, garmentHue]);
 
   // Auto-hide controls after 5 seconds of inactivity in fullscreen
   const resetControlsTimer = useCallback(() => {
@@ -1669,14 +1693,34 @@ export default function MirrorPage() {
         </div>
       )}
 
+      {/* Garment Hue Slider */}
+      {cameraOn && (
+        <div style={{ marginTop: 8, width: "100%", maxWidth: 300 }}>
+          <label style={{ color: "#888", fontSize: 14, display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+            <span>🎨 Color Tint</span>
+            <span>{garmentHue === 0 ? "Off" : `${garmentHue}°`}</span>
+          </label>
+          <input
+            type="range"
+            min="0"
+            max="360"
+            step="15"
+            value={garmentHue}
+            onChange={(e) => setGarmentHue(parseInt(e.target.value))}
+            style={{ width: "100%", accentColor: `hsl(${garmentHue}, 70%, 50%)` }}
+          />
+        </div>
+      )}
+
       {/* Reset Settings Button */}
-      {cameraOn && (garmentOpacity !== 0.9 || garmentScale !== 1.0 || garmentYOffset !== 0 || garmentBrightness !== 1.0) && (
+      {cameraOn && (garmentOpacity !== 0.9 || garmentScale !== 1.0 || garmentYOffset !== 0 || garmentBrightness !== 1.0 || garmentHue !== 0) && (
         <button
           onClick={() => {
             setGarmentOpacity(0.9);
             setGarmentScale(1.0);
             setGarmentYOffset(0);
             setGarmentBrightness(1.0);
+            setGarmentHue(0);
           }}
           style={{
             marginTop: 8,
