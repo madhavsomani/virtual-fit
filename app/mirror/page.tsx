@@ -618,6 +618,44 @@ export default function MirrorPage() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      switch (e.key.toLowerCase()) {
+        case 'f': // Fullscreen
+          toggleFullscreen();
+          break;
+        case 's': // Screenshot
+          if (cameraOn) captureScreenshot();
+          break;
+        case 'arrowright': // Next garment
+        case 'n':
+          if (cameraOn) {
+            const nextIdx = (selectedGarment + 1) % GARMENTS.length;
+            switchGarment(nextIdx);
+          }
+          break;
+        case 'arrowleft': // Previous garment
+        case 'p':
+          if (cameraOn) {
+            const prevIdx = (selectedGarment - 1 + GARMENTS.length) % GARMENTS.length;
+            switchGarment(prevIdx);
+          }
+          break;
+        case 'escape': // Exit fullscreen
+          if (isFullscreen) {
+            document.exitFullscreen();
+          }
+          break;
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [cameraOn, selectedGarment, isFullscreen, toggleFullscreen, captureScreenshot, switchGarment, GARMENTS.length]);
+
   // Cleanup
   useEffect(() => {
     return () => {
