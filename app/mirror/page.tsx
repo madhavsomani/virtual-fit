@@ -1299,6 +1299,12 @@ export default function MirrorPage() {
             <span style={{ color: trackingConfidence >= 70 ? "#22c55e" : trackingConfidence >= 40 ? "#eab308" : "#ef4444" }}>
               [{trackingConfidence}% conf]
             </span>
+            {estimatedSize && (
+              <>
+                {" "}
+                <span style={{ color: "#a78bfa" }}>[Size: {estimatedSize}]</span>
+              </>
+            )}
           </>
         )}
       </p>
