@@ -652,6 +652,62 @@ export default function MirrorPage() {
     }, "image/png");
   }, []);
 
+  // Share try-on result using Web Share API
+  const shareResult = useCallback(async () => {
+    if (!videoRef.current || !threeCanvasRef.current) {
+      setStatus("Cannot share - camera not ready");
+      return;
+    }
+
+    // Create composite canvas same as screenshot
+    const video = videoRef.current;
+    const threeCanvas = threeCanvasRef.current;
+    const compositeCanvas = document.createElement("canvas");
+    compositeCanvas.width = video.videoWidth || 640;
+    compositeCanvas.height = video.videoHeight || 480;
+    const ctx = compositeCanvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.save();
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, -compositeCanvas.width, 0, compositeCanvas.width, compositeCanvas.height);
+    ctx.restore();
+    ctx.drawImage(threeCanvas, 0, 0, compositeCanvas.width, compositeCanvas.height);
+
+    compositeCanvas.toBlob(async (blob) => {
+      if (!blob) return;
+
+      // Check if Web Share API is available
+      if (navigator.share && navigator.canShare) {
+        const file = new File([blob], `virtualfit-${Date.now()}.png`, { type: "image/png" });
+        const shareData = {
+          title: "My VirtualFit Try-On",
+          text: "Check out how this looks on me! Made with VirtualFit",
+          files: [file],
+        };
+
+        if (navigator.canShare(shareData)) {
+          try {
+            await navigator.share(shareData);
+            setStatus("🚀 Shared successfully!");
+          } catch (err) {
+            if ((err as Error).name !== "AbortError") {
+              setStatus("❌ Share cancelled");
+            }
+          }
+        } else {
+          // Fallback to download
+          setStatus("📱 Share not supported - downloading instead");
+          captureScreenshot();
+        }
+      } else {
+        // Fallback for browsers without Web Share API
+        setStatus("📱 Share not available - downloading instead");
+        captureScreenshot();
+      }
+    }, "image/png");
+  }, [captureScreenshot]);
+
   // Toggle fullscreen mode
   const toggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
@@ -1042,6 +1098,18 @@ export default function MirrorPage() {
             }}
           >
             📸 Screenshot
+          </button>
+
+          {/* Share button */}
+          <button
+            onClick={shareResult}
+            style={{
+              padding: "12px 24px", fontSize: 16, fontWeight: 600,
+              background: "#059669", color: "#fff", border: "1px solid #10b981",
+              borderRadius: 10, cursor: "pointer",
+            }}
+          >
+            🚀 Share
           </button>
 
           {/* Fullscreen button */}
