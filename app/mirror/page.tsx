@@ -18,6 +18,7 @@ export default function MirrorPage() {
   const [savedGarments, setSavedGarments] = useState<Array<{name: string, dataUrl: string}>>([]);
   const [estimatedSize, setEstimatedSize] = useState<string | null>(null);
   const [garmentOpacity, setGarmentOpacity] = useState(0.9);
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [handsVisible, setHandsVisible] = useState<{left: boolean, right: boolean}>({left: false, right: false});
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -271,7 +272,7 @@ export default function MirrorPage() {
     try {
       setStatus("Starting camera...");
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        video: { facingMode: facingMode, width: { ideal: 640 }, height: { ideal: 480 } },
       });
       if (!videoRef.current) return;
       videoRef.current.srcObject = stream;
@@ -356,7 +357,7 @@ export default function MirrorPage() {
         setStatus(`Error: ${errorMsg}`);
       }
     }
-  }, [initThree, updateGarmentFromLandmarks]);
+  }, [initThree, updateGarmentFromLandmarks, facingMode]);
 
   // Upload garment image → rembg → texture on 3D mesh
   const handleUpload = useCallback(async (file: File) => {
@@ -710,6 +711,30 @@ export default function MirrorPage() {
     setStatus("Camera stopped. Click Start to begin again.");
   }, []);
 
+  // Flip between front and back camera
+  const flipCamera = useCallback(async () => {
+    // Stop current stream
+    if (videoRef.current?.srcObject) {
+      (videoRef.current.srcObject as MediaStream).getTracks().forEach(t => t.stop());
+    }
+    // Toggle facing mode
+    const newMode = facingMode === "user" ? "environment" : "user";
+    setFacingMode(newMode);
+    setStatus(`Switching to ${newMode === "user" ? "front" : "back"} camera...`);
+  }, [facingMode]);
+
+  // Restart camera when facingMode changes
+  useEffect(() => {
+    if (cameraOn) {
+      // Small delay to let previous stream close
+      const timer = setTimeout(() => {
+        startCamera();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [facingMode]);
+
   // Cleanup
   useEffect(() => {
     return () => {
@@ -946,6 +971,18 @@ export default function MirrorPage() {
             }}
           >
             ⏹ Stop
+          </button>
+
+          {/* Flip Camera button */}
+          <button
+            onClick={flipCamera}
+            style={{
+              padding: "12px 24px", fontSize: 16, fontWeight: 600,
+              background: "#0891b2", color: "#fff", border: "1px solid #06b6d4",
+              borderRadius: 10, cursor: "pointer",
+            }}
+          >
+            🔄 {facingMode === "user" ? "Back Cam" : "Front Cam"}
           </button>
         </div>
       )}
