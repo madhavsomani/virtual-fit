@@ -1480,8 +1480,8 @@ export default function MirrorPage() {
           onMouseLeave={() => setIsDragging(false)}
         />
 
-        {/* Position indicator during drag */}
-        {isDragging && (garmentXOffset !== 0 || garmentYOffset !== 0) && (
+        {/* Position/Scale indicator during drag */}
+        {isDragging && (
           <div style={{
             position: "absolute",
             top: 12, left: "50%",
@@ -1494,7 +1494,7 @@ export default function MirrorPage() {
             fontFamily: "monospace",
             pointerEvents: "none",
           }}>
-            X: {garmentXOffset.toFixed(0)} | Y: {garmentYOffset.toFixed(0)}
+            X: {garmentXOffset.toFixed(0)} | Y: {garmentYOffset.toFixed(0)} | 🔍 {(garmentScale * 100).toFixed(0)}%
           </div>
         )}
 
