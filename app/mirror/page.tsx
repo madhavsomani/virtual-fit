@@ -593,6 +593,15 @@ export default function MirrorPage() {
     }
     setStatus(`Loading ${garment.name}...`);
     
+    // Fade out current garment
+    if (garmentMeshRef.current) {
+      const mat = garmentMeshRef.current.material as THREE.MeshBasicMaterial;
+      if (mat.opacity !== undefined) {
+        mat.opacity = 0.3; // dim during transition
+        mat.needsUpdate = true;
+      }
+    }
+    
     const loader = new THREE.TextureLoader();
     loader.load(
       garment.path,
@@ -607,6 +616,10 @@ export default function MirrorPage() {
           newMesh.scale.copy(oldMesh.scale);
           newMesh.rotation.copy(oldMesh.rotation);
           
+          // Start new mesh at low opacity
+          const newMat = newMesh.material as THREE.MeshBasicMaterial;
+          newMat.opacity = 0.3;
+          
           sceneRef.current.remove(oldMesh);
           oldMesh.geometry.dispose();
           (oldMesh.material as THREE.Material).dispose();
@@ -614,6 +627,21 @@ export default function MirrorPage() {
           sceneRef.current.add(newMesh);
           garmentMeshRef.current = newMesh;
           garmentTextureRef.current = texture;
+          
+          // Fade in new garment
+          let fadeStep = 0;
+          const fadeIn = () => {
+            fadeStep += 0.1;
+            if (fadeStep < garmentOpacity) {
+              newMat.opacity = 0.3 + fadeStep * 0.7;
+              newMat.needsUpdate = true;
+              requestAnimationFrame(fadeIn);
+            } else {
+              newMat.opacity = garmentOpacity;
+              newMat.needsUpdate = true;
+            }
+          };
+          requestAnimationFrame(fadeIn);
           
           setStatus(`✅ ${garment.name} loaded!`);
         }
