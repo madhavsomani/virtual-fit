@@ -33,6 +33,7 @@ export default function MirrorPage() {
   const [isLandscape, setIsLandscape] = useState(false);
   const [showGarment, setShowGarment] = useState(true); // toggle for before/after comparison
   const [renamingIndex, setRenamingIndex] = useState<number | null>(null);
+  const [torchOn, setTorchOn] = useState(false);
   const [renameValue, setRenameValue] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -1121,6 +1122,30 @@ export default function MirrorPage() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, switchGarment, GARMENTS.length]);
 
+  // Toggle torch/flashlight
+  const toggleTorch = useCallback(async () => {
+    if (!videoRef.current?.srcObject) return;
+    const stream = videoRef.current.srcObject as MediaStream;
+    const track = stream.getVideoTracks()[0];
+    if (!track) return;
+    
+    try {
+      const capabilities = track.getCapabilities();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ('torch' in capabilities && (capabilities as any).torch) {
+        const newTorchState = !torchOn;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await track.applyConstraints({ advanced: [{ torch: newTorchState } as any] });
+        setTorchOn(newTorchState);
+        setStatus(newTorchState ? "🔦 Torch ON" : "🔦 Torch OFF");
+      } else {
+        setStatus("⚠️ Torch not supported on this device");
+      }
+    } catch {
+      setStatus("❌ Failed to toggle torch");
+    }
+  }, [torchOn]);
+
   // Stop camera and clean up
   const stopCamera = useCallback(() => {
     cancelAnimationFrame(animFrameRef.current);
@@ -1132,6 +1157,7 @@ export default function MirrorPage() {
       garmentMeshRef.current.visible = false;
     }
     setCameraOn(false);
+    setTorchOn(false);
     setFps(0);
     setEstimatedSize(null);
     setHandsVisible({ left: false, right: false });
@@ -1583,6 +1609,20 @@ export default function MirrorPage() {
             }}
           >
             🔄 {facingMode === "user" ? "Back Cam" : "Front Cam"}
+          </button>
+
+          {/* Torch button */}
+          <button
+            onClick={toggleTorch}
+            style={{
+              padding: "12px 24px", fontSize: 16, fontWeight: 600,
+              background: torchOn ? "#f59e0b" : "#374151", color: "#fff", 
+              border: torchOn ? "1px solid #fbbf24" : "1px solid #4b5563",
+              borderRadius: 10, cursor: "pointer",
+            }}
+            title="Toggle flashlight (mobile only)"
+          >
+            🔦 {torchOn ? "Torch ON" : "Torch"}
           </button>
 
           {/* Mirror toggle */}
