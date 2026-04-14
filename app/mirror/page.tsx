@@ -13,6 +13,19 @@ export default function MirrorPage() {
   const [cameraOn, setCameraOn] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedGarment, setSelectedGarment] = useState(0);
+  const [savedGarments, setSavedGarments] = useState<Array<{name: string, dataUrl: string}>>([]);
+
+  // Load saved garments from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("virtualfit-saved-garments");
+      if (saved) {
+        setSavedGarments(JSON.parse(saved));
+      }
+    } catch {
+      console.warn("Failed to load saved garments");
+    }
+  }, []);
 
   // Garment gallery
   const GARMENTS = [
@@ -310,13 +323,24 @@ export default function MirrorPage() {
         garmentTextureRef.current = texture;
       }
 
-      setStatus(`✅ "${file.name}" loaded as 3D garment!`);
+      // Save to localStorage for persistence
+      const garmentName = file.name.replace(/\.[^/.]+$/, ""); // remove extension
+      const newGarment = { name: garmentName, dataUrl: data.imageUrl };
+      const updatedSaved = [...savedGarments, newGarment];
+      setSavedGarments(updatedSaved);
+      try {
+        localStorage.setItem("virtualfit-saved-garments", JSON.stringify(updatedSaved));
+      } catch {
+        console.warn("Failed to save garment to localStorage");
+      }
+
+      setStatus(`✅ "${file.name}" loaded and saved!`);
     } catch (err: unknown) {
       setStatus(`Upload failed: ${err instanceof Error ? err.message : "Unknown"}`);
     } finally {
       setUploading(false);
     }
-  }, [createShirtMesh]);
+  }, [createShirtMesh, savedGarments]);
 
   // Switch to a garment from the gallery
   const switchGarment = useCallback((index: number) => {
@@ -360,6 +384,61 @@ export default function MirrorPage() {
       }
     );
   }, [createShirtMesh]);
+
+  // Load a saved garment from localStorage
+  const loadSavedGarment = useCallback((index: number) => {
+    if (!sceneRef.current || !garmentMeshRef.current) return;
+    
+    const garment = savedGarments[index];
+    if (!garment) return;
+    
+    setSelectedGarment(-1); // deselect preset gallery
+    setStatus(`Loading ${garment.name}...`);
+    
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      garment.dataUrl,
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        
+        if (sceneRef.current && garmentMeshRef.current) {
+          const oldMesh = garmentMeshRef.current;
+          const newMesh = createShirtMesh(texture);
+          newMesh.visible = oldMesh.visible;
+          newMesh.position.copy(oldMesh.position);
+          newMesh.scale.copy(oldMesh.scale);
+          newMesh.rotation.copy(oldMesh.rotation);
+          
+          sceneRef.current.remove(oldMesh);
+          oldMesh.geometry.dispose();
+          (oldMesh.material as THREE.Material).dispose();
+          
+          sceneRef.current.add(newMesh);
+          garmentMeshRef.current = newMesh;
+          garmentTextureRef.current = texture;
+          
+          setStatus(`✅ ${garment.name} loaded!`);
+        }
+      },
+      undefined,
+      (err) => {
+        console.error("Failed to load saved garment:", err);
+        setStatus(`Failed to load ${garment.name}`);
+      }
+    );
+  }, [createShirtMesh, savedGarments]);
+
+  // Delete a saved garment
+  const deleteSavedGarment = useCallback((index: number) => {
+    const updated = savedGarments.filter((_, i) => i !== index);
+    setSavedGarments(updated);
+    try {
+      localStorage.setItem("virtualfit-saved-garments", JSON.stringify(updated));
+    } catch {
+      console.warn("Failed to update localStorage");
+    }
+    setStatus("Garment removed");
+  }, [savedGarments]);
 
   // Cleanup
   useEffect(() => {
@@ -498,6 +577,50 @@ export default function MirrorPage() {
               >
                 {garment.emoji} {garment.name}
               </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Saved Garments */}
+      {cameraOn && savedGarments.length > 0 && (
+        <div style={{ marginTop: 16, width: "100%", maxWidth: 640 }}>
+          <p style={{ color: "#888", fontSize: 14, marginBottom: 8, textAlign: "center" }}>Your saved garments:</p>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+            {savedGarments.map((garment, idx) => (
+              <div key={idx} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <button
+                  onClick={() => loadSavedGarment(idx)}
+                  style={{
+                    padding: "10px 16px",
+                    fontSize: 14,
+                    fontWeight: 500,
+                    background: "#1a3a2a",
+                    color: "#4ade80",
+                    border: "1px solid #22c55e",
+                    borderRadius: 8,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  💾 {garment.name}
+                </button>
+                <button
+                  onClick={() => deleteSavedGarment(idx)}
+                  style={{
+                    padding: "8px",
+                    fontSize: 12,
+                    background: "#3a1a1a",
+                    color: "#f87171",
+                    border: "1px solid #ef4444",
+                    borderRadius: 6,
+                    cursor: "pointer",
+                  }}
+                  title="Delete"
+                >
+                  ✕
+                </button>
+              </div>
             ))}
           </div>
         </div>
