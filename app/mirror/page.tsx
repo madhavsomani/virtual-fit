@@ -2,12 +2,9 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as THREE from "three";
+import { smoothScalar } from "./smoothing-utils";
 
 type PoseResultLandmark = { x: number; y: number; z?: number; visibility?: number };
-
-function lerp(a: number, b: number, t: number) {
-  return a + (b - a) * t;
-}
 
 export default function MirrorPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -176,15 +173,15 @@ export default function MirrorPage() {
     const shoulderW = Math.abs(rs.x - ls.x) * vw;
     const torsoH = hipCY - shoulderCY;
 
-    // Smooth position
-    const t = 0.3;
+    // Smooth position using smoothing-utils
+    const alpha = 0.3;
     if (!smoothPos.current.ready) {
       smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, ready: true };
     } else {
-      smoothPos.current.x = lerp(smoothPos.current.x, shoulderCX, t);
-      smoothPos.current.y = lerp(smoothPos.current.y, shoulderCY, t);
-      smoothPos.current.w = lerp(smoothPos.current.w, shoulderW, t);
-      smoothPos.current.h = lerp(smoothPos.current.h, torsoH, t);
+      smoothPos.current.x = smoothScalar(smoothPos.current.x, shoulderCX, { alpha }) ?? shoulderCX;
+      smoothPos.current.y = smoothScalar(smoothPos.current.y, shoulderCY, { alpha }) ?? shoulderCY;
+      smoothPos.current.w = smoothScalar(smoothPos.current.w, shoulderW, { alpha, min: 50 }) ?? shoulderW;
+      smoothPos.current.h = smoothScalar(smoothPos.current.h, torsoH, { alpha, min: 50 }) ?? torsoH;
     }
 
     const sp = smoothPos.current;
