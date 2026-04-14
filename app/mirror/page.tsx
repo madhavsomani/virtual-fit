@@ -28,6 +28,8 @@ export default function MirrorPage() {
   const [batteryLevel, setBatteryLevel] = useState<number | null>(null);
   const [isOnline, setIsOnline] = useState(true);
   const [screenshotCountdown, setScreenshotCountdown] = useState<number | null>(null);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [showRotateHint, setShowRotateHint] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
   const [garmentScale, setGarmentScale] = useState(1.0);
   const [isMirrored, setIsMirrored] = useState(true);
@@ -1142,15 +1144,23 @@ export default function MirrorPage() {
     }
   }, [garmentBrightness, garmentHue]);
 
-  // Detect landscape orientation
+  // Detect landscape orientation and mobile device
   useEffect(() => {
     const checkOrientation = () => {
       setIsLandscape(window.innerWidth > window.innerHeight);
+      // Detect mobile via touch or user agent
+      const isMobile = 'ontouchstart' in window || window.innerWidth < 768;
+      setIsMobileDevice(isMobile);
+      // Show rotate hint on mobile in portrait while camera is on
+      if (isMobile && window.innerWidth < window.innerHeight && cameraOn) {
+        setShowRotateHint(true);
+        setTimeout(() => setShowRotateHint(false), 5000); // Auto-hide after 5s
+      }
     };
     checkOrientation();
     window.addEventListener('resize', checkOrientation);
     return () => window.removeEventListener('resize', checkOrientation);
-  }, []);
+  }, [cameraOn]);
 
   // Auto-hide controls after 5 seconds of inactivity in fullscreen
   const resetControlsTimer = useCallback(() => {
@@ -1417,6 +1427,28 @@ export default function MirrorPage() {
           zIndex: 300,
         }}>
           📴 You&apos;re offline — some features may not work
+        </div>
+      )}
+
+      {/* Rotate device hint for mobile portrait */}
+      {showRotateHint && isMobileDevice && !isLandscape && cameraOn && (
+        <div 
+          onClick={() => setShowRotateHint(false)}
+          style={{
+            position: "fixed",
+            bottom: 80, left: 16, right: 16,
+            background: "rgba(108, 92, 231, 0.95)",
+            color: "#fff",
+            padding: "12px 16px",
+            borderRadius: 12,
+            textAlign: "center",
+            fontSize: 14,
+            zIndex: 250,
+            cursor: "pointer",
+          }}
+        >
+          🔄 Rotate your device for a better try-on experience
+          <span style={{ display: "block", fontSize: 11, marginTop: 4, opacity: 0.8 }}>Tap to dismiss</span>
         </div>
       )}
 
