@@ -517,6 +517,44 @@ export default function MirrorPage() {
     setStatus("Garment removed");
   }, [savedGarments]);
 
+  // Capture screenshot of try-on result
+  const captureScreenshot = useCallback(() => {
+    if (!videoRef.current || !threeCanvasRef.current) {
+      setStatus("Cannot capture - camera not ready");
+      return;
+    }
+
+    // Create a composite canvas
+    const video = videoRef.current;
+    const threeCanvas = threeCanvasRef.current;
+    const compositeCanvas = document.createElement("canvas");
+    compositeCanvas.width = video.videoWidth || 640;
+    compositeCanvas.height = video.videoHeight || 480;
+    const ctx = compositeCanvas.getContext("2d");
+    if (!ctx) return;
+
+    // Draw mirrored video first
+    ctx.save();
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, -compositeCanvas.width, 0, compositeCanvas.width, compositeCanvas.height);
+    ctx.restore();
+
+    // Draw Three.js overlay on top
+    ctx.drawImage(threeCanvas, 0, 0, compositeCanvas.width, compositeCanvas.height);
+
+    // Convert to blob and download
+    compositeCanvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `virtualfit-${Date.now()}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setStatus("📸 Screenshot saved!");
+    }, "image/png");
+  }, []);
+
   // Cleanup
   useEffect(() => {
     return () => {
@@ -625,8 +663,20 @@ export default function MirrorPage() {
               background: "#333", color: "#fff", border: "1px solid #555",
               borderRadius: 10, cursor: "pointer",
             }}
-          >
+          >  
             👕 Default Shirt
+          </button>
+
+          {/* Screenshot button */}
+          <button
+            onClick={captureScreenshot}
+            style={{
+              padding: "12px 24px", fontSize: 16, fontWeight: 600,
+              background: "#2563eb", color: "#fff", border: "1px solid #3b82f6",
+              borderRadius: 10, cursor: "pointer",
+            }}
+          >
+            📸 Screenshot
           </button>
         </div>
       )}
