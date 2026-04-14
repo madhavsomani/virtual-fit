@@ -24,6 +24,7 @@ export default function MirrorPage() {
   const garmentTextureRef = useRef<THREE.Texture | null>(null);
 
   // Pose refs
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const poseLandmarkerRef = useRef<any>(null);
   const animFrameRef = useRef<number>(0);
   const smoothPos = useRef({ x: 0, y: 0, w: 0, h: 0, ready: false });
