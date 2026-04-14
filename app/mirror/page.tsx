@@ -1668,7 +1668,7 @@ export default function MirrorPage() {
           <div style={{
             position: "absolute",
             top: 12, left: 12,
-            background: "rgba(108, 92, 231, 0.8)",
+            background: showGarment ? "rgba(108, 92, 231, 0.8)" : "rgba(75, 85, 99, 0.8)",
             padding: "6px 12px",
             borderRadius: 8,
             color: "#fff",
@@ -1679,8 +1679,8 @@ export default function MirrorPage() {
             alignItems: "center",
             gap: 6,
           }}>
-            <span>{GARMENTS[selectedGarment].emoji}</span>
-            <span>{GARMENTS[selectedGarment].name}</span>
+            <span>{showGarment ? GARMENTS[selectedGarment].emoji : "👁️‍🗨️"}</span>
+            <span>{showGarment ? GARMENTS[selectedGarment].name : "Garment Hidden"}</span>
           </div>
         )}
 
