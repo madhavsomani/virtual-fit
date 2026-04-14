@@ -56,7 +56,7 @@ export default function AdminPage() {
             : g
         )
       );
-    } catch (err: unknown) {
+    } catch {
       setGarments((prev) =>
         prev.map((g) => (g.id === id ? { ...g, status: "failed" as const } : g))
       );
