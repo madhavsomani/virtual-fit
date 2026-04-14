@@ -11,6 +11,7 @@ export default function MirrorPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const threeCanvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState("Click Start to begin");
+  const [fps, setFps] = useState(0);
   const [cameraOn, setCameraOn] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedGarment, setSelectedGarment] = useState(0);
@@ -60,6 +61,8 @@ export default function MirrorPage() {
   const lastWristX = useRef<number | null>(null);
   const lastGestureTime = useRef<number>(0);
   const lastFrameTime = useRef<number>(0);
+  const frameCount = useRef(0);
+  const lastFpsUpdate = useRef(0);
   const detectGestureRef = useRef<((landmarks: PoseResultLandmark[]) => void) | null>(null);
 
   // Build a 3D shirt mesh (curved plane that wraps around body)
@@ -303,6 +306,14 @@ export default function MirrorPage() {
         const now = performance.now();
         if (now === lastTime) { animFrameRef.current = requestAnimationFrame(loop); return; }
         lastTime = now;
+
+        // FPS tracking
+        frameCount.current++;
+        if (now - lastFpsUpdate.current >= 1000) {
+          setFps(frameCount.current);
+          frameCount.current = 0;
+          lastFpsUpdate.current = now;
+        }
 
         try {
           const result = poseLandmarkerRef.current.detectForVideo(videoRef.current, now);
@@ -641,7 +652,7 @@ export default function MirrorPage() {
 
       {/* Status */}
       <p style={{ color: "#aaa", fontSize: 16, marginTop: 12, fontFamily: "monospace" }}>
-        {status}
+        {status} {cameraOn && fps > 0 && <span style={{ color: fps >= 24 ? "#22c55e" : fps >= 15 ? "#eab308" : "#ef4444" }}>({fps} FPS)</span>}
       </p>
 
       {/* Controls */}
