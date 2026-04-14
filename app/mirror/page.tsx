@@ -43,6 +43,7 @@ export default function MirrorPage() {
   const [renameValue, setRenameValue] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const lastTouchDistanceRef = useRef<number | null>(null);
@@ -471,6 +472,7 @@ export default function MirrorPage() {
       poseLandmarkerRef.current = poseLandmarker;
 
       setCameraOn(true);
+      setSessionStartTime(Date.now());
       setIsLoading(false);
       setStatus("✅ Tracking active — move around!");
 
@@ -1217,6 +1219,7 @@ export default function MirrorPage() {
       garmentMeshRef.current.visible = false;
     }
     setCameraOn(false);
+    setSessionStartTime(null);
     setTorchOn(false);
     setFps(0);
     setEstimatedSize(null);
@@ -1566,6 +1569,23 @@ export default function MirrorPage() {
             <span style={{ color: "#fff", fontSize: 11 }}>
               {trackingConfidence >= 70 ? "✨ Great fit" : trackingConfidence >= 40 ? "👍 Good" : "👀 Move closer"}
             </span>
+          </div>
+        )}
+
+        {/* Session duration timer */}
+        {cameraOn && sessionStartTime && (
+          <div style={{
+            position: "absolute",
+            bottom: 12, left: 12,
+            background: "rgba(0,0,0,0.6)",
+            padding: "6px 10px",
+            borderRadius: 8,
+            color: "#fff",
+            fontSize: 11,
+            fontFamily: "monospace",
+            pointerEvents: "none",
+          }}>
+            ⏱️ {Math.floor((Date.now() - sessionStartTime) / 60000)}:{String(Math.floor(((Date.now() - sessionStartTime) % 60000) / 1000)).padStart(2, "0")}
           </div>
         )}
 
