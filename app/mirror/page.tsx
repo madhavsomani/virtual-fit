@@ -22,6 +22,7 @@ export default function MirrorPage() {
   const [handsVisible, setHandsVisible] = useState<{left: boolean, right: boolean}>({left: false, right: false});
   const [trackingConfidence, setTrackingConfidence] = useState(0);
   const [debugMode, setDebugMode] = useState(false);
+  const [garmentScale, setGarmentScale] = useState(1.0);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -237,8 +238,8 @@ export default function MirrorPage() {
 
     // Position & scale the 3D mesh
     mesh.position.set(sp.x, sp.y + sp.h * 0.45, 0);
-    const scaleX = sp.w * 1.35 * sp.depth;
-    const scaleY = sp.h * 1.1 * sp.depth;
+    const scaleX = sp.w * 1.35 * sp.depth * garmentScale;
+    const scaleY = sp.h * 1.1 * sp.depth * garmentScale;
     mesh.scale.set(scaleX, scaleY, scaleX * 0.3);
     
     // Apply shoulder tilt as Z-rotation
@@ -298,7 +299,7 @@ export default function MirrorPage() {
         ctx.stroke();
       }
     }
-  }, [debugMode]);
+  }, [debugMode, garmentScale]);
 
   // Start camera + pose detection
   const startCamera = useCallback(async () => {
@@ -1151,6 +1152,25 @@ export default function MirrorPage() {
             value={garmentOpacity}
             onChange={(e) => setGarmentOpacity(parseFloat(e.target.value))}
             style={{ width: "100%", accentColor: "#6C5CE7" }}
+          />
+        </div>
+      )}
+
+      {/* Garment Scale Slider */}
+      {cameraOn && (
+        <div style={{ marginTop: 8, width: "100%", maxWidth: 300 }}>
+          <label style={{ color: "#888", fontSize: 14, display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+            <span>📏 Garment Size</span>
+            <span>{Math.round(garmentScale * 100)}%</span>
+          </label>
+          <input
+            type="range"
+            min="0.7"
+            max="1.3"
+            step="0.05"
+            value={garmentScale}
+            onChange={(e) => setGarmentScale(parseFloat(e.target.value))}
+            style={{ width: "100%", accentColor: "#10b981" }}
           />
         </div>
       )}
