@@ -34,6 +34,8 @@ export default function MirrorPage() {
   const [showRotateHint, setShowRotateHint] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
+  const [cameraZoom, setCameraZoom] = useState(1);
+  const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
   const [garmentScale, setGarmentScale] = useState(1.0);
@@ -199,6 +201,19 @@ export default function MirrorPage() {
   const vibrate = useCallback((pattern: number | number[] = 10) => {
     if ('vibrate' in navigator) {
       navigator.vibrate(pattern);
+    }
+  }, []);
+
+  // Apply camera zoom
+  const applyCameraZoom = useCallback((zoomLevel: number) => {
+    if (!videoRef.current?.srcObject) return;
+    const stream = videoRef.current.srcObject as MediaStream;
+    const track = stream.getVideoTracks()[0];
+    if (track) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const constraints = { advanced: [{ zoom: zoomLevel }] } as any;
+      track.applyConstraints(constraints).catch(() => {});
+      setCameraZoom(zoomLevel);
     }
   }, []);
 
@@ -497,6 +512,17 @@ export default function MirrorPage() {
       if (!videoRef.current) return;
       videoRef.current.srcObject = stream;
       await videoRef.current.play();
+
+      // Check for zoom capability
+      const track = stream.getVideoTracks()[0];
+      if (track) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const capabilities = track.getCapabilities() as any;
+        if (capabilities?.zoom) {
+          setMaxZoom(capabilities.zoom.max || 1);
+          setCameraZoom(capabilities.zoom.min || 1);
+        }
+      }
 
       const vw = videoRef.current.videoWidth;
       const vh = videoRef.current.videoHeight;
@@ -2527,6 +2553,25 @@ export default function MirrorPage() {
             value={garmentRotation}
             onChange={(e) => setGarmentRotation(parseFloat(e.target.value))}
             style={{ width: "100%", accentColor: "#8b5cf6" }}
+          />
+        </div>
+      )}
+
+      {/* Camera Zoom Slider (if supported) */}
+      {cameraOn && maxZoom > 1 && (
+        <div style={{ marginTop: 8, width: "100%", maxWidth: 300 }}>
+          <label style={{ color: "#888", fontSize: 14, display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+            <span>🔍 Camera Zoom</span>
+            <span>{cameraZoom.toFixed(1)}x</span>
+          </label>
+          <input
+            type="range"
+            min="1"
+            max={maxZoom}
+            step="0.1"
+            value={cameraZoom}
+            onChange={(e) => applyCameraZoom(parseFloat(e.target.value))}
+            style={{ width: "100%", accentColor: "#06b6d4" }}
           />
         </div>
       )}
