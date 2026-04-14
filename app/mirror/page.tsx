@@ -27,6 +27,7 @@ export default function MirrorPage() {
   const [isMirrored, setIsMirrored] = useState(true);
   const [garmentYOffset, setGarmentYOffset] = useState(0);
   const [garmentXOffset, setGarmentXOffset] = useState(0);
+  const [garmentRotation, setGarmentRotation] = useState(0); // manual rotation offset in radians
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
   const [showControls, setShowControls] = useState(true);
@@ -139,6 +140,7 @@ export default function MirrorPage() {
       setGarmentXOffset(0);
       setGarmentBrightness(1.0);
       setGarmentHue(0);
+      setGarmentRotation(0);
       setShowClearConfirm(false);
       setStatus("🧹 All data cleared!");
     } catch {
@@ -355,7 +357,7 @@ export default function MirrorPage() {
     mesh.scale.set(scaleX, scaleY, scaleX * 0.3);
     
     // Apply shoulder tilt as Z-rotation
-    mesh.rotation.z = sp.tilt;
+    mesh.rotation.z = sp.tilt + garmentRotation;
     
     mesh.visible = showGarment;
 
@@ -2010,6 +2012,25 @@ export default function MirrorPage() {
         </div>
       )}
 
+      {/* Garment Rotation Slider */}
+      {cameraOn && (
+        <div style={{ marginTop: 8, width: "100%", maxWidth: 300 }}>
+          <label style={{ color: "#888", fontSize: 14, display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+            <span>🔄 Rotation</span>
+            <span>{garmentRotation === 0 ? "Auto" : `${Math.round(garmentRotation * 180 / Math.PI)}°`}</span>
+          </label>
+          <input
+            type="range"
+            min="-0.5"
+            max="0.5"
+            step="0.05"
+            value={garmentRotation}
+            onChange={(e) => setGarmentRotation(parseFloat(e.target.value))}
+            style={{ width: "100%", accentColor: "#8b5cf6" }}
+          />
+        </div>
+      )}
+
       {/* Quick Presets */}
       {cameraOn && (
         <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
@@ -2057,7 +2078,7 @@ export default function MirrorPage() {
       )}
 
       {/* Reset Settings Button */}
-      {cameraOn && (garmentOpacity !== 0.9 || garmentScale !== 1.0 || garmentYOffset !== 0 || garmentXOffset !== 0 || garmentBrightness !== 1.0 || garmentHue !== 0) && (
+      {cameraOn && (garmentOpacity !== 0.9 || garmentScale !== 1.0 || garmentYOffset !== 0 || garmentXOffset !== 0 || garmentBrightness !== 1.0 || garmentHue !== 0 || garmentRotation !== 0) && (
         <button
           onClick={() => {
             setGarmentOpacity(0.9);
@@ -2066,6 +2087,7 @@ export default function MirrorPage() {
             setGarmentXOffset(0);
             setGarmentBrightness(1.0);
             setGarmentHue(0);
+            setGarmentRotation(0);
           }}
           style={{
             marginTop: 8,
