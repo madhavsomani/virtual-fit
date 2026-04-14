@@ -1224,7 +1224,19 @@ export default function MirrorPage() {
           setIsMirrored(prev => !prev);
           break;
         case 'g': // Toggle garment visibility (before/after)
+        case ' ': // Space also toggles garment
+          e.preventDefault();
           setShowGarment(prev => !prev);
+          break;
+        case 'r': // Quick reset adjustments
+          setGarmentOpacity(0.9);
+          setGarmentScale(1.0);
+          setGarmentYOffset(0);
+          setGarmentXOffset(0);
+          setGarmentBrightness(1.0);
+          setGarmentHue(0);
+          setGarmentRotation(0);
+          setStatus("🔄 Adjustments reset!");
           break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select
           {
@@ -1411,6 +1423,10 @@ export default function MirrorPage() {
               <span>Toggle debug landmarks</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>M</kbd>
               <span>Toggle mirror mode</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>Space</kbd>
+              <span>Toggle garment on/off</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>R</kbd>
+              <span>Reset all adjustments</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>1-5</kbd>
               <span>Quick select garment 1-5</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>Esc</kbd>
