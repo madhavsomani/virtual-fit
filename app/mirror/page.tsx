@@ -31,6 +31,7 @@ export default function MirrorPage() {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const lastTouchDistanceRef = useRef<number | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const lowConfidenceCountRef = useRef(0);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -54,6 +55,11 @@ export default function MirrorPage() {
         if (adj.scale !== undefined) setGarmentScale(adj.scale);
         if (adj.yOffset !== undefined) setGarmentYOffset(adj.yOffset);
         if (adj.brightness !== undefined) setGarmentBrightness(adj.brightness);
+      }
+      // Check if first-time user
+      const hasSeenOnboarding = localStorage.getItem("virtualfit-onboarding-seen");
+      if (!hasSeenOnboarding) {
+        setShowOnboarding(true);
       }
     } catch {
       console.warn("Failed to load saved garments");
@@ -1026,6 +1032,46 @@ export default function MirrorPage() {
 
   return (
     <div ref={containerRef} style={{ background: "#111", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", padding: 20 }}>
+      {/* Onboarding Overlay for First-Time Users */}
+      {showOnboarding && (
+        <div
+          onClick={() => {
+            setShowOnboarding(false);
+            localStorage.setItem("virtualfit-onboarding-seen", "true");
+          }}
+          style={{
+            position: "fixed", inset: 0, zIndex: 200,
+            background: "rgba(0,0,0,0.9)",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <div style={{ maxWidth: 400, textAlign: "center", color: "#fff" }}>
+            <h1 style={{ fontSize: 36, marginBottom: 16 }}>👗 Welcome to VirtualFit!</h1>
+            <p style={{ fontSize: 18, lineHeight: 1.6, marginBottom: 24, color: "#aaa" }}>
+              Try on clothes virtually using your camera and AI-powered body tracking.
+            </p>
+            <div style={{ textAlign: "left", background: "rgba(255,255,255,0.1)", padding: 20, borderRadius: 12, marginBottom: 24 }}>
+              <p style={{ margin: "0 0 12px", fontSize: 16 }}><strong>Quick Start:</strong></p>
+              <p style={{ margin: "0 0 8px", fontSize: 14, color: "#ccc" }}>1️⃣ Click &quot;Start Camera&quot; and allow camera access</p>
+              <p style={{ margin: "0 0 8px", fontSize: 14, color: "#ccc" }}>2️⃣ Stand back so your shoulders and torso are visible</p>
+              <p style={{ margin: "0 0 8px", fontSize: 14, color: "#ccc" }}>3️⃣ Select a garment from the gallery or upload your own</p>
+              <p style={{ margin: 0, fontSize: 14, color: "#ccc" }}>4️⃣ Use sliders to adjust fit, or pinch on mobile!</p>
+            </div>
+            <button
+              style={{
+                padding: "16px 48px", fontSize: 18, fontWeight: 700,
+                background: "#6C5CE7", color: "#fff", border: "none",
+                borderRadius: 12, cursor: "pointer",
+              }}
+            >
+              Let&apos;s Try It! →
+            </button>
+            <p style={{ marginTop: 16, fontSize: 12, color: "#666" }}>Tap anywhere to dismiss</p>
+          </div>
+        </div>
+      )}
+
       {/* Help Overlay */}
       {showHelp && (
         <div
