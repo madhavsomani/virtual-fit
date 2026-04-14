@@ -2375,7 +2375,7 @@ export default function MirrorPage() {
 
       {/* Version footer */}
       <div style={{ marginTop: 32, color: "#444", fontSize: 11, textAlign: "center" }}>
-        <p>VirtualFit v2.0.0 • 40 features • Built with Next.js + Three.js + MediaPipe</p>
+        <p>VirtualFit v2.0.0 • 77 features • Built with Next.js + Three.js + MediaPipe</p>
         <p style={{ marginTop: 4 }}>
           <a href="#" onClick={(e) => { e.preventDefault(); setShowHelp(true); }} style={{ color: "#6C5CE7", textDecoration: "none" }}>
             ❓ Help
