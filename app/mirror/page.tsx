@@ -29,6 +29,8 @@ export default function MirrorPage() {
   const [lowLightWarning, setLowLightWarning] = useState(false);
   const [garmentBrightness, setGarmentBrightness] = useState(1.0);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const lastTouchDistanceRef = useRef<number | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -784,6 +786,11 @@ export default function MirrorPage() {
       // Stop recording
       mediaRecorderRef.current.stop();
       setIsRecording(false);
+      setRecordingTime(0);
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
       setStatus("⏹ Saving video...");
     } else {
       // Start recording
@@ -818,6 +825,11 @@ export default function MirrorPage() {
       recorder.start();
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
+      setRecordingTime(0);
+      // Start recording timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
       setStatus("🔴 Recording... Press again to stop");
     }
   }, [isRecording]);
@@ -1352,7 +1364,7 @@ export default function MirrorPage() {
               animation: isRecording ? "pulse 1s infinite" : "none",
             }}
           >
-            {isRecording ? "⏹ Stop Recording" : "🎬 Record"}
+            {isRecording ? `⏹ Stop (${Math.floor(recordingTime / 60)}:${(recordingTime % 60).toString().padStart(2, '0')})` : "🎬 Record"}
           </button>
 
           {/* Fullscreen button */}
