@@ -78,6 +78,14 @@ export default function MirrorPage() {
       if (savedFavorites) {
         setFavoriteGarments(JSON.parse(savedFavorites));
       }
+      // Load last selected garment
+      const lastGarment = localStorage.getItem("virtualfit-last-garment");
+      if (lastGarment) {
+        const idx = parseInt(lastGarment, 10);
+        if (!isNaN(idx) && idx >= 0) {
+          setSelectedGarment(idx);
+        }
+      }
     } catch {
       console.warn("Failed to load saved garments");
     }
@@ -569,6 +577,12 @@ export default function MirrorPage() {
     if (!garment) return;
     
     setSelectedGarment(index);
+    // Save to localStorage for persistence
+    try {
+      localStorage.setItem("virtualfit-last-garment", String(index));
+    } catch {
+      // Ignore
+    }
     setStatus(`Loading ${garment.name}...`);
     
     const loader = new THREE.TextureLoader();
