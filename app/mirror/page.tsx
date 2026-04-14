@@ -858,10 +858,14 @@ export default function MirrorPage() {
     const ctx = compositeCanvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.save();
-    ctx.scale(-1, 1);
-    ctx.drawImage(video, -compositeCanvas.width, 0, compositeCanvas.width, compositeCanvas.height);
-    ctx.restore();
+    if (isMirrored) {
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, -compositeCanvas.width, 0, compositeCanvas.width, compositeCanvas.height);
+      ctx.restore();
+    } else {
+      ctx.drawImage(video, 0, 0, compositeCanvas.width, compositeCanvas.height);
+    }
     ctx.drawImage(threeCanvas, 0, 0, compositeCanvas.width, compositeCanvas.height);
 
     compositeCanvas.toBlob(async (blob) => {
@@ -896,7 +900,7 @@ export default function MirrorPage() {
         captureScreenshot();
       }
     }, "image/png");
-  }, [captureScreenshot]);
+  }, [captureScreenshot, isMirrored]);
 
   // Start/stop recording video clip
   const toggleRecording = useCallback(() => {
