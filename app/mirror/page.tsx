@@ -26,6 +26,8 @@ export default function MirrorPage() {
   const [isMirrored, setIsMirrored] = useState(true);
   const [garmentYOffset, setGarmentYOffset] = useState(0);
   const [showControls, setShowControls] = useState(true);
+  const [lowLightWarning, setLowLightWarning] = useState(false);
+  const lowConfidenceCountRef = useRef(0);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -276,7 +278,19 @@ export default function MirrorPage() {
     // Calculate overall tracking confidence from key landmarks
     const keyLandmarks = [ls, rs, lh, rh, leftWrist, rightWrist];
     const avgConfidence = keyLandmarks.reduce((sum, lm) => sum + (lm?.visibility ?? 0), 0) / keyLandmarks.length;
-    setTrackingConfidence(Math.round(avgConfidence * 100));
+    const confidencePercent = Math.round(avgConfidence * 100);
+    setTrackingConfidence(confidencePercent);
+
+    // Detect sustained low confidence for lighting warning
+    if (confidencePercent < 30) {
+      lowConfidenceCountRef.current++;
+      if (lowConfidenceCountRef.current > 30) { // ~1 second at 30fps
+        setLowLightWarning(true);
+      }
+    } else {
+      lowConfidenceCountRef.current = 0;
+      setLowLightWarning(false);
+    }
 
     // Draw debug overlay if enabled
     if (debugMode && debugCanvasRef.current) {
@@ -1040,6 +1054,24 @@ export default function MirrorPage() {
           </>
         )}
       </p>
+
+      {/* Low Light Warning */}
+      {cameraOn && lowLightWarning && (
+        <div style={{
+          marginTop: 8,
+          padding: "10px 16px",
+          background: "#fef3c7",
+          border: "1px solid #f59e0b",
+          borderRadius: 8,
+          color: "#92400e",
+          fontSize: 14,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}>
+          💡 <strong>Low light detected.</strong> Move to a brighter area for better tracking.
+        </div>
+      )}
 
       {/* Controls */}
       {cameraOn && showControls && (
