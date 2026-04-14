@@ -335,7 +335,21 @@ export default function MirrorPage() {
       }
       loop();
     } catch (err: unknown) {
-      setStatus(`Error: ${err instanceof Error ? err.message : "Unknown"}`);
+      // Better error handling for camera permission issues
+      const errorMsg = err instanceof Error ? err.message : "Unknown error";
+      if (err instanceof DOMException) {
+        if (err.name === "NotAllowedError") {
+          setStatus("⛔ Camera access denied. Please allow camera permission in your browser settings and refresh.");
+        } else if (err.name === "NotFoundError") {
+          setStatus("📷 No camera found. Please connect a camera and refresh.");
+        } else if (err.name === "NotReadableError") {
+          setStatus("⚠️ Camera is in use by another app. Close other apps and try again.");
+        } else {
+          setStatus(`Error: ${errorMsg}`);
+        }
+      } else {
+        setStatus(`Error: ${errorMsg}`);
+      }
     }
   }, [initThree, updateGarmentFromLandmarks]);
 
