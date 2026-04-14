@@ -20,6 +20,7 @@ export default function MirrorPage() {
   const [handsVisible, setHandsVisible] = useState<{left: boolean, right: boolean}>({left: false, right: false});
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Load saved garments from localStorage on mount
@@ -265,6 +266,7 @@ export default function MirrorPage() {
 
   // Start camera + pose detection
   const startCamera = useCallback(async () => {
+    setIsLoading(true);
     try {
       setStatus("Starting camera...");
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -300,6 +302,7 @@ export default function MirrorPage() {
       poseLandmarkerRef.current = poseLandmarker;
 
       setCameraOn(true);
+      setIsLoading(false);
       setStatus("✅ Tracking active — move around!");
 
       // Detection + render loop
@@ -335,6 +338,7 @@ export default function MirrorPage() {
       }
       loop();
     } catch (err: unknown) {
+      setIsLoading(false);
       // Better error handling for camera permission issues
       const errorMsg = err instanceof Error ? err.message : "Unknown error";
       if (err instanceof DOMException) {
@@ -787,13 +791,29 @@ export default function MirrorPage() {
           }}>
             <button
               onClick={startCamera}
+              disabled={isLoading}
               style={{
                 padding: "16px 40px", fontSize: 20, fontWeight: 700,
-                background: "#6C5CE7", color: "#fff", border: "none",
-                borderRadius: 12, cursor: "pointer",
+                background: isLoading ? "#4a4a6a" : "#6C5CE7", color: "#fff", border: "none",
+                borderRadius: 12, cursor: isLoading ? "wait" : "pointer",
+                display: "flex", alignItems: "center", gap: 8,
               }}
             >
-              🎥 Start Camera
+              {isLoading ? (
+                <>
+                  <span style={{ 
+                    display: "inline-block", 
+                    width: 20, height: 20, 
+                    border: "3px solid #fff", 
+                    borderTopColor: "transparent", 
+                    borderRadius: "50%",
+                    animation: "spin 1s linear infinite",
+                  }} />
+                  Loading...
+                </>
+              ) : (
+                "🎥 Start Camera"
+              )}
             </button>
           </div>
         )}
@@ -1014,6 +1034,13 @@ export default function MirrorPage() {
         <p>2. Upload any clothing photo → AI removes background</p>
         <p>3. Image becomes a 3D curved mesh anchored to your shoulders</p>
       </div>
+
+      {/* CSS for spinner animation */}
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
