@@ -17,6 +17,7 @@ export default function MirrorPage() {
   const [selectedGarment, setSelectedGarment] = useState(0);
   const [savedGarments, setSavedGarments] = useState<Array<{name: string, dataUrl: string}>>([]);
   const [estimatedSize, setEstimatedSize] = useState<string | null>(null);
+  const [garmentOpacity, setGarmentOpacity] = useState(0.9);
   const [handsVisible, setHandsVisible] = useState<{left: boolean, right: boolean}>({left: false, right: false});
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -628,6 +629,17 @@ export default function MirrorPage() {
     }
   }, []);
 
+  // Update garment opacity when slider changes
+  useEffect(() => {
+    if (garmentMeshRef.current) {
+      const material = garmentMeshRef.current.material as THREE.MeshBasicMaterial | THREE.MeshStandardMaterial;
+      if (material.opacity !== undefined) {
+        material.opacity = garmentOpacity;
+        material.needsUpdate = true;
+      }
+    }
+  }, [garmentOpacity]);
+
   // Listen for fullscreen changes
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -1022,6 +1034,25 @@ export default function MirrorPage() {
           <p style={{ margin: 0, fontSize: 14, color: "#d1fae5" }}>Estimated Size</p>
           <p style={{ margin: "4px 0 0", fontSize: 28, fontWeight: 700, color: "#fff" }}>{estimatedSize}</p>
           <p style={{ margin: "4px 0 0", fontSize: 11, color: "#a7f3d0" }}>Based on shoulder width</p>
+        </div>
+      )}
+
+      {/* Garment Opacity Slider */}
+      {cameraOn && (
+        <div style={{ marginTop: 16, width: "100%", maxWidth: 300 }}>
+          <label style={{ color: "#888", fontSize: 14, display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+            <span>👕 Garment Opacity</span>
+            <span>{Math.round(garmentOpacity * 100)}%</span>
+          </label>
+          <input
+            type="range"
+            min="0.3"
+            max="1"
+            step="0.05"
+            value={garmentOpacity}
+            onChange={(e) => setGarmentOpacity(parseFloat(e.target.value))}
+            style={{ width: "100%", accentColor: "#6C5CE7" }}
+          />
         </div>
       )}
 
