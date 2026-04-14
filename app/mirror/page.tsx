@@ -32,6 +32,8 @@ export default function MirrorPage() {
   const [garmentHue, setGarmentHue] = useState(0); // 0-360 degrees hue rotation
   const [isLandscape, setIsLandscape] = useState(false);
   const [showGarment, setShowGarment] = useState(true); // toggle for before/after comparison
+  const [renamingIndex, setRenamingIndex] = useState<number | null>(null);
+  const [renameValue, setRenameValue] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -724,6 +726,23 @@ export default function MirrorPage() {
       console.warn("Failed to update localStorage");
     }
     setStatus("Garment removed");
+  }, [savedGarments]);
+
+  // Rename a saved garment
+  const renameSavedGarment = useCallback((index: number, newName: string) => {
+    if (!newName.trim()) return;
+    const updated = savedGarments.map((g, i) => 
+      i === index ? { ...g, name: newName.trim() } : g
+    );
+    setSavedGarments(updated);
+    try {
+      localStorage.setItem("virtualfit-saved-garments", JSON.stringify(updated));
+    } catch {
+      console.warn("Failed to update localStorage");
+    }
+    setRenamingIndex(null);
+    setRenameValue("");
+    setStatus(`Renamed to "${newName.trim()}"`);
   }, [savedGarments]);
 
   // Capture screenshot of try-on result
@@ -1661,37 +1680,64 @@ export default function MirrorPage() {
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
             {savedGarments.map((garment, idx) => (
               <div key={idx} style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <button
-                  onClick={() => loadSavedGarment(idx)}
-                  style={{
-                    padding: "10px 16px",
-                    fontSize: 14,
-                    fontWeight: 500,
-                    background: "#1a3a2a",
-                    color: "#4ade80",
-                    border: "1px solid #22c55e",
-                    borderRadius: 8,
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  💾 {garment.name}
-                </button>
-                <button
-                  onClick={() => deleteSavedGarment(idx)}
-                  style={{
-                    padding: "8px",
-                    fontSize: 12,
-                    background: "#3a1a1a",
-                    color: "#f87171",
-                    border: "1px solid #ef4444",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                  }}
-                  title="Delete"
-                >
-                  ✕
-                </button>
+                {renamingIndex === idx ? (
+                  <form
+                    onSubmit={(e) => { e.preventDefault(); renameSavedGarment(idx, renameValue); }}
+                    style={{ display: "flex", gap: 4 }}
+                  >
+                    <input
+                      type="text"
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      autoFocus
+                      style={{
+                        padding: "8px 12px", fontSize: 14,
+                        background: "#1a3a2a", color: "#4ade80",
+                        border: "1px solid #22c55e", borderRadius: 6,
+                        width: 120,
+                      }}
+                      placeholder="New name"
+                    />
+                    <button type="submit" style={{ padding: "8px", background: "#22c55e", border: "none", borderRadius: 6, cursor: "pointer" }}>✓</button>
+                    <button type="button" onClick={() => { setRenamingIndex(null); setRenameValue(""); }} style={{ padding: "8px", background: "#666", border: "none", borderRadius: 6, cursor: "pointer" }}>✕</button>
+                  </form>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => loadSavedGarment(idx)}
+                      onDoubleClick={() => { setRenamingIndex(idx); setRenameValue(garment.name); }}
+                      style={{
+                        padding: "10px 16px",
+                        fontSize: 14,
+                        fontWeight: 500,
+                        background: "#1a3a2a",
+                        color: "#4ade80",
+                        border: "1px solid #22c55e",
+                        borderRadius: 8,
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      title="Double-click to rename"
+                    >
+                      💾 {garment.name}
+                    </button>
+                    <button
+                      onClick={() => deleteSavedGarment(idx)}
+                      style={{
+                        padding: "8px",
+                        fontSize: 12,
+                        background: "#3a1a1a",
+                        color: "#f87171",
+                        border: "1px solid #ef4444",
+                        borderRadius: 6,
+                        cursor: "pointer",
+                      }}
+                      title="Delete"
+                    >
+                      ✕
+                    </button>
+                  </>
+                )}
               </div>
             ))}
           </div>
