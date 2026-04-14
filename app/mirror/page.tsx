@@ -29,6 +29,7 @@ export default function MirrorPage() {
   const [lowLightWarning, setLowLightWarning] = useState(false);
   const [garmentBrightness, setGarmentBrightness] = useState(1.0);
   const [garmentHue, setGarmentHue] = useState(0); // 0-360 degrees hue rotation
+  const [isLandscape, setIsLandscape] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -927,6 +928,16 @@ export default function MirrorPage() {
     }
   }, [garmentBrightness, garmentHue]);
 
+  // Detect landscape orientation
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsLandscape(window.innerWidth > window.innerHeight);
+    };
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    return () => window.removeEventListener('resize', checkOrientation);
+  }, []);
+
   // Auto-hide controls after 5 seconds of inactivity in fullscreen
   const resetControlsTimer = useCallback(() => {
     setShowControls(true);
@@ -1115,7 +1126,16 @@ export default function MirrorPage() {
   }, []);
 
   return (
-    <div ref={containerRef} style={{ background: "#111", minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", padding: 20 }}>
+    <div ref={containerRef} style={{ 
+      background: "#111", 
+      minHeight: "100vh", 
+      display: "flex", 
+      flexDirection: isLandscape ? "row" : "column", 
+      alignItems: "center", 
+      justifyContent: isLandscape ? "center" : "flex-start",
+      gap: isLandscape ? 24 : 0,
+      padding: isLandscape ? 12 : 20 
+    }}>
       {/* Onboarding Overlay for First-Time Users */}
       {showOnboarding && (
         <div
