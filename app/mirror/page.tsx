@@ -12,6 +12,8 @@ export default function MirrorPage() {
   const threeCanvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState("Click Start to begin");
   const [fps, setFps] = useState(0);
+  const [lowFpsWarning, setLowFpsWarning] = useState(false);
+  const lowFpsCountRef = useRef(0);
   const totalFramesRef = useRef(0);
   const [cameraOn, setCameraOn] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -537,7 +539,20 @@ export default function MirrorPage() {
         frameCount.current++;
         totalFramesRef.current++;
         if (now - lastFpsUpdate.current >= 1000) {
-          setFps(frameCount.current);
+          const currentFps = frameCount.current;
+          setFps(currentFps);
+          
+          // Low FPS warning (below 15 fps for 3 seconds)
+          if (currentFps < 15 && currentFps > 0) {
+            lowFpsCountRef.current++;
+            if (lowFpsCountRef.current >= 3) {
+              setLowFpsWarning(true);
+            }
+          } else {
+            lowFpsCountRef.current = 0;
+            setLowFpsWarning(false);
+          }
+          
           frameCount.current = 0;
           lastFpsUpdate.current = now;
         }
@@ -1400,6 +1415,8 @@ export default function MirrorPage() {
     setSessionStartTime(null);
     setTorchOn(false);
     setFps(0);
+    setLowFpsWarning(false);
+    lowFpsCountRef.current = 0;
     totalFramesRef.current = 0;
     setEstimatedSize(null);
     setHandsVisible({ left: false, right: false });
@@ -1977,6 +1994,24 @@ export default function MirrorPage() {
           gap: 8,
         }}>
           💡 <strong>Low light detected.</strong> Move to a brighter area for better tracking.
+        </div>
+      )}
+
+      {/* Low FPS Performance Warning */}
+      {cameraOn && lowFpsWarning && (
+        <div style={{
+          marginTop: 8,
+          padding: "10px 16px",
+          background: "#fee2e2",
+          border: "1px solid #ef4444",
+          borderRadius: 8,
+          color: "#991b1b",
+          fontSize: 14,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+        }}>
+          ⚠️ <strong>Performance issue.</strong> Close other apps or tabs for smoother tracking.
         </div>
       )}
 
