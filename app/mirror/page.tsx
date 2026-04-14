@@ -30,6 +30,8 @@ export default function MirrorPage() {
   const [screenshotCountdown, setScreenshotCountdown] = useState<number | null>(null);
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [showRotateHint, setShowRotateHint] = useState(false);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
   const [garmentScale, setGarmentScale] = useState(1.0);
   const [isMirrored, setIsMirrored] = useState(true);
@@ -964,6 +966,36 @@ export default function MirrorPage() {
     }, "image/png");
   }, [isMirrored, vibrate]);
 
+  // Prepare share image
+  const prepareShareImage = useCallback((): Promise<Blob | null> => {
+    return new Promise((resolve) => {
+      if (!videoRef.current || !threeCanvasRef.current) {
+        resolve(null);
+        return;
+      }
+      const video = videoRef.current;
+      const threeCanvas = threeCanvasRef.current;
+      const compositeCanvas = document.createElement("canvas");
+      compositeCanvas.width = video.videoWidth || 640;
+      compositeCanvas.height = video.videoHeight || 480;
+      const ctx = compositeCanvas.getContext("2d");
+      if (!ctx) {
+        resolve(null);
+        return;
+      }
+      if (isMirrored) {
+        ctx.save();
+        ctx.scale(-1, 1);
+        ctx.drawImage(video, -compositeCanvas.width, 0, compositeCanvas.width, compositeCanvas.height);
+        ctx.restore();
+      } else {
+        ctx.drawImage(video, 0, 0, compositeCanvas.width, compositeCanvas.height);
+      }
+      ctx.drawImage(threeCanvas, 0, 0, compositeCanvas.width, compositeCanvas.height);
+      compositeCanvas.toBlob((blob) => resolve(blob), "image/png");
+    });
+  }, [isMirrored]);
+
   // Share try-on result using Web Share API
   const shareResult = useCallback(async () => {
     if (!videoRef.current || !threeCanvasRef.current) {
@@ -1013,16 +1045,23 @@ export default function MirrorPage() {
           }
         } else {
           // Fallback to download
-          setStatus("📱 Share not supported - downloading instead");
-          captureScreenshot();
+          setStatus("📱 Share not supported - showing share menu");
+          const blob = await prepareShareImage();
+          if (blob) {
+            setShareImageBlob(blob);
+            setShowShareMenu(true);
+          }
         }
       } else {
-        // Fallback for browsers without Web Share API
-        setStatus("📱 Share not available - downloading instead");
-        captureScreenshot();
+        // Fallback for browsers without Web Share API - show share menu
+        const blob = await prepareShareImage();
+        if (blob) {
+          setShareImageBlob(blob);
+          setShowShareMenu(true);
+        }
       }
     }, "image/png");
-  }, [captureScreenshot, isMirrored]);
+  }, [captureScreenshot, isMirrored, prepareShareImage]);
 
   // Start/stop recording video clip
   const toggleRecording = useCallback(() => {
@@ -2562,6 +2601,65 @@ export default function MirrorPage() {
           </a>
         </p>
       </div>
+
+      {/* Share Menu Modal */}
+      {showShareMenu && shareImageBlob && (
+        <div
+          onClick={() => setShowShareMenu(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 200,
+            background: "rgba(0,0,0,0.8)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <div onClick={(e) => e.stopPropagation()} style={{
+            background: "#1a1a2e", borderRadius: 16, padding: 24,
+            maxWidth: 320, width: "100%", textAlign: "center",
+          }}>
+            <h3 style={{ color: "#fff", marginBottom: 16 }}>🚀 Share Your Look</h3>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <button
+                onClick={() => {
+                  const url = URL.createObjectURL(shareImageBlob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `virtualfit-${Date.now()}.png`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  setShowShareMenu(false);
+                  setStatus("📸 Downloaded!");
+                }}
+                style={{ padding: "12px 16px", fontSize: 15, background: "#6C5CE7", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}
+              >
+                📥 Download Image
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.write([
+                      new ClipboardItem({ "image/png": shareImageBlob })
+                    ]);
+                    setStatus("📋 Copied to clipboard!");
+                  } catch {
+                    setStatus("❌ Clipboard not supported");
+                  }
+                  setShowShareMenu(false);
+                }}
+                style={{ padding: "12px 16px", fontSize: 15, background: "#059669", color: "#fff", border: "none", borderRadius: 8, cursor: "pointer" }}
+              >
+                📋 Copy to Clipboard
+              </button>
+            </div>
+            <button
+              onClick={() => setShowShareMenu(false)}
+              style={{ marginTop: 16, padding: "8px 16px", fontSize: 13, background: "transparent", color: "#888", border: "1px solid #444", borderRadius: 6, cursor: "pointer" }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Clear Data Confirmation Modal */}
       {showClearConfirm && (
