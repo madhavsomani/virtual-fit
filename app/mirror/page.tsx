@@ -1605,6 +1605,10 @@ export default function MirrorPage() {
             <span style={{ color: trackingConfidence >= 70 ? "#22c55e" : trackingConfidence >= 40 ? "#eab308" : "#ef4444" }}>
               [{trackingConfidence}% conf]
             </span>
+            {" "}
+            <span style={{ color: "#60a5fa" }}>
+              [{selectedGarment + 1}/{GARMENTS.length + savedGarments.length}]
+            </span>
             {estimatedSize && (
               <>
                 {" "}
