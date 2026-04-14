@@ -33,6 +33,7 @@ export default function MirrorPage() {
   const [isMobileDevice, setIsMobileDevice] = useState(false);
   const [showRotateHint, setShowRotateHint] = useState(false);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
   const [garmentScale, setGarmentScale] = useState(1.0);
@@ -1353,6 +1354,10 @@ export default function MirrorPage() {
           e.preventDefault();
           setShowGarment(prev => !prev);
           break;
+        case 'b': // Before/after compare toggle
+          setCompareMode(prev => !prev);
+          setStatus(compareMode ? "👁️ Compare off" : "👁️ Compare mode: showing before/after");
+          break;
         case 'r': // Quick reset adjustments
           setGarmentOpacity(0.9);
           setGarmentScale(1.0);
@@ -1597,6 +1602,8 @@ export default function MirrorPage() {
               <span>Toggle mirror mode</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>Space</kbd>
               <span>Toggle garment on/off</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>B</kbd>
+              <span>Before/after compare mode</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>R</kbd>
               <span>Reset all adjustments</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>1-5</kbd>
@@ -1859,6 +1866,54 @@ export default function MirrorPage() {
           }}>
             <span>{showGarment ? GARMENTS[selectedGarment].emoji : "👁️‍🗨️"}</span>
             <span>{showGarment ? GARMENTS[selectedGarment].name : "Garment Hidden"}</span>
+          </div>
+        )}
+
+        {/* Compare mode split indicator */}
+        {cameraOn && compareMode && (
+          <div style={{
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
+            pointerEvents: "none",
+            display: "flex",
+          }}>
+            <div style={{
+              flex: 1,
+              borderRight: "2px dashed rgba(255,255,255,0.5)",
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "center",
+              paddingBottom: 50,
+            }}>
+              <span style={{
+                background: "rgba(0,0,0,0.7)",
+                color: "#fff",
+                padding: "4px 12px",
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 600,
+              }}>
+                BEFORE
+              </span>
+            </div>
+            <div style={{
+              flex: 1,
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "center",
+              paddingBottom: 50,
+            }}>
+              <span style={{
+                background: "rgba(108, 92, 231, 0.9)",
+                color: "#fff",
+                padding: "4px 12px",
+                borderRadius: 6,
+                fontSize: 12,
+                fontWeight: 600,
+              }}>
+                AFTER
+              </span>
+            </div>
           </div>
         )}
 
