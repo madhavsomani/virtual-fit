@@ -492,6 +492,11 @@ export default function MirrorPage() {
 
   // Upload garment image → rembg → texture on 3D mesh
   const handleUpload = useCallback(async (file: File) => {
+    // Check upload limit
+    if (savedGarments.length >= 10) {
+      setStatus("⚠️ Upload limit reached (10 garments). Delete some to add more.");
+      return;
+    }
     setUploading(true);
     setStatus("🔄 Removing background...");
     try {
@@ -1524,7 +1529,9 @@ export default function MirrorPage() {
       {/* Saved Garments */}
       {cameraOn && savedGarments.length > 0 && (
         <div style={{ marginTop: 16, width: "100%", maxWidth: 640 }}>
-          <p style={{ color: "#888", fontSize: 14, marginBottom: 8, textAlign: "center" }}>Your saved garments:</p>
+          <p style={{ color: "#888", fontSize: 14, marginBottom: 8, textAlign: "center" }}>
+            Your saved garments ({savedGarments.length}/10)
+          </p>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
             {savedGarments.map((garment, idx) => (
               <div key={idx} style={{ display: "flex", alignItems: "center", gap: 4 }}>
