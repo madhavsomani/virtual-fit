@@ -24,6 +24,7 @@ export default function MirrorPage() {
   const [debugMode, setDebugMode] = useState(false);
   const [garmentScale, setGarmentScale] = useState(1.0);
   const [isMirrored, setIsMirrored] = useState(true);
+  const [garmentYOffset, setGarmentYOffset] = useState(0);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -238,7 +239,7 @@ export default function MirrorPage() {
     const sp = smoothPos.current;
 
     // Position & scale the 3D mesh
-    mesh.position.set(sp.x, sp.y + sp.h * 0.45, 0);
+    mesh.position.set(sp.x, sp.y + sp.h * 0.45 + garmentYOffset * sp.h * 0.01, 0);
     const scaleX = sp.w * 1.35 * sp.depth * garmentScale;
     const scaleY = sp.h * 1.1 * sp.depth * garmentScale;
     mesh.scale.set(scaleX, scaleY, scaleX * 0.3);
@@ -300,7 +301,7 @@ export default function MirrorPage() {
         ctx.stroke();
       }
     }
-  }, [debugMode, garmentScale]);
+  }, [debugMode, garmentScale, garmentYOffset]);
 
   // Start camera + pose detection
   const startCamera = useCallback(async () => {
@@ -1193,12 +1194,32 @@ export default function MirrorPage() {
         </div>
       )}
 
+      {/* Garment Y Offset Slider */}
+      {cameraOn && (
+        <div style={{ marginTop: 8, width: "100%", maxWidth: 300 }}>
+          <label style={{ color: "#888", fontSize: 14, display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+            <span>↕️ Position</span>
+            <span>{garmentYOffset > 0 ? `+${garmentYOffset}` : garmentYOffset}</span>
+          </label>
+          <input
+            type="range"
+            min="-20"
+            max="20"
+            step="1"
+            value={garmentYOffset}
+            onChange={(e) => setGarmentYOffset(parseInt(e.target.value))}
+            style={{ width: "100%", accentColor: "#f59e0b" }}
+          />
+        </div>
+      )}
+
       {/* Reset Settings Button */}
-      {cameraOn && (garmentOpacity !== 0.9 || garmentScale !== 1.0) && (
+      {cameraOn && (garmentOpacity !== 0.9 || garmentScale !== 1.0 || garmentYOffset !== 0) && (
         <button
           onClick={() => {
             setGarmentOpacity(0.9);
             setGarmentScale(1.0);
+            setGarmentYOffset(0);
           }}
           style={{
             marginTop: 8,
