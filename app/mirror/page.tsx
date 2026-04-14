@@ -14,6 +14,7 @@ export default function MirrorPage() {
   const [fps, setFps] = useState(0);
   const [cameraOn, setCameraOn] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedGarment, setSelectedGarment] = useState(0);
   const [savedGarments, setSavedGarments] = useState<Array<{name: string, dataUrl: string}>>([]);
   const [estimatedSize, setEstimatedSize] = useState<string | null>(null);
@@ -503,20 +504,27 @@ export default function MirrorPage() {
       return;
     }
     setUploading(true);
-    setStatus("🔄 Removing background...");
+    setUploadProgress(10);
+    setStatus("🔄 Uploading image...");
     try {
       const formData = new FormData();
       formData.append("image", file);
+      setUploadProgress(30);
+      setStatus("🔄 Removing background...");
       const res = await fetch("/api/remove-bg", { method: "POST", body: formData });
+      setUploadProgress(60);
       const data = await res.json();
       if (!data.success) throw new Error(data.error || "Failed");
 
+      setUploadProgress(80);
+      setStatus("🔄 Loading texture...");
       // Load as Three.js texture
       const loader = new THREE.TextureLoader();
       const texture = await new Promise<THREE.Texture>((resolve, reject) => {
         loader.load(data.imageUrl, resolve, undefined, reject);
       });
       texture.colorSpace = THREE.SRGBColorSpace;
+      setUploadProgress(90);
 
       // Replace mesh with textured version
       if (sceneRef.current && garmentMeshRef.current) {
@@ -541,11 +549,13 @@ export default function MirrorPage() {
         console.warn("Failed to save garment to localStorage");
       }
 
+      setUploadProgress(100);
       setStatus(`✅ "${file.name}" loaded and saved!`);
     } catch (err: unknown) {
       setStatus(`Upload failed: ${err instanceof Error ? err.message : "Unknown"}`);
     } finally {
       setUploading(false);
+      setUploadProgress(0);
     }
   }, [createShirtMesh, savedGarments]);
 
@@ -1406,8 +1416,19 @@ export default function MirrorPage() {
             background: uploading ? "#555" : "#6C5CE7", color: "#fff",
             borderRadius: 10, cursor: uploading ? "wait" : "pointer",
             display: "flex", alignItems: "center", gap: 8,
+            position: "relative", overflow: "hidden",
           }}>
-            {uploading ? "⏳ Processing..." : "📸 Upload Clothing Photo"}
+            {uploading && (
+              <div style={{
+                position: "absolute", left: 0, top: 0, bottom: 0,
+                width: `${uploadProgress}%`,
+                background: "rgba(110,86,207,0.5)",
+                transition: "width 0.3s ease",
+              }} />
+            )}
+            <span style={{ position: "relative", zIndex: 1 }}>
+              {uploading ? `⏳ ${uploadProgress}% Processing...` : "📸 Upload Clothing Photo"}
+            </span>
             <input
               type="file"
               accept="image/*"
