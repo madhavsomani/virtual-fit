@@ -30,6 +30,7 @@ export default function MirrorPage() {
   const [garmentBrightness, setGarmentBrightness] = useState(1.0);
   const [garmentHue, setGarmentHue] = useState(0); // 0-360 degrees hue rotation
   const [isLandscape, setIsLandscape] = useState(false);
+  const [showGarment, setShowGarment] = useState(true); // toggle for before/after comparison
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -333,7 +334,7 @@ export default function MirrorPage() {
     // Apply shoulder tilt as Z-rotation
     mesh.rotation.z = sp.tilt;
     
-    mesh.visible = true;
+    mesh.visible = showGarment;
 
     // Estimate garment size based on shoulder width ratio
     // Shoulder width as fraction of frame width (typical range 0.2-0.5)
@@ -1068,6 +1069,9 @@ export default function MirrorPage() {
         case 'm': // Toggle mirror mode
           setIsMirrored(prev => !prev);
           break;
+        case 'g': // Toggle garment visibility (before/after)
+          setShowGarment(prev => !prev);
+          break;
       }
     };
     document.addEventListener("keydown", handleKeyDown);
@@ -1537,6 +1541,19 @@ export default function MirrorPage() {
             }}
           >
             🪞 {isMirrored ? "Mirror ON" : "Mirror OFF"}
+          </button>
+
+          {/* Comparison toggle */}
+          <button
+            onClick={() => setShowGarment(prev => !prev)}
+            style={{
+              padding: "12px 24px", fontSize: 16, fontWeight: 600,
+              background: showGarment ? "#059669" : "#374151", color: "#fff", border: "1px solid #10b981",
+              borderRadius: 10, cursor: "pointer",
+            }}
+            title="Press G to toggle"
+          >
+            {showGarment ? "👗 Garment ON" : "👤 Before View"}
           </button>
         </div>
       )}
