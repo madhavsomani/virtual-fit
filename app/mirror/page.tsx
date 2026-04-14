@@ -12,6 +12,7 @@ export default function MirrorPage() {
   const threeCanvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState("Click Start to begin");
   const [fps, setFps] = useState(0);
+  const totalFramesRef = useRef(0);
   const [cameraOn, setCameraOn] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -500,6 +501,7 @@ export default function MirrorPage() {
 
         // FPS tracking
         frameCount.current++;
+        totalFramesRef.current++;
         if (now - lastFpsUpdate.current >= 1000) {
           setFps(frameCount.current);
           frameCount.current = 0;
@@ -1290,6 +1292,7 @@ export default function MirrorPage() {
     setSessionStartTime(null);
     setTorchOn(false);
     setFps(0);
+    totalFramesRef.current = 0;
     setEstimatedSize(null);
     setHandsVisible({ left: false, right: false });
     setStatus("Camera stopped. Click Start to begin again.");
@@ -1665,6 +1668,7 @@ export default function MirrorPage() {
             pointerEvents: "none",
           }}>
             ⏱️ {Math.floor((Date.now() - sessionStartTime) / 60000)}:{String(Math.floor(((Date.now() - sessionStartTime) % 60000) / 1000)).padStart(2, "0")}
+            {debugMode && ` | 🎬 ${totalFramesRef.current.toLocaleString()}f`}
           </div>
         )}
 
