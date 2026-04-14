@@ -36,6 +36,7 @@ export default function MirrorPage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [favoriteGarments, setFavoriteGarments] = useState<number[]>([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const lastTapTimeRef = useRef(0);
   const lowConfidenceCountRef = useRef(0);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -1110,7 +1111,7 @@ export default function MirrorPage() {
               <p style={{ margin: "0 0 8px", fontSize: 14, color: "#ccc" }}>1️⃣ Click &quot;Start Camera&quot; and allow camera access</p>
               <p style={{ margin: "0 0 8px", fontSize: 14, color: "#ccc" }}>2️⃣ Stand back so your shoulders and torso are visible</p>
               <p style={{ margin: "0 0 8px", fontSize: 14, color: "#ccc" }}>3️⃣ Select a garment from the gallery or upload your own</p>
-              <p style={{ margin: 0, fontSize: 14, color: "#ccc" }}>4️⃣ Use sliders to adjust fit, or pinch on mobile!</p>
+              <p style={{ margin: 0, fontSize: 14, color: "#ccc" }}>4️⃣ Use sliders to adjust, pinch to resize, double-tap to switch!</p>
             </div>
             <button
               style={{
@@ -1201,7 +1202,20 @@ export default function MirrorPage() {
       </p>
 
       {/* Camera + Three.js overlay */}
-      <div style={{ position: "relative", width: "100%", maxWidth: 640 }}>
+      <div 
+        style={{ position: "relative", width: "100%", maxWidth: 640 }}
+        onTouchEnd={() => {
+          if (!cameraOn) return;
+          const now = Date.now();
+          if (now - lastTapTimeRef.current < 300) {
+            // Double tap detected - cycle to next garment
+            switchGarment((selectedGarment + 1) % GARMENTS.length);
+            lastTapTimeRef.current = 0;
+          } else {
+            lastTapTimeRef.current = now;
+          }
+        }}
+      >
         <video
           ref={videoRef}
           style={{ width: "100%", transform: isMirrored ? "scaleX(-1)" : "none", borderRadius: 12, background: "#000" }}
