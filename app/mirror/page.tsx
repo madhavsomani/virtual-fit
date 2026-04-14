@@ -30,6 +30,7 @@ export default function MirrorPage() {
   const [garmentBrightness, setGarmentBrightness] = useState(1.0);
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const lastTouchDistanceRef = useRef<number | null>(null);
   const lowConfidenceCountRef = useRef(0);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -857,6 +858,47 @@ export default function MirrorPage() {
     };
   }, [resetControlsTimer]);
 
+  // Pinch-to-zoom for garment scale on mobile
+  useEffect(() => {
+    const getDistance = (touches: TouchList) => {
+      if (touches.length < 2) return null;
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        lastTouchDistanceRef.current = getDistance(e.touches);
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && lastTouchDistanceRef.current !== null) {
+        const currentDistance = getDistance(e.touches);
+        if (currentDistance !== null) {
+          const delta = (currentDistance - lastTouchDistanceRef.current) * 0.002;
+          setGarmentScale(prev => Math.max(0.7, Math.min(1.3, prev + delta)));
+          lastTouchDistanceRef.current = currentDistance;
+        }
+      }
+    };
+
+    const handleTouchEnd = () => {
+      lastTouchDistanceRef.current = null;
+    };
+
+    document.addEventListener("touchstart", handleTouchStart, { passive: true });
+    document.addEventListener("touchmove", handleTouchMove, { passive: true });
+    document.addEventListener("touchend", handleTouchEnd);
+
+    return () => {
+      document.removeEventListener("touchstart", handleTouchStart);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1005,7 +1047,8 @@ export default function MirrorPage() {
               <span>Close help / exit fullscreen</span>
             </div>
             <p style={{ marginTop: 16, fontSize: 13, color: "#9ca3af" }}>
-              👋 Swipe gestures also work with your hand!
+              👋 Swipe gestures also work with your hand!<br/>
+              🤏 Pinch to resize garment on touch devices!
             </p>
             <button
               onClick={() => setShowHelp(false)}
