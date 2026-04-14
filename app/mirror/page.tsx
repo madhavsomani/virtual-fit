@@ -2313,29 +2313,60 @@ export default function MirrorPage() {
 
       {/* Reset Settings Button */}
       {cameraOn && (garmentOpacity !== 0.9 || garmentScale !== 1.0 || garmentYOffset !== 0 || garmentXOffset !== 0 || garmentBrightness !== 1.0 || garmentHue !== 0 || garmentRotation !== 0) && (
-        <button
-          onClick={() => {
-            setGarmentOpacity(0.9);
-            setGarmentScale(1.0);
-            setGarmentYOffset(0);
-            setGarmentXOffset(0);
-            setGarmentBrightness(1.0);
-            setGarmentHue(0);
-            setGarmentRotation(0);
-          }}
-          style={{
-            marginTop: 8,
-            padding: "8px 16px",
-            fontSize: 13,
-            background: "transparent",
-            color: "#888",
-            border: "1px solid #444",
-            borderRadius: 6,
-            cursor: "pointer",
-          }}
-        >
-          ↩ Reset to Defaults
-        </button>
+        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+          <button
+            onClick={() => {
+              setGarmentOpacity(0.9);
+              setGarmentScale(1.0);
+              setGarmentYOffset(0);
+              setGarmentXOffset(0);
+              setGarmentBrightness(1.0);
+              setGarmentHue(0);
+              setGarmentRotation(0);
+            }}
+            style={{
+              padding: "8px 16px",
+              fontSize: 13,
+              background: "transparent",
+              color: "#888",
+              border: "1px solid #444",
+              borderRadius: 6,
+              cursor: "pointer",
+            }}
+          >
+            ↩ Reset to Defaults
+          </button>
+          <button
+            onClick={() => {
+              const preset = {
+                opacity: garmentOpacity,
+                scale: garmentScale,
+                yOffset: garmentYOffset,
+                xOffset: garmentXOffset,
+                brightness: garmentBrightness,
+                hue: garmentHue,
+                rotation: garmentRotation,
+              };
+              const data = JSON.stringify(preset, null, 2);
+              navigator.clipboard.writeText(data).then(() => {
+                setStatus("📋 Preset copied to clipboard!");
+              }).catch(() => {
+                setStatus("❌ Failed to copy preset");
+              });
+            }}
+            style={{
+              padding: "8px 16px",
+              fontSize: 13,
+              background: "transparent",
+              color: "#60a5fa",
+              border: "1px solid #3b82f6",
+              borderRadius: 6,
+              cursor: "pointer",
+            }}
+          >
+            📤 Export Preset
+          </button>
+        </div>
       )}
 
       {/* Hand Visibility Indicators */}
