@@ -1868,6 +1868,52 @@ export default function MirrorPage() {
         </div>
       )}
 
+      {/* Quick Presets */}
+      {cameraOn && (
+        <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+          <button
+            onClick={() => { setGarmentScale(0.9); setGarmentYOffset(-5); }}
+            style={{
+              padding: "8px 12px", fontSize: 12, background: "#1e293b", color: "#94a3b8",
+              border: "1px solid #334155", borderRadius: 6, cursor: "pointer",
+            }}
+            title="Smaller, higher fit"
+          >
+            👕 Fitted
+          </button>
+          <button
+            onClick={() => { setGarmentScale(1.1); setGarmentYOffset(5); }}
+            style={{
+              padding: "8px 12px", fontSize: 12, background: "#1e293b", color: "#94a3b8",
+              border: "1px solid #334155", borderRadius: 6, cursor: "pointer",
+            }}
+            title="Larger, lower fit"
+          >
+            🧥 Oversized
+          </button>
+          <button
+            onClick={() => { setGarmentOpacity(0.7); setGarmentBrightness(0.9); }}
+            style={{
+              padding: "8px 12px", fontSize: 12, background: "#1e293b", color: "#94a3b8",
+              border: "1px solid #334155", borderRadius: 6, cursor: "pointer",
+            }}
+            title="Semi-transparent preview"
+          >
+            👻 Ghost
+          </button>
+          <button
+            onClick={() => { setGarmentOpacity(1.0); setGarmentBrightness(1.2); }}
+            style={{
+              padding: "8px 12px", fontSize: 12, background: "#1e293b", color: "#94a3b8",
+              border: "1px solid #334155", borderRadius: 6, cursor: "pointer",
+            }}
+            title="Full opacity, bright"
+          >
+            ✨ Vivid
+          </button>
+        </div>
+      )}
+
       {/* Reset Settings Button */}
       {cameraOn && (garmentOpacity !== 0.9 || garmentScale !== 1.0 || garmentYOffset !== 0 || garmentBrightness !== 1.0 || garmentHue !== 0) && (
         <button
