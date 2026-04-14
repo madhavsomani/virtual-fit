@@ -1516,6 +1516,34 @@ export default function MirrorPage() {
           </div>
         )}
 
+        {/* Loading spinner during garment switch */}
+        {isLoading && cameraOn && (
+          <div style={{
+            position: "absolute",
+            top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "rgba(0,0,0,0.6)",
+            color: "#fff",
+            padding: "16px 24px",
+            borderRadius: 12,
+            fontSize: 14,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            pointerEvents: "none",
+          }}>
+            <span style={{ 
+              display: "inline-block", 
+              width: 20, height: 20, 
+              border: "3px solid #fff", 
+              borderTopColor: "transparent",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+            }} />
+            Loading garment...
+          </div>
+        )}
+
         {/* Debug overlay canvas */}
         {debugMode && (
           <canvas
