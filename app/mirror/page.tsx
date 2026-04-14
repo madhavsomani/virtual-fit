@@ -30,6 +30,8 @@ export default function MirrorPage() {
   const [garmentRotation, setGarmentRotation] = useState(0); // manual rotation offset in radians
   const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
+  const pinchStartDistRef = useRef(0);
+  const pinchStartScaleRef = useRef(1.0);
   const [showControls, setShowControls] = useState(true);
   const [lowLightWarning, setLowLightWarning] = useState(false);
   const [garmentBrightness, setGarmentBrightness] = useState(1.0);
@@ -1371,23 +1373,38 @@ export default function MirrorPage() {
         style={{ position: "relative", width: "100%", maxWidth: 640 }}
         onTouchStart={(e) => {
           touchStartXRef.current = e.touches[0].clientX;
-          // Two-finger touch starts drag mode
+          // Two-finger touch starts drag mode + pinch
           if (e.touches.length === 2) {
             const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
             dragStartRef.current = { x: midX, y: midY, offsetX: garmentXOffset, offsetY: garmentYOffset };
+            // Calculate initial pinch distance
+            const dx = e.touches[1].clientX - e.touches[0].clientX;
+            const dy = e.touches[1].clientY - e.touches[0].clientY;
+            pinchStartDistRef.current = Math.sqrt(dx * dx + dy * dy);
+            pinchStartScaleRef.current = garmentScale;
             setIsDragging(true);
           }
         }}
         onTouchMove={(e) => {
-          // Two-finger drag for positioning
+          // Two-finger drag for positioning + pinch for scale
           if (isDragging && e.touches.length === 2) {
             const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-            const dx = midX - dragStartRef.current.x;
-            const dy = midY - dragStartRef.current.y;
-            setGarmentXOffset(dragStartRef.current.offsetX + dx * 0.3);
-            setGarmentYOffset(dragStartRef.current.offsetY + dy * 0.3);
+            const posX = midX - dragStartRef.current.x;
+            const posY = midY - dragStartRef.current.y;
+            setGarmentXOffset(dragStartRef.current.offsetX + posX * 0.3);
+            setGarmentYOffset(dragStartRef.current.offsetY + posY * 0.3);
+            
+            // Pinch-to-zoom
+            const dx = e.touches[1].clientX - e.touches[0].clientX;
+            const dy = e.touches[1].clientY - e.touches[0].clientY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (pinchStartDistRef.current > 0) {
+              const ratio = dist / pinchStartDistRef.current;
+              const newScale = Math.max(0.5, Math.min(2.0, pinchStartScaleRef.current * ratio));
+              setGarmentScale(newScale);
+            }
           }
         }}
         onTouchEnd={(e) => {
