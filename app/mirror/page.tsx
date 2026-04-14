@@ -35,7 +35,7 @@ export default function MirrorPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const poseLandmarkerRef = useRef<any>(null);
   const animFrameRef = useRef<number>(0);
-  const smoothPos = useRef({ x: 0, y: 0, w: 0, h: 0, ready: false });
+  const smoothPos = useRef({ x: 0, y: 0, w: 0, h: 0, tilt: 0, ready: false });
 
   // Video dimensions
   const videoDims = useRef({ w: 640, h: 480 });
@@ -172,16 +172,23 @@ export default function MirrorPage() {
     const hipCY = ((lh.y + rh.y) / 2) * vh;
     const shoulderW = Math.abs(rs.x - ls.x) * vw;
     const torsoH = hipCY - shoulderCY;
+    
+    // Calculate shoulder tilt angle from Y-difference
+    // Note: camera is mirrored, so we flip the calculation
+    const shoulderDeltaY = (rs.y - ls.y) * vh; // positive = right shoulder lower
+    const shoulderDeltaX = Math.abs(rs.x - ls.x) * vw;
+    const tiltAngle = Math.atan2(shoulderDeltaY, shoulderDeltaX); // radians
 
     // Smooth position using smoothing-utils
     const alpha = 0.3;
     if (!smoothPos.current.ready) {
-      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, ready: true };
+      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, ready: true };
     } else {
       smoothPos.current.x = smoothScalar(smoothPos.current.x, shoulderCX, { alpha }) ?? shoulderCX;
       smoothPos.current.y = smoothScalar(smoothPos.current.y, shoulderCY, { alpha }) ?? shoulderCY;
       smoothPos.current.w = smoothScalar(smoothPos.current.w, shoulderW, { alpha, min: 50 }) ?? shoulderW;
       smoothPos.current.h = smoothScalar(smoothPos.current.h, torsoH, { alpha, min: 50 }) ?? torsoH;
+      smoothPos.current.tilt = smoothScalar(smoothPos.current.tilt, tiltAngle, { alpha: 0.25 }) ?? tiltAngle;
     }
 
     const sp = smoothPos.current;
@@ -191,6 +198,10 @@ export default function MirrorPage() {
     const scaleX = sp.w * 1.35;
     const scaleY = sp.h * 1.1;
     mesh.scale.set(scaleX, scaleY, scaleX * 0.3);
+    
+    // Apply shoulder tilt as Z-rotation
+    mesh.rotation.z = sp.tilt;
+    
     mesh.visible = true;
   }, []);
 
