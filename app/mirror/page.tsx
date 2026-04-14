@@ -21,6 +21,8 @@ export default function MirrorPage() {
   const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
   const [handsVisible, setHandsVisible] = useState<{left: boolean, right: boolean}>({left: false, right: false});
   const [trackingConfidence, setTrackingConfidence] = useState(0);
+  const [debugMode, setDebugMode] = useState(false);
+  const debugCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -270,7 +272,33 @@ export default function MirrorPage() {
     const keyLandmarks = [ls, rs, lh, rh, leftWrist, rightWrist];
     const avgConfidence = keyLandmarks.reduce((sum, lm) => sum + (lm?.visibility ?? 0), 0) / keyLandmarks.length;
     setTrackingConfidence(Math.round(avgConfidence * 100));
-  }, []);
+
+    // Draw debug overlay if enabled
+    if (debugMode && debugCanvasRef.current) {
+      const ctx = debugCanvasRef.current.getContext("2d");
+      if (ctx) {
+        ctx.clearRect(0, 0, vw, vh);
+        // Draw key landmarks as circles
+        ctx.fillStyle = "#6C5CE7";
+        landmarks.forEach((lm, idx) => {
+          if ((lm.visibility ?? 0) > 0.3) {
+            const x = (1 - lm.x) * vw; // mirrored
+            const y = lm.y * vh;
+            ctx.beginPath();
+            ctx.arc(x, y, idx < 11 ? 6 : 4, 0, Math.PI * 2); // face landmarks bigger
+            ctx.fill();
+          }
+        });
+        // Draw shoulder line
+        ctx.strokeStyle = "#22c55e";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo((1 - ls.x) * vw, ls.y * vh);
+        ctx.lineTo((1 - rs.x) * vw, rs.y * vh);
+        ctx.stroke();
+      }
+    }
+  }, [debugMode]);
 
   // Start camera + pose detection
   const startCamera = useCallback(async () => {
@@ -694,6 +722,9 @@ export default function MirrorPage() {
         case '?':
           setShowHelp(prev => !prev);
           break;
+        case 'd': // Toggle debug mode
+          setDebugMode(prev => !prev);
+          break;
       }
     };
     document.addEventListener("keydown", handleKeyDown);
@@ -790,6 +821,8 @@ export default function MirrorPage() {
               <span>Next garment</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>H / ?</kbd>
               <span>Toggle this help</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>D</kbd>
+              <span>Toggle debug landmarks</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>Esc</kbd>
               <span>Close help / exit fullscreen</span>
             </div>
@@ -841,6 +874,21 @@ export default function MirrorPage() {
             pointerEvents: "none",
           }}
         />
+
+        {/* Debug overlay canvas */}
+        {debugMode && (
+          <canvas
+            ref={debugCanvasRef}
+            width={640}
+            height={480}
+            style={{
+              position: "absolute",
+              top: 0, left: 0,
+              width: "100%", height: "100%",
+              pointerEvents: "none",
+            }}
+          />
+        )}
 
         {/* Start button overlay */}
         {!cameraOn && (
