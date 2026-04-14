@@ -46,10 +46,33 @@ export default function MirrorPage() {
       if (saved) {
         setSavedGarments(JSON.parse(saved));
       }
+      // Load saved adjustments
+      const savedAdjustments = localStorage.getItem("virtualfit-adjustments");
+      if (savedAdjustments) {
+        const adj = JSON.parse(savedAdjustments);
+        if (adj.opacity !== undefined) setGarmentOpacity(adj.opacity);
+        if (adj.scale !== undefined) setGarmentScale(adj.scale);
+        if (adj.yOffset !== undefined) setGarmentYOffset(adj.yOffset);
+        if (adj.brightness !== undefined) setGarmentBrightness(adj.brightness);
+      }
     } catch {
       console.warn("Failed to load saved garments");
     }
   }, []);
+
+  // Save adjustments to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem("virtualfit-adjustments", JSON.stringify({
+        opacity: garmentOpacity,
+        scale: garmentScale,
+        yOffset: garmentYOffset,
+        brightness: garmentBrightness,
+      }));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [garmentOpacity, garmentScale, garmentYOffset, garmentBrightness]);
 
   // Garment gallery
   const GARMENTS = [
