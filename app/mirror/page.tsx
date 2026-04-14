@@ -16,6 +16,7 @@ export default function MirrorPage() {
   const [selectedGarment, setSelectedGarment] = useState(0);
   const [savedGarments, setSavedGarments] = useState<Array<{name: string, dataUrl: string}>>([]);
   const [estimatedSize, setEstimatedSize] = useState<string | null>(null);
+  const [handsVisible, setHandsVisible] = useState<{left: boolean, right: boolean}>({left: false, right: false});
 
   // Load saved garments from localStorage on mount
   useEffect(() => {
@@ -246,6 +247,14 @@ export default function MirrorPage() {
     else if (shoulderRatio < 0.45) size = "XL";
     else size = "XXL";
     setEstimatedSize(size);
+
+    // Track hand visibility (wrist landmarks 15=left, 16=right)
+    const leftWrist = landmarks[15];
+    const rightWrist = landmarks[16];
+    setHandsVisible({
+      left: (leftWrist?.visibility ?? 0) > 0.5,
+      right: (rightWrist?.visibility ?? 0) > 0.5,
+    });
   }, []);
 
   // Start camera + pose detection
@@ -780,6 +789,37 @@ export default function MirrorPage() {
           <p style={{ margin: 0, fontSize: 14, color: "#d1fae5" }}>Estimated Size</p>
           <p style={{ margin: "4px 0 0", fontSize: 28, fontWeight: 700, color: "#fff" }}>{estimatedSize}</p>
           <p style={{ margin: "4px 0 0", fontSize: 11, color: "#a7f3d0" }}>Based on shoulder width</p>
+        </div>
+      )}
+
+      {/* Hand Visibility Indicators */}
+      {cameraOn && (
+        <div style={{
+          marginTop: 12,
+          display: "flex",
+          gap: 16,
+          justifyContent: "center",
+        }}>
+          <div style={{
+            padding: "8px 16px",
+            background: handsVisible.left ? "#22c55e" : "#374151",
+            borderRadius: 8,
+            fontSize: 14,
+            color: "#fff",
+            transition: "background 0.2s",
+          }}>
+            ✋ Left Hand {handsVisible.left ? "✓" : "✗"}
+          </div>
+          <div style={{
+            padding: "8px 16px",
+            background: handsVisible.right ? "#22c55e" : "#374151",
+            borderRadius: 8,
+            fontSize: 14,
+            color: "#fff",
+            transition: "background 0.2s",
+          }}>
+            🤚 Right Hand {handsVisible.right ? "✓" : "✗"}
+          </div>
         </div>
       )}
 
