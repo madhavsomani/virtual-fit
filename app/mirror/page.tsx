@@ -1662,6 +1662,20 @@ export default function MirrorPage() {
         <p>3. Image becomes a 3D curved mesh anchored to your shoulders</p>
       </div>
 
+      {/* Version footer */}
+      <div style={{ marginTop: 32, color: "#444", fontSize: 11, textAlign: "center" }}>
+        <p>VirtualFit v2.0.0 • 38 features • Built with Next.js + Three.js + MediaPipe</p>
+        <p style={{ marginTop: 4 }}>
+          <a href="#" onClick={(e) => { e.preventDefault(); setShowHelp(true); }} style={{ color: "#6C5CE7", textDecoration: "none" }}>
+            ❓ Help
+          </a>
+          {" • "}
+          <a href="#" onClick={(e) => { e.preventDefault(); setShowOnboarding(true); }} style={{ color: "#6C5CE7", textDecoration: "none" }}>
+            📖 Tutorial
+          </a>
+        </p>
+      </div>
+
       {/* CSS for spinner animation */}
       <style>{`
         @keyframes spin {
