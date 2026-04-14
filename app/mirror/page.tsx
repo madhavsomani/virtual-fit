@@ -35,7 +35,7 @@ export default function MirrorPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const poseLandmarkerRef = useRef<any>(null);
   const animFrameRef = useRef<number>(0);
-  const smoothPos = useRef({ x: 0, y: 0, w: 0, h: 0, tilt: 0, ready: false });
+  const smoothPos = useRef({ x: 0, y: 0, w: 0, h: 0, tilt: 0, depth: 1, ready: false });
 
   // Video dimensions
   const videoDims = useRef({ w: 640, h: 480 });
@@ -178,25 +178,33 @@ export default function MirrorPage() {
     const shoulderDeltaY = (rs.y - ls.y) * vh; // positive = right shoulder lower
     const shoulderDeltaX = Math.abs(rs.x - ls.x) * vw;
     const tiltAngle = Math.atan2(shoulderDeltaY, shoulderDeltaX); // radians
+    
+    // Calculate depth scale from Z-coordinates (closer = bigger, further = smaller)
+    // MediaPipe Z is relative to hip center, negative = closer to camera
+    const avgShoulderZ = ((ls.z ?? 0) + (rs.z ?? 0)) / 2;
+    // Map Z to a scale factor: Z around -0.5 to 0.5, map to 0.8 to 1.2
+    const depthScale = 1.0 - (avgShoulderZ * 0.4); // closer (negative Z) = larger
+    const clampedDepth = Math.max(0.7, Math.min(1.3, depthScale));
 
     // Smooth position using smoothing-utils
     const alpha = 0.3;
     if (!smoothPos.current.ready) {
-      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, ready: true };
+      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, depth: clampedDepth, ready: true };
     } else {
       smoothPos.current.x = smoothScalar(smoothPos.current.x, shoulderCX, { alpha }) ?? shoulderCX;
       smoothPos.current.y = smoothScalar(smoothPos.current.y, shoulderCY, { alpha }) ?? shoulderCY;
       smoothPos.current.w = smoothScalar(smoothPos.current.w, shoulderW, { alpha, min: 50 }) ?? shoulderW;
       smoothPos.current.h = smoothScalar(smoothPos.current.h, torsoH, { alpha, min: 50 }) ?? torsoH;
       smoothPos.current.tilt = smoothScalar(smoothPos.current.tilt, tiltAngle, { alpha: 0.25 }) ?? tiltAngle;
+      smoothPos.current.depth = smoothScalar(smoothPos.current.depth, clampedDepth, { alpha: 0.2, min: 0.7, max: 1.3 }) ?? clampedDepth;
     }
 
     const sp = smoothPos.current;
 
     // Position & scale the 3D mesh
     mesh.position.set(sp.x, sp.y + sp.h * 0.45, 0);
-    const scaleX = sp.w * 1.35;
-    const scaleY = sp.h * 1.1;
+    const scaleX = sp.w * 1.35 * sp.depth;
+    const scaleY = sp.h * 1.1 * sp.depth;
     mesh.scale.set(scaleX, scaleY, scaleX * 0.3);
     
     // Apply shoulder tilt as Z-rotation
