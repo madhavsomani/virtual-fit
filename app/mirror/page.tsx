@@ -44,6 +44,7 @@ export default function MirrorPage() {
     brightness: number; hue: number; rotation: number;
   } | null>(null);
   const previousGarmentRef = useRef<number | null>(null);
+  const [smoothMode, setSmoothMode] = useState(false);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -434,7 +435,11 @@ export default function MirrorPage() {
     const clampedDepth = Math.max(0.7, Math.min(1.3, depthScale));
 
     // Smooth position using smoothing-utils
-    const alpha = 0.3;
+    // Use higher smoothing in smooth mode
+    const alpha = smoothMode ? 0.15 : 0.3;
+    const tiltAlpha = smoothMode ? 0.1 : 0.25;
+    const depthAlpha = smoothMode ? 0.1 : 0.2;
+    
     if (!smoothPos.current.ready) {
       smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, depth: clampedDepth, ready: true };
     } else {
@@ -442,8 +447,8 @@ export default function MirrorPage() {
       smoothPos.current.y = smoothScalar(smoothPos.current.y, shoulderCY, { alpha }) ?? shoulderCY;
       smoothPos.current.w = smoothScalar(smoothPos.current.w, shoulderW, { alpha, min: 50 }) ?? shoulderW;
       smoothPos.current.h = smoothScalar(smoothPos.current.h, torsoH, { alpha, min: 50 }) ?? torsoH;
-      smoothPos.current.tilt = smoothScalar(smoothPos.current.tilt, tiltAngle, { alpha: 0.25 }) ?? tiltAngle;
-      smoothPos.current.depth = smoothScalar(smoothPos.current.depth, clampedDepth, { alpha: 0.2, min: 0.7, max: 1.3 }) ?? clampedDepth;
+      smoothPos.current.tilt = smoothScalar(smoothPos.current.tilt, tiltAngle, { alpha: tiltAlpha }) ?? tiltAngle;
+      smoothPos.current.depth = smoothScalar(smoothPos.current.depth, clampedDepth, { alpha: depthAlpha, min: 0.7, max: 1.3 }) ?? clampedDepth;
     }
 
     const sp = smoothPos.current;
@@ -1459,6 +1464,10 @@ export default function MirrorPage() {
             switchGarment(previousGarmentRef.current);
             setStatus("⇄ Switched to previous garment");
           }
+          break;
+        case 'q': // Toggle smooth mode
+          setSmoothMode(prev => !prev);
+          setStatus(smoothMode ? "✨ Smooth mode off" : "✨ Smooth mode on (less jitter)");
           break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select
           {
