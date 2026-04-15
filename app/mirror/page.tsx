@@ -146,6 +146,7 @@ export default function MirrorPage() {
   const [showHelp, setShowHelp] = useState(false);
   const [helpPage, setHelpPage] = useState(1);
   const [garmentLoading, setGarmentLoading] = useState(false);
+  const [showGarmentInfo, setShowGarmentInfo] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2583,10 +2584,17 @@ export default function MirrorPage() {
         setStatus('🔄 All settings reset to defaults!');
         vibrate(30);
       }
+      
+      // Alt+G for garment info panel
+      if ((e.key === 'g' || e.key === 'G') && e.altKey) {
+        setShowGarmentInfo(prev => !prev);
+        setStatus(showGarmentInfo ? 'ℹ️ Info closed' : 'ℹ️ Garment info');
+        vibrate(15);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -3956,6 +3964,37 @@ export default function MirrorPage() {
                 {" | "}🔋 {batteryLevel}%
               </span>
             )}
+          </div>
+        )}
+
+        {/* Garment info panel */}
+        {showGarmentInfo && cameraOn && GARMENTS[selectedGarment] && (
+          <div style={{
+            position: "absolute",
+            top: 60, right: 12,
+            background: "rgba(0,0,0,0.9)",
+            padding: 16,
+            borderRadius: 12,
+            color: "#fff",
+            fontSize: 12,
+            minWidth: 180,
+          }}>
+            <div style={{ fontWeight: 700, marginBottom: 12, fontSize: 14 }}>
+              ℹ️ {GARMENTS[selectedGarment].name}
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "6px 12px", opacity: 0.9 }}>
+              <span>Category:</span><span>{GARMENTS[selectedGarment].category || 'N/A'}</span>
+              <span>Scale:</span><span>{Math.round(garmentScale * 100)}%</span>
+              <span>Rotation:</span><span>{Math.round(garmentRotation)}°</span>
+              <span>Opacity:</span><span>{Math.round(garmentOpacity * 100)}%</span>
+              <span>Hue:</span><span>{garmentHue}°</span>
+              <span>Brightness:</span><span>{Math.round(garmentBrightness * 100)}%</span>
+              <span>Position:</span><span>({garmentXOffset}, {garmentYOffset})</span>
+              <span>Flipped:</span><span>{garmentFlipped ? 'Yes' : 'No'}</span>
+            </div>
+            <div style={{ marginTop: 12, fontSize: 10, opacity: 0.6 }}>
+              Alt+G to close
+            </div>
           </div>
         )}
 
