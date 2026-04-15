@@ -1519,11 +1519,22 @@ export default function MirrorPage() {
             }
           }
           break;
-        case '1': case '2': case '3': case '4': case '5': // Quick garment select
+        case '1': case '2': case '3': case '4': case '5': // Quick garment select or scale presets
           {
-            const idx = parseInt(e.key) - 1;
-            if (idx < GARMENTS.length && cameraOn) {
-              switchGarment(idx);
+            if (e.shiftKey) {
+              // Shift+1-5: Scale presets (50%, 75%, 100%, 125%, 150%)
+              const scalePresets = [0.5, 0.75, 1.0, 1.25, 1.5];
+              const presetIdx = parseInt(e.key) - 1;
+              if (!adjustmentsLocked) {
+                setGarmentScale(scalePresets[presetIdx]);
+                setStatus(`📏 Scale: ${Math.round(scalePresets[presetIdx] * 100)}%`);
+              }
+            } else {
+              // Regular 1-5: Quick garment select
+              const idx = parseInt(e.key) - 1;
+              if (idx < GARMENTS.length && cameraOn) {
+                switchGarment(idx);
+              }
             }
           }
           break;
@@ -1531,7 +1542,7 @@ export default function MirrorPage() {
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
