@@ -163,6 +163,7 @@ export default function MirrorPage() {
   const [showGestureTip, setShowGestureTip] = useState(false);
   const [privacyMode, setPrivacyMode] = useState(false);
   const [selfieCountdown, setSelfieCountdown] = useState<number | null>(null);
+  const [showAspectBadge, setShowAspectBadge] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2661,6 +2662,8 @@ export default function MirrorPage() {
         const nextAspect = aspects[(currentIdx + 1) % aspects.length];
         setViewportAspect(nextAspect);
         setStatus(`📏 Aspect: ${nextAspect}`);
+        setShowAspectBadge(true);
+        setTimeout(() => setShowAspectBadge(false), 2000);
         vibrate(15);
       }
       
@@ -4535,6 +4538,28 @@ export default function MirrorPage() {
           }}>
             <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#fff", animation: "pulse 1s infinite" }} />
             REC {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
+          </div>
+        )}
+        
+        {/* Aspect ratio badge */}
+        {showAspectBadge && cameraOn && (
+          <div style={{
+            position: "absolute",
+            top: 100, left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(108, 92, 231, 0.9)",
+            padding: "8px 16px",
+            borderRadius: 8,
+            color: "#fff",
+            fontSize: 14,
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            zIndex: 150,
+          }}>
+            <span>📏</span>
+            <span>{viewportAspect === 'auto' ? 'Auto' : viewportAspect}</span>
           </div>
         )}
         
