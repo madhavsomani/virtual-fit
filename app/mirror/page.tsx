@@ -2130,6 +2130,16 @@ export default function MirrorPage() {
             >
               {favoriteGarments.includes(selectedGarment) ? "❤️" : "🤍"}
             </button>
+            <div style={{
+              background: "rgba(0,0,0,0.5)",
+              padding: "4px 8px",
+              borderRadius: 6,
+              color: "#9ca3af",
+              fontSize: 11,
+              fontWeight: 500,
+            }}>
+              {selectedGarment + 1}/{GARMENTS.length}
+            </div>
           </div>
         )}
 
