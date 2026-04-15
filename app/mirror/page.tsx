@@ -2939,6 +2939,15 @@ export default function MirrorPage() {
         setStatus('🔄 All settings reset to defaults!');
         vibrate([50, 30, 50]);
       }
+      
+      // Alt+R for random garment picker
+      if ((e.key === 'r' || e.key === 'R') && e.altKey && !e.ctrlKey && !e.shiftKey) {
+        e.preventDefault();
+        const randomIndex = Math.floor(Math.random() * GARMENTS.length);
+        setSelectedGarment(randomIndex);
+        setStatus(`🎲 Random: ${GARMENTS[randomIndex].name}`);
+        vibrate(20);
+      }
     };
     
     // Key indicator handler
