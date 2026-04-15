@@ -4834,6 +4834,26 @@ export default function MirrorPage() {
           </div>
         )}
         
+        {/* Offline indicator */}
+        {!isOnline && (
+          <div style={{
+            position: "absolute",
+            top: 12, left: 12,
+            background: "rgba(239, 68, 68, 0.9)",
+            padding: "6px 12px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: 12,
+            fontWeight: 600,
+            zIndex: 200,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}>
+            📴 Offline
+          </div>
+        )}
+        
         {/* Active mode badges */}
         {cameraOn && (batterySaver || adjustmentsLocked || autoLighting || slideshowMode) && (
           <div style={{
