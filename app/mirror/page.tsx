@@ -58,6 +58,7 @@ export default function MirrorPage() {
   const tapCountRef = useRef(0);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
+  const [blendMode, setBlendMode] = useState<'normal' | 'multiply' | 'screen' | 'overlay'>('normal');
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -1717,6 +1718,16 @@ export default function MirrorPage() {
             setStatus(`↕️ Y Scale: ${Math.round((garmentScaleY + 0.05) * 100)}%`);
           }
           break;
+        case 'y': // Cycle blend modes
+          {
+            const modes: Array<'normal' | 'multiply' | 'screen' | 'overlay'> = ['normal', 'multiply', 'screen', 'overlay'];
+            const currentIdx = modes.indexOf(blendMode);
+            const nextMode = modes[(currentIdx + 1) % modes.length];
+            setBlendMode(nextMode);
+            setStatus(`🎨 Blend: ${nextMode}`);
+            vibrate(20);
+          }
+          break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select, scale, or brightness presets
           {
             if (e.shiftKey) {
@@ -2170,6 +2181,7 @@ export default function MirrorPage() {
             transition: garmentTransition ? "transform 0.15s ease-out" : "transform 0.15s ease-in",
             pointerEvents: "auto",
             cursor: isDragging ? "grabbing" : "grab",
+            mixBlendMode: blendMode,
           }}
           onMouseDown={(e) => {
             if (!cameraOn) return;
