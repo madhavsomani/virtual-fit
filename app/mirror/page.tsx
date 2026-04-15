@@ -4170,6 +4170,36 @@ export default function MirrorPage() {
           </div>
         )}
         
+        {/* Camera flip button */}
+        {cameraOn && (
+          <button
+            onClick={() => {
+              const newMode = facingMode === 'user' ? 'environment' : 'user';
+              setFacingMode(newMode);
+              setStatus(`📷 ${newMode === 'user' ? 'Front' : 'Rear'} camera`);
+              vibrate(15);
+            }}
+            style={{
+              position: "absolute",
+              bottom: 12, right: 12,
+              width: 44, height: 44,
+              borderRadius: "50%",
+              background: "rgba(108, 92, 231, 0.8)",
+              border: "none",
+              color: "#fff",
+              fontSize: 20,
+              cursor: "pointer",
+              zIndex: 100,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            title="Flip camera"
+          >
+            🔄
+          </button>
+        )}
+        
         {/* Garment thumbnail preview */}
         {showGarmentPreview && cameraOn && GARMENTS[selectedGarment] && (
           <div 
