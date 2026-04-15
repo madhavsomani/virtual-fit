@@ -1401,9 +1401,13 @@ export default function MirrorPage() {
         case 'c': // Copy to clipboard
           if (cameraOn) copyToClipboard();
           break;
-        case 'arrowright': // Next garment
+        case 'arrowright': // Next garment or nudge right
         case 'n':
-          if (cameraOn) {
+          if (e.shiftKey && !adjustmentsLocked) {
+            // Shift+Arrow: Nudge position
+            setGarmentXOffset(prev => prev + 5);
+            setStatus(`↔️ X: ${garmentXOffset + 5}px`);
+          } else if (cameraOn) {
             if (favoritesOnly && favoriteGarments.length > 0) {
               // Navigate through favorites only
               const currentFavIdx = favoriteGarments.indexOf(selectedGarment);
@@ -1415,9 +1419,13 @@ export default function MirrorPage() {
             }
           }
           break;
-        case 'arrowleft': // Previous garment
+        case 'arrowleft': // Previous garment or nudge left
         case 'p':
-          if (cameraOn) {
+          if (e.shiftKey && !adjustmentsLocked) {
+            // Shift+Arrow: Nudge position
+            setGarmentXOffset(prev => prev - 5);
+            setStatus(`↔️ X: ${garmentXOffset - 5}px`);
+          } else if (cameraOn) {
             if (favoritesOnly && favoriteGarments.length > 0) {
               // Navigate through favorites only
               const currentFavIdx = favoriteGarments.indexOf(selectedGarment);
@@ -1427,6 +1435,18 @@ export default function MirrorPage() {
               const prevIdx = (selectedGarment - 1 + GARMENTS.length) % GARMENTS.length;
               switchGarment(prevIdx);
             }
+          }
+          break;
+        case 'arrowup': // Nudge up
+          if (e.shiftKey && !adjustmentsLocked) {
+            setGarmentYOffset(prev => prev - 5);
+            setStatus(`↕️ Y: ${garmentYOffset - 5}px`);
+          }
+          break;
+        case 'arrowdown': // Nudge down
+          if (e.shiftKey && !adjustmentsLocked) {
+            setGarmentYOffset(prev => prev + 5);
+            setStatus(`↕️ Y: ${garmentYOffset + 5}px`);
           }
           break;
         case 'escape': // Exit fullscreen or close help
