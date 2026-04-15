@@ -2556,6 +2556,28 @@ export default function MirrorPage() {
           }
         }).catch(() => setStatus('❌ Clipboard read failed'));
       }
+      
+      // Alt+R for full reset all settings to defaults
+      if ((e.key === 'r' || e.key === 'R') && e.altKey) {
+        setGarmentScale(1.0);
+        setGarmentScaleY(1.0);
+        setGarmentXOffset(0);
+        setGarmentYOffset(0);
+        setGarmentRotation(0);
+        setGarmentBrightness(1.0);
+        setGarmentHue(0);
+        setGarmentFlipped(false);
+        setGarmentOpacity(0.9);
+        setTintMode('none');
+        setEdgeFeather(0);
+        setShadowAngle(135);
+        setShowShadow(false);
+        setBlendMode('normal');
+        setSmoothMode(false);
+        setAutoLighting(false);
+        setStatus('🔄 All settings reset to defaults!');
+        vibrate(30);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
