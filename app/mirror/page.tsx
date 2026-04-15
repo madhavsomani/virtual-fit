@@ -1179,13 +1179,8 @@ export default function MirrorPage() {
     ctx.drawImage(threeCanvas, 0, 0, compositeCanvas.width, compositeCanvas.height);
 
     // Convert to blob and download
-    compositeCanvas.toBlob((blob) => {
+    compositeCanvas.toBlob(async (blob) => {
       if (!blob) return;
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `virtualfit-${Date.now()}.png`;
-      a.click();
       
       // Save to history (keep last 10)
       const dataUrl = compositeCanvas.toDataURL('image/png');
@@ -1194,6 +1189,31 @@ export default function MirrorPage() {
         return updated;
       });
       
+      // Try Web Share API on mobile, fallback to download
+      if (navigator.share && navigator.canShare) {
+        const file = new File([blob], `virtualfit-${Date.now()}.png`, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: 'VirtualFit Try-On',
+              text: 'Check out my virtual try-on!',
+            });
+            vibrate(25);
+            setStatus("📤 Shared!");
+            return;
+          } catch {
+            // User cancelled or share failed, fall through to download
+          }
+        }
+      }
+      
+      // Fallback: download
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `virtualfit-${Date.now()}.png`;
+      a.click();
       URL.revokeObjectURL(url);
       vibrate(25);
       setStatus("📸 Screenshot saved!");
