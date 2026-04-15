@@ -76,6 +76,7 @@ export default function MirrorPage() {
   const [comparisonMode, setComparisonMode] = useState(false);
   const [comparisonGarment, setComparisonGarment] = useState<number | null>(null);
   const [autoPauseOnBlur, setAutoPauseOnBlur] = useState(true);
+  const [sessionStats, setSessionStats] = useState({ tryOns: 0, screenshots: 0, adjustments: 0 });
   const wasPlayingBeforeBlur = useRef(false);
   const slideshowIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [flashCompare, setFlashCompare] = useState(false);
@@ -1059,6 +1060,9 @@ export default function MirrorPage() {
     previousGarmentRef.current = selectedGarment;
     setSelectedGarment(index);
     
+    // Track session stats
+    setSessionStats(prev => ({ ...prev, tryOns: prev.tryOns + 1 }));
+    
     // Track recent garments (last 5)
     setRecentGarments(prev => {
       const filtered = prev.filter(g => g !== index);
@@ -1385,6 +1389,9 @@ export default function MirrorPage() {
 
     // Draw Three.js overlay on top
     ctx.drawImage(threeCanvas, 0, 0, compositeCanvas.width, compositeCanvas.height);
+
+    // Track screenshot in session stats
+    setSessionStats(prev => ({ ...prev, screenshots: prev.screenshots + 1 }));
 
     // Convert to blob and download
     compositeCanvas.toBlob(async (blob) => {
@@ -3826,6 +3833,8 @@ export default function MirrorPage() {
           }}>
             ⏱️ {Math.floor(sessionDuration / 60)}:{String(sessionDuration % 60).padStart(2, "0")}
             {" | "}👕 {selectedGarment + 1}/{GARMENTS.length}
+            {sessionStats.tryOns > 0 && ` | 👗 ${sessionStats.tryOns}`}
+            {sessionStats.screenshots > 0 && ` | 📸 ${sessionStats.screenshots}`}
             {debugMode && ` | 🎬 ${totalFramesRef.current.toLocaleString()}f`}
             {batteryLevel !== null && batteryLevel <= 20 && (
               <span style={{ color: batteryLevel <= 10 ? "#ef4444" : "#eab308" }}>
