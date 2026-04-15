@@ -63,6 +63,8 @@ export default function MirrorPage() {
   const [garmentSaturation, setGarmentSaturation] = useState(100);
   const [garmentContrast, setGarmentContrast] = useState(100);
   const [colorGradeIdx, setColorGradeIdx] = useState(0);
+  const [showEdgeHints, setShowEdgeHints] = useState(false);
+  const [hasSeenEdgeHints, setHasSeenEdgeHints] = useState(false);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -2111,6 +2113,13 @@ export default function MirrorPage() {
           touchStartXRef.current = e.touches[0].clientX;
           touchStartYRef.current = e.touches[0].clientY;
           
+          // Show edge hints on first touch (once per session)
+          if (!hasSeenEdgeHints && cameraOn) {
+            setShowEdgeHints(true);
+            setHasSeenEdgeHints(true);
+            setTimeout(() => setShowEdgeHints(false), 2000);
+          }
+          
           // Long press detection for quick menu (single finger only)
           if (e.touches.length === 1) {
             longPressTimerRef.current = setTimeout(() => {
@@ -2493,6 +2502,50 @@ export default function MirrorPage() {
           }}>
             🎬 {['None', 'Warm', 'Cool', 'Vintage', 'Vivid', 'Noir'][colorGradeIdx]}
           </div>
+        )}
+
+        {/* Edge zone hints */}
+        {showEdgeHints && (
+          <>
+            <div style={{
+              position: "absolute",
+              left: 0, top: "50%",
+              transform: "translateY(-50%)",
+              width: 60, height: 120,
+              background: "linear-gradient(to right, rgba(251, 191, 36, 0.6), transparent)",
+              borderRadius: "0 12px 12px 0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#fff",
+              fontSize: 10,
+              fontWeight: 600,
+              textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+              pointerEvents: "none",
+              animation: "fadeIn 0.3s ease",
+            }}>
+              ☀️ Bright
+            </div>
+            <div style={{
+              position: "absolute",
+              right: 0, top: "50%",
+              transform: "translateY(-50%)",
+              width: 60, height: 120,
+              background: "linear-gradient(to left, rgba(59, 130, 246, 0.6), transparent)",
+              borderRadius: "12px 0 0 12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#fff",
+              fontSize: 10,
+              fontWeight: 600,
+              textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+              pointerEvents: "none",
+              animation: "fadeIn 0.3s ease",
+            }}>
+              👁️ Opacity
+            </div>
+          </>
         )}
 
         {/* Quick menu (long press) */}
