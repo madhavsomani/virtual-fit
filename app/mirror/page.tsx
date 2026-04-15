@@ -68,6 +68,7 @@ export default function MirrorPage() {
   const [fitQuality, setFitQuality] = useState<'excellent' | 'good' | 'fair' | 'poor'>('good');
   const prevFitQualityRef = useRef<'excellent' | 'good' | 'fair' | 'poor'>('good');
   const [postureTip, setPostureTip] = useState<string | null>(null);
+  const [photoCountdown, setPhotoCountdown] = useState<number | null>(null);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -1515,6 +1516,27 @@ export default function MirrorPage() {
         case 's': // Screenshot
           if (cameraOn) captureScreenshot();
           break;
+        case 'p': // Photo booth mode with countdown
+          if (cameraOn && photoCountdown === null) {
+            setStatus("📸 Photo in 3...");
+            vibrate(30);
+            setPhotoCountdown(3);
+            let count = 3;
+            const interval = setInterval(() => {
+              count--;
+              if (count > 0) {
+                setPhotoCountdown(count);
+                setStatus(`📸 Photo in ${count}...`);
+                vibrate(20);
+              } else {
+                clearInterval(interval);
+                setPhotoCountdown(null);
+                vibrate([50, 50, 50]); // shutter sound pattern
+                captureScreenshot();
+              }
+            }, 1000);
+          }
+          break;
         case 'c': // Copy to clipboard or copy config (with Shift)
           if (e.shiftKey) {
             // Shift+C: Copy garment config as URL params
@@ -2586,6 +2608,29 @@ export default function MirrorPage() {
             textAlign: "center",
           }}>
             {postureTip}
+          </div>
+        )}
+
+        {/* Photo countdown overlay */}
+        {photoCountdown !== null && (
+          <div style={{
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0, 0, 0, 0.3)",
+            pointerEvents: "none",
+          }}>
+            <div style={{
+              fontSize: 120,
+              fontWeight: 700,
+              color: "#fff",
+              textShadow: "0 4px 20px rgba(0,0,0,0.5)",
+              animation: "pulse 0.5s ease-in-out",
+            }}>
+              {photoCountdown}
+            </div>
           </div>
         )}
 
