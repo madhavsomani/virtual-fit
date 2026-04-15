@@ -1898,7 +1898,13 @@ export default function MirrorPage() {
           break;
         case 'arrowright': // Next garment or nudge right
         case 'n':
-          if (e.shiftKey && !adjustmentsLocked) {
+          if (e.altKey && cameraOn) {
+            // Alt+N: Random garment
+            const randomIdx = Math.floor(Math.random() * GARMENTS.length);
+            switchGarment(randomIdx);
+            setStatus(`🎲 Random: ${GARMENTS[randomIdx].name}`);
+            vibrate(20);
+          } else if (e.shiftKey && !adjustmentsLocked) {
             // Shift+Arrow: Nudge position
             setGarmentXOffset(prev => prev + 5);
             setStatus(`↔️ X: ${garmentXOffset + 5}px`);
