@@ -72,6 +72,8 @@ export default function MirrorPage() {
   const [splitViewGarment, setSplitViewGarment] = useState<number | null>(null);
   const adjustmentHistoryRef = useRef<Array<{scale: number, scaleY: number, x: number, y: number, rotation: number, brightness: number, hue: number, opacity: number}>>([]);
   const [colorTemp, setColorTemp] = useState(0); // -100 (cool) to +100 (warm)
+  const lastShakeTimeRef = useRef(0);
+  const shakeThreshold = 15; // acceleration threshold for shake detection
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -956,6 +958,32 @@ export default function MirrorPage() {
       }
     );
   }, [createShirtMesh]);
+
+  // Shake-to-randomize detection for mobile
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.DeviceMotionEvent) return;
+    
+    const handleMotion = (e: DeviceMotionEvent) => {
+      const acc = e.accelerationIncludingGravity;
+      if (!acc || !cameraOn) return;
+      
+      const totalAcc = Math.sqrt((acc.x ?? 0) ** 2 + (acc.y ?? 0) ** 2 + (acc.z ?? 0) ** 2);
+      const now = Date.now();
+      
+      // Detect strong shake (subtract gravity ~9.8)
+      if (totalAcc > shakeThreshold + 9.8 && now - lastShakeTimeRef.current > 1000) {
+        lastShakeTimeRef.current = now;
+        // Random outfit
+        const randomIdx = Math.floor(Math.random() * GARMENTS.length);
+        switchGarment(randomIdx);
+        setStatus(`📱 Shake! ${GARMENTS[randomIdx].name}`);
+        if ('vibrate' in navigator) navigator.vibrate([20, 30, 20]);
+      }
+    };
+    
+    window.addEventListener('devicemotion', handleMotion);
+    return () => window.removeEventListener('devicemotion', handleMotion);
+  }, [cameraOn, switchGarment]);
 
   // Detect hand swipe gestures from wrist landmarks
   const detectGesture = useCallback((landmarks: PoseResultLandmark[]) => {
