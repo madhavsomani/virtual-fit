@@ -1471,6 +1471,15 @@ export default function MirrorPage() {
           setSmoothMode(prev => !prev);
           setStatus(smoothMode ? "✨ Smooth mode off" : "✨ Smooth mode on (less jitter)");
           break;
+        case 'v': // Cycle opacity levels
+          {
+            const levels = [1.0, 0.75, 0.5, 0.25];
+            const currentIdx = levels.findIndex(l => Math.abs(l - garmentOpacity) < 0.1);
+            const nextIdx = (currentIdx + 1) % levels.length;
+            setGarmentOpacity(levels[nextIdx]);
+            setStatus(`👓 Opacity: ${Math.round(levels[nextIdx] * 100)}%`);
+          }
+          break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select
           {
             const idx = parseInt(e.key) - 1;
