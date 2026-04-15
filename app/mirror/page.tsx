@@ -4370,6 +4370,29 @@ export default function MirrorPage() {
           </div>
         )}
         
+        {/* Recording time indicator */}
+        {isRecording && (
+          <div style={{
+            position: "absolute",
+            top: 50, left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(220, 38, 38, 0.9)",
+            padding: "8px 16px",
+            borderRadius: 20,
+            color: "#fff",
+            fontSize: 14,
+            fontWeight: 700,
+            fontFamily: "monospace",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            zIndex: 100,
+          }}>
+            <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#fff", animation: "pulse 1s infinite" }} />
+            REC {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
+          </div>
+        )}
+        
         {/* Active mode badges */}
         {cameraOn && (batterySaver || adjustmentsLocked || autoLighting || slideshowMode) && (
           <div style={{
