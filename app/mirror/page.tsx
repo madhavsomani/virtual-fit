@@ -71,6 +71,8 @@ export default function MirrorPage() {
   const [garmentFadeIn, setGarmentFadeIn] = useState(true);
   const [slideshowMode, setSlideshowMode] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [recentGarments, setRecentGarments] = useState<number[]>([]);
+  const [showRecentPanel, setShowRecentPanel] = useState(false);
   const slideshowIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [flashCompare, setFlashCompare] = useState(false);
   const flashIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -1029,6 +1031,13 @@ export default function MirrorPage() {
     // Track previous garment for quick switch
     previousGarmentRef.current = selectedGarment;
     setSelectedGarment(index);
+    
+    // Track recent garments (last 5)
+    setRecentGarments(prev => {
+      const filtered = prev.filter(g => g !== index);
+      return [index, ...filtered].slice(0, 5);
+    });
+    
     // Save to localStorage for persistence
     try {
       localStorage.setItem("virtualfit-last-garment", String(index));
@@ -2416,10 +2425,17 @@ export default function MirrorPage() {
         setStatus(showColorPicker ? '🎨 Color picker closed' : '🎨 Color picker open');
         vibrate(15);
       }
+      
+      // U key for recent garments panel
+      if (e.key === 'u' || e.key === 'U') {
+        setShowRecentPanel(prev => !prev);
+        setStatus(showRecentPanel ? '🕒 Recent panel closed' : '🕒 Recent garments');
+        vibrate(15);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -3374,6 +3390,50 @@ export default function MirrorPage() {
             </button>
           </div>
         )}
+
+        {/* Recent garments panel */}
+        {showRecentPanel && cameraOn && recentGarments.length > 0 && (
+          <div style={{
+            position: "absolute",
+            bottom: 140, left: 12,
+            background: "rgba(0,0,0,0.85)",
+            padding: 12,
+            borderRadius: 12,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}>
+            <div style={{ color: "#fff", fontSize: 11, fontWeight: 600, marginBottom: 4 }}>
+              🕒 Recent (U to close)
+            </div>
+            {recentGarments.map((idx, i) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  switchGarment(idx);
+                  setShowRecentPanel(false);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "6px 10px",
+                  background: idx === selectedGarment ? "rgba(147, 51, 234, 0.5)" : "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  borderRadius: 6,
+                  color: "#fff",
+                  fontSize: 11,
+                  cursor: "pointer",
+                  textAlign: "left",
+                }}
+              >
+                <span style={{ opacity: 0.5 }}>{i + 1}.</span>
+                {GARMENTS[idx]?.name || `Garment ${idx + 1}`}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Fit guide overlay */}
         {showFitGuide && cameraOn && (
           <div style={{
