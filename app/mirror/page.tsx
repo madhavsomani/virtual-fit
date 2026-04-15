@@ -152,6 +152,8 @@ export default function MirrorPage() {
   const [showFps, setShowFps] = useState(false);
   const [currentFps, setCurrentFps] = useState(0);
   const fpsCounterRef = useRef({ frames: 0, lastTime: Date.now() });
+  const [batterySaver, setBatterySaver] = useState(false);
+  const frameSkipRef = useRef(0);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -934,6 +936,15 @@ export default function MirrorPage() {
         const now = performance.now();
         if (now === lastTime) { animFrameRef.current = requestAnimationFrame(loop); return; }
         lastTime = now;
+        
+        // Battery saver: skip every other frame
+        if (batterySaver) {
+          frameSkipRef.current++;
+          if (frameSkipRef.current % 2 !== 0) {
+            animFrameRef.current = requestAnimationFrame(loop);
+            return;
+          }
+        }
 
         // FPS tracking
         frameCount.current++;
@@ -2644,10 +2655,18 @@ export default function MirrorPage() {
         setStatus(showFps ? '📊 FPS off' : '📊 FPS on');
         vibrate(10);
       }
+      
+      // Alt+P for battery saver toggle
+      if ((e.key === 'p' || e.key === 'P') && e.altKey) {
+        e.preventDefault();
+        setBatterySaver(prev => !prev);
+        setStatus(batterySaver ? '🔋 Full power' : '🔋 Battery saver ON');
+        vibrate(15);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
