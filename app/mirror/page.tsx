@@ -96,6 +96,7 @@ export default function MirrorPage() {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const lastTapTimeRef = useRef(0);
   const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
   const lowConfidenceCountRef = useRef(0);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -2108,6 +2109,7 @@ export default function MirrorPage() {
         style={{ position: "relative", width: "100%", maxWidth: 640 }}
         onTouchStart={(e) => {
           touchStartXRef.current = e.touches[0].clientX;
+          touchStartYRef.current = e.touches[0].clientY;
           
           // Long press detection for quick menu (single finger only)
           if (e.touches.length === 1) {
@@ -2175,13 +2177,37 @@ export default function MirrorPage() {
           }
           if (!cameraOn) return;
           const touchEndX = e.changedTouches[0].clientX;
-          const swipeDistance = touchEndX - touchStartXRef.current;
+          const touchEndY = e.changedTouches[0].clientY;
+          const swipeDistanceX = touchEndX - touchStartXRef.current;
+          const swipeDistanceY = touchEndY - touchStartYRef.current;
           const minSwipe = 50; // minimum swipe distance
           
-          // Swipe detection (single finger only)
-          if (Math.abs(swipeDistance) > minSwipe) {
+          // Vertical swipe for brightness (left edge) or opacity (right edge)
+          if (Math.abs(swipeDistanceY) > minSwipe && Math.abs(swipeDistanceY) > Math.abs(swipeDistanceX)) {
+            const isLeftEdge = touchStartXRef.current < 80;
+            const isRightEdge = touchStartXRef.current > window.innerWidth - 80;
+            
+            if (isLeftEdge && !adjustmentsLocked) {
+              // Left edge: adjust brightness
+              const delta = swipeDistanceY < 0 ? 10 : -10;
+              setGarmentBrightness(prev => Math.max(50, Math.min(150, prev + delta)));
+              setStatus(`☀️ Brightness: ${garmentBrightness + delta}%`);
+              vibrate(10);
+              return;
+            } else if (isRightEdge && !adjustmentsLocked) {
+              // Right edge: adjust opacity
+              const delta = swipeDistanceY < 0 ? 0.1 : -0.1;
+              setGarmentOpacity(prev => Math.max(0.2, Math.min(1, prev + delta)));
+              setStatus(`👁️ Opacity: ${Math.round((garmentOpacity + delta) * 100)}%`);
+              vibrate(10);
+              return;
+            }
+          }
+          
+          // Horizontal swipe detection (single finger only)
+          if (Math.abs(swipeDistanceX) > minSwipe) {
             vibrate(15); // haptic feedback on swipe
-            if (swipeDistance > 0) {
+            if (swipeDistanceX > 0) {
               // Swipe right - previous garment
               switchGarment((selectedGarment - 1 + GARMENTS.length) % GARMENTS.length);
             } else {
