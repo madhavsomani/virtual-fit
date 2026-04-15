@@ -1577,6 +1577,15 @@ export default function MirrorPage() {
             }
           }
           break;
+        case 'x': // Center align - reset position offsets
+          if (!adjustmentsLocked) {
+            saveAdjustmentsForUndo();
+            setGarmentXOffset(0);
+            setGarmentYOffset(0);
+            setStatus("✝️ Centered! Press Z to undo");
+            vibrate(20);
+          }
+          break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select, scale, or brightness presets
           {
             if (e.shiftKey) {
