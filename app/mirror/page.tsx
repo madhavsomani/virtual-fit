@@ -48,6 +48,7 @@ export default function MirrorPage() {
   const [showPinchFeedback, setShowPinchFeedback] = useState(false);
   const [adjustmentsLocked, setAdjustmentsLocked] = useState(false);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [autoFit, setAutoFit] = useState(true);
   const tapCountRef = useRef(0);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
@@ -1586,6 +1587,11 @@ export default function MirrorPage() {
             vibrate(20);
           }
           break;
+        case 't': // Toggle auto-fit mode
+          setAutoFit(prev => !prev);
+          setStatus(autoFit ? "📏 Manual scale mode" : "✨ Auto-fit enabled");
+          vibrate(20);
+          break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select, scale, or brightness presets
           {
             if (e.shiftKey) {
@@ -2162,6 +2168,23 @@ export default function MirrorPage() {
             pointerEvents: "none",
           }}>
             ❤️ Favorites ({favoriteGarments.length})
+          </div>
+        )}
+
+        {/* Manual scale mode indicator */}
+        {cameraOn && !autoFit && (
+          <div style={{
+            position: "absolute",
+            top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0), left: 12,
+            background: "rgba(59, 130, 246, 0.85)",
+            padding: "4px 10px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: 11,
+            fontWeight: 600,
+            pointerEvents: "none",
+          }}>
+            📏 Manual
           </div>
         )}
 
