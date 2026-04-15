@@ -2764,6 +2764,13 @@ export default function MirrorPage() {
         setStatus(`🎲 Random: ${GARMENTS[randomIdx]?.name || 'Garment'}`);
         vibrate([20, 10, 20]);
       }
+      
+      // Alt+Q for session stats panel
+      if ((e.key === 'q' || e.key === 'Q') && e.altKey) {
+        e.preventDefault();
+        setShowStats(prev => !prev);
+        vibrate(10);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
@@ -4547,6 +4554,28 @@ export default function MirrorPage() {
           }}>
             <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#fff", animation: "pulse 1s infinite" }} />
             REC {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
+          </div>
+        )}
+        
+        {/* Session stats panel */}
+        {showStats && cameraOn && (
+          <div style={{
+            position: "absolute",
+            top: 60, left: 12,
+            background: "rgba(0,0,0,0.85)",
+            padding: 16,
+            borderRadius: 12,
+            color: "#fff",
+            fontSize: 12,
+            minWidth: 150,
+            zIndex: 150,
+          }}>
+            <div style={{ fontWeight: 700, marginBottom: 12, fontSize: 14 }}>📊 Session Stats</div>
+            <div style={{ marginBottom: 8 }}>👗 Try-ons: {sessionStats.tryOns}</div>
+            <div style={{ marginBottom: 8 }}>📸 Screenshots: {screenshotHistory.length}</div>
+            <div style={{ marginBottom: 8 }}>🎨 Adjustments: {sessionStats.adjustments}</div>
+            <div style={{ marginBottom: 8 }}>💾 Presets: {Object.keys(savedPresets).length}</div>
+            <div style={{ opacity: 0.7, fontSize: 10, marginTop: 8 }}>Alt+Q to close</div>
           </div>
         )}
         
