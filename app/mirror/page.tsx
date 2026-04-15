@@ -2755,6 +2755,15 @@ export default function MirrorPage() {
           });
         }, 1000);
       }
+      
+      // Alt+R for random garment shuffle
+      if ((e.key === 'r' || e.key === 'R') && e.altKey) {
+        e.preventDefault();
+        const randomIdx = Math.floor(Math.random() * GARMENTS.length);
+        switchGarment(randomIdx);
+        setStatus(`🎲 Random: ${GARMENTS[randomIdx]?.name || 'Garment'}`);
+        vibrate([20, 10, 20]);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
