@@ -62,6 +62,7 @@ export default function MirrorPage() {
   const [showShadow, setShowShadow] = useState(true);
   const [garmentSaturation, setGarmentSaturation] = useState(100);
   const [garmentContrast, setGarmentContrast] = useState(100);
+  const [colorGradeIdx, setColorGradeIdx] = useState(0);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -1755,6 +1756,27 @@ export default function MirrorPage() {
             setGarmentContrast(levels[nextIdx]);
             const names = ['Normal', 'Punchy', 'High', 'Soft', 'Flat'];
             setStatus(`☀️ Contrast: ${names[nextIdx]} (${levels[nextIdx]}%)`);
+            vibrate(20);
+          }
+          break;
+        case '`': // Color grade presets
+          {
+            const presets = [
+              { name: 'None', sat: 100, con: 100, bright: 100, hue: 0 },
+              { name: 'Warm', sat: 110, con: 105, bright: 105, hue: 15 },
+              { name: 'Cool', sat: 90, con: 100, bright: 100, hue: 200 },
+              { name: 'Vintage', sat: 80, con: 90, bright: 95, hue: 30 },
+              { name: 'Vivid', sat: 140, con: 110, bright: 100, hue: 0 },
+              { name: 'Noir', sat: 0, con: 120, bright: 100, hue: 0 },
+            ];
+            const nextIdx = (colorGradeIdx + 1) % presets.length;
+            const preset = presets[nextIdx];
+            setColorGradeIdx(nextIdx);
+            setGarmentSaturation(preset.sat);
+            setGarmentContrast(preset.con);
+            setGarmentBrightness(preset.bright);
+            setGarmentHue(preset.hue);
+            setStatus(`🎬 Grade: ${preset.name}`);
             vibrate(20);
           }
           break;
