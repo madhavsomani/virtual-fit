@@ -1505,6 +1505,20 @@ export default function MirrorPage() {
           setStatus(adjustmentsLocked ? "🔓 Adjustments unlocked" : "🔒 Adjustments locked");
           vibrate(adjustmentsLocked ? 20 : [20, 30, 20]);
           break;
+        case 'w': // Random garment shuffle
+          {
+            let randomIdx = Math.floor(Math.random() * GARMENTS.length);
+            // Avoid same garment
+            while (randomIdx === selectedGarment && GARMENTS.length > 1) {
+              randomIdx = Math.floor(Math.random() * GARMENTS.length);
+            }
+            if (cameraOn) {
+              switchGarment(randomIdx);
+              setStatus(`🎲 Random: ${GARMENTS[randomIdx]?.name || 'Unknown'}`);
+              vibrate([10, 20, 10, 20, 10]);
+            }
+          }
+          break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select
           {
             const idx = parseInt(e.key) - 1;
