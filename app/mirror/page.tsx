@@ -69,6 +69,7 @@ export default function MirrorPage() {
   const prevFitQualityRef = useRef<'excellent' | 'good' | 'fair' | 'poor'>('good');
   const [postureTip, setPostureTip] = useState<string | null>(null);
   const [photoCountdown, setPhotoCountdown] = useState<number | null>(null);
+  const [splitViewGarment, setSplitViewGarment] = useState<number | null>(null);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -1537,6 +1538,28 @@ export default function MirrorPage() {
             }, 1000);
           }
           break;
+        case '=': // Split view comparison
+          if (cameraOn) {
+            if (splitViewGarment === null) {
+              // Enter split view with next garment
+              const nextGarment = (selectedGarment + 1) % GARMENTS.length;
+              setSplitViewGarment(nextGarment);
+              setStatus(`👓 Split: ${GARMENTS[selectedGarment].name} vs ${GARMENTS[nextGarment].name}`);
+            } else {
+              // Cycle to next comparison garment
+              const nextGarment = (splitViewGarment + 1) % GARMENTS.length;
+              if (nextGarment === selectedGarment) {
+                // Exiting split view
+                setSplitViewGarment(null);
+                setStatus("✖️ Split view off");
+              } else {
+                setSplitViewGarment(nextGarment);
+                setStatus(`👓 Compare: ${GARMENTS[nextGarment].name}`);
+              }
+            }
+            vibrate(20);
+          }
+          break;
         case 'c': // Copy to clipboard or copy config (with Shift)
           if (e.shiftKey) {
             // Shift+C: Copy garment config as URL params
@@ -2608,6 +2631,29 @@ export default function MirrorPage() {
             textAlign: "center",
           }}>
             {postureTip}
+          </div>
+        )}
+
+        {/* Split view indicator */}
+        {cameraOn && splitViewGarment !== null && (
+          <div style={{
+            position: "absolute",
+            top: 12, left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(139, 92, 246, 0.9)",
+            padding: "6px 16px",
+            borderRadius: 20,
+            color: "#fff",
+            fontSize: 12,
+            fontWeight: 600,
+            pointerEvents: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}>
+            <span>👓 {GARMENTS[selectedGarment].name}</span>
+            <span style={{ opacity: 0.7 }}>vs</span>
+            <span>{GARMENTS[splitViewGarment].name}</span>
           </div>
         )}
 
