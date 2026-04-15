@@ -2850,6 +2850,26 @@ export default function MirrorPage() {
         setShowDeviceInfo(prev => !prev);
         vibrate(10);
       }
+      
+      // Alt+U for copy shareable URL with current config
+      if ((e.key === 'u' || e.key === 'U') && e.altKey) {
+        e.preventDefault();
+        const params = new URLSearchParams();
+        params.set('g', String(selectedGarment));
+        params.set('s', String(garmentScale));
+        params.set('sy', String(garmentScaleY));
+        params.set('x', String(garmentXOffset));
+        params.set('y', String(garmentYOffset));
+        params.set('r', String(garmentRotation));
+        params.set('o', String(garmentOpacity));
+        params.set('b', String(garmentBrightness));
+        params.set('h', String(garmentHue));
+        if (garmentFlipped) params.set('f', '1');
+        const shareUrl = `${window.location.origin}/mirror?${params.toString()}`;
+        navigator.clipboard.writeText(shareUrl);
+        setStatus('🔗 Config URL copied!');
+        vibrate(20);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
