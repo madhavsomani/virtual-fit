@@ -3566,6 +3566,7 @@ export default function MirrorPage() {
             pointerEvents: "none",
           }}>
             ⏱️ {Math.floor(sessionDuration / 60)}:{String(sessionDuration % 60).padStart(2, "0")}
+            {" | "}👕 {selectedGarment + 1}/{GARMENTS.length}
             {debugMode && ` | 🎬 ${totalFramesRef.current.toLocaleString()}f`}
             {batteryLevel !== null && batteryLevel <= 20 && (
               <span style={{ color: batteryLevel <= 10 ? "#ef4444" : "#eab308" }}>
