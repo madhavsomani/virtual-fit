@@ -70,6 +70,7 @@ export default function MirrorPage() {
   const [postureTip, setPostureTip] = useState<string | null>(null);
   const [photoCountdown, setPhotoCountdown] = useState<number | null>(null);
   const [splitViewGarment, setSplitViewGarment] = useState<number | null>(null);
+  const adjustmentHistoryRef = useRef<Array<{scale: number, scaleY: number, x: number, y: number, rotation: number, brightness: number, hue: number, opacity: number}>>([]);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -267,6 +268,25 @@ export default function MirrorPage() {
       navigator.vibrate(pattern);
     }
   }, []);
+
+  // Save current adjustments to history (for undo)
+  const saveAdjustmentState = useCallback(() => {
+    const state = {
+      scale: garmentScale,
+      scaleY: garmentScaleY,
+      x: garmentXOffset,
+      y: garmentYOffset,
+      rotation: garmentRotation,
+      brightness: garmentBrightness,
+      hue: garmentHue,
+      opacity: garmentOpacity,
+    };
+    adjustmentHistoryRef.current.push(state);
+    // Keep only last 20 states
+    if (adjustmentHistoryRef.current.length > 20) {
+      adjustmentHistoryRef.current.shift();
+    }
+  }, [garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentOpacity]);
 
   // Apply camera zoom
   const applyCameraZoom = useCallback((zoomLevel: number) => {
@@ -1560,6 +1580,23 @@ export default function MirrorPage() {
             vibrate(20);
           }
           break;
+        case 'u': // Undo last adjustment
+          if (adjustmentHistoryRef.current.length > 0) {
+            const prev = adjustmentHistoryRef.current.pop()!;
+            setGarmentScale(prev.scale);
+            setGarmentScaleY(prev.scaleY);
+            setGarmentXOffset(prev.x);
+            setGarmentYOffset(prev.y);
+            setGarmentRotation(prev.rotation);
+            setGarmentBrightness(prev.brightness);
+            setGarmentHue(prev.hue);
+            setGarmentOpacity(prev.opacity);
+            setStatus(`↩️ Undo (${adjustmentHistoryRef.current.length} left)`);
+            vibrate(15);
+          } else {
+            setStatus("⚠️ Nothing to undo");
+          }
+          break;
         case 'c': // Copy to clipboard or copy config (with Shift)
           if (e.shiftKey) {
             // Shift+C: Copy garment config as URL params
@@ -1621,12 +1658,14 @@ export default function MirrorPage() {
           break;
         case 'arrowup': // Nudge up
           if (e.shiftKey && !adjustmentsLocked) {
+            saveAdjustmentState();
             setGarmentYOffset(prev => prev - 5);
             setStatus(`↕️ Y: ${garmentYOffset - 5}px`);
           }
           break;
         case 'arrowdown': // Nudge down
           if (e.shiftKey && !adjustmentsLocked) {
+            saveAdjustmentState();
             setGarmentYOffset(prev => prev + 5);
             setStatus(`↕️ Y: ${garmentYOffset + 5}px`);
           }
