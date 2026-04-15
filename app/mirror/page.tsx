@@ -133,7 +133,7 @@ export default function MirrorPage() {
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const lastTouchDistanceRef = useRef<number | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(true); // Show on first launch
   const [favoriteGarments, setFavoriteGarments] = useState<number[]>([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const lastTapTimeRef = useRef(0);
@@ -361,6 +361,13 @@ export default function MirrorPage() {
     } catch {}
   }, []);
 
+  // Check if user has seen onboarding
+  useEffect(() => {
+    try {
+      const seen = localStorage.getItem("virtualfit-onboarding-seen");
+      if (seen) setShowOnboarding(false);
+    } catch {}
+  }, []);
   // Auto-pause camera when tab loses focus (battery saving)
   useEffect(() => {
     if (!autoPauseOnBlur) return;
@@ -3981,6 +3988,52 @@ export default function MirrorPage() {
                 {" | "}🔋 {batteryLevel}%
               </span>
             )}
+          </div>
+        )}
+
+        {/* Onboarding tooltip for first-time users */}
+        {showOnboarding && cameraOn && (
+          <div style={{
+            position: "absolute",
+            bottom: 100, left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(108, 92, 231, 0.95)",
+            padding: "16px 20px",
+            borderRadius: 12,
+            color: "#fff",
+            fontSize: 13,
+            maxWidth: 320,
+            textAlign: "center",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+            zIndex: 200,
+          }}>
+            <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 15 }}>
+              👋 Welcome to VirtualFit!
+            </div>
+            <div style={{ lineHeight: 1.6, marginBottom: 12 }}>
+              Use ← → keys to browse garments<br/>
+              Drag to reposition • Pinch to resize<br/>
+              Press H or ? for all shortcuts
+            </div>
+            <button
+              onClick={() => {
+                setShowOnboarding(false);
+                try {
+                  localStorage.setItem("virtualfit-onboarding-seen", "true");
+                } catch {}
+              }}
+              style={{
+                padding: "8px 24px",
+                background: "#fff",
+                color: "#6C5CE7",
+                border: "none",
+                borderRadius: 6,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Got it!
+            </button>
           </div>
         )}
 
