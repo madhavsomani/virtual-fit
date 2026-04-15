@@ -1956,6 +1956,23 @@ export default function MirrorPage() {
           </div>
         )}
 
+        {/* Smooth mode indicator */}
+        {cameraOn && smoothMode && (
+          <div style={{
+            position: "absolute",
+            top: 50, left: 12,
+            background: "rgba(34, 197, 94, 0.85)",
+            padding: "4px 10px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: 11,
+            fontWeight: 600,
+            pointerEvents: "none",
+          }}>
+            ✨ Smooth
+          </div>
+        )}
+
         {/* Stats info overlay */}
         {cameraOn && showStats && (
           <div style={{
