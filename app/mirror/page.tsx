@@ -156,6 +156,7 @@ export default function MirrorPage() {
   const frameSkipRef = useRef(0);
   const lastClickTimeRef = useRef(0);
   const [showGarmentPreview, setShowGarmentPreview] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -405,6 +406,27 @@ export default function MirrorPage() {
       navigator.vibrate(pattern);
     }
   }, []);
+  
+  // Sound effect helper
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const playSound = useCallback((type: 'click' | 'success' | 'error' = 'click') => {
+    if (!soundEnabled) return;
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    gain.gain.value = 0.1;
+    if (type === 'success') {
+      osc.frequency.value = 880;
+    } else if (type === 'error') {
+      osc.frequency.value = 220;
+    } else {
+      osc.frequency.value = 440;
+    }
+    osc.start();
+    osc.stop(ctx.currentTime + 0.05);
+  }, [soundEnabled]);
 
   // Save current adjustments to history (for undo)
   const saveAdjustmentState = useCallback(() => {
@@ -2673,10 +2695,18 @@ export default function MirrorPage() {
         setStatus(showGarmentPreview ? '🖼️ Preview off' : '🖼️ Preview on');
         vibrate(10);
       }
+      
+      // Alt+M for sound effects toggle
+      if ((e.key === 'm' || e.key === 'M') && e.altKey) {
+        e.preventDefault();
+        setSoundEnabled(prev => !prev);
+        setStatus(soundEnabled ? '🔇 Sound off' : '🔊 Sound on');
+        vibrate(10);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
