@@ -1,9 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
-  experimental: {
-    typedRoutes: true
-  }
+  output: 'export',
+  images: { unoptimized: true },
+  trailingSlash: true,
 };
 
 export default nextConfig;
