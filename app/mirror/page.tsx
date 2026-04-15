@@ -50,11 +50,13 @@ export default function MirrorPage() {
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [autoFit, setAutoFit] = useState(true);
   const [garmentFlipped, setGarmentFlipped] = useState(false);
+  const [aspectLocked, setAspectLocked] = useState(true);
   const tapCountRef = useRef(0);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
   const [garmentScale, setGarmentScale] = useState(1.0);
+  const [garmentScaleY, setGarmentScaleY] = useState(1.0);
   const [isMirrored, setIsMirrored] = useState(true);
   const [garmentYOffset, setGarmentYOffset] = useState(0);
   const [garmentXOffset, setGarmentXOffset] = useState(0);
@@ -464,7 +466,8 @@ export default function MirrorPage() {
     // Position & scale the 3D mesh
     mesh.position.set(sp.x + garmentXOffset * sp.w * 0.01, sp.y + sp.h * 0.45 + garmentYOffset * sp.h * 0.01, 0);
     const scaleX = sp.w * 1.35 * sp.depth * garmentScale * (garmentFlipped ? -1 : 1);
-    const scaleY = sp.h * 1.1 * sp.depth * garmentScale;
+    const effectiveScaleY = aspectLocked ? garmentScale : garmentScaleY;
+    const scaleY = sp.h * 1.1 * sp.depth * effectiveScaleY;
     mesh.scale.set(scaleX, scaleY, Math.abs(scaleX) * 0.3);
     
     // Apply shoulder tilt as Z-rotation
@@ -1596,6 +1599,15 @@ export default function MirrorPage() {
         case 'j': // Flip garment horizontally
           setGarmentFlipped(prev => !prev);
           setStatus(garmentFlipped ? "↩️ Garment normal" : "↪️ Garment flipped");
+          vibrate(20);
+          break;
+        case 'k': // Toggle aspect ratio lock
+          setAspectLocked(prev => !prev);
+          if (aspectLocked) {
+            // Unlock: copy X scale to Y
+            setGarmentScaleY(garmentScale);
+          }
+          setStatus(aspectLocked ? "🔓 Aspect unlocked (stretch mode)" : "🔒 Aspect locked");
           vibrate(20);
           break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select, scale, or brightness presets
