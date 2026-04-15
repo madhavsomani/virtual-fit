@@ -1612,6 +1612,20 @@ export default function MirrorPage() {
             vibrate(10);
           }
           break;
+        case "'": // Random outfit inspiration
+          {
+            const randomIdx = Math.floor(Math.random() * GARMENTS.length);
+            const randomScale = 0.8 + Math.random() * 0.4; // 0.8-1.2
+            const randomBrightness = 80 + Math.floor(Math.random() * 40); // 80-120
+            const randomHue = Math.floor(Math.random() * 360);
+            switchGarment(randomIdx);
+            setGarmentScale(randomScale);
+            setGarmentBrightness(randomBrightness);
+            setGarmentHue(randomHue);
+            setStatus(`🎲 Random: ${GARMENTS[randomIdx].name}`);
+            vibrate([10, 20, 10]);
+          }
+          break;
         case 'c': // Copy to clipboard or copy config (with Shift)
           if (e.shiftKey) {
             // Shift+C: Copy garment config as URL params
