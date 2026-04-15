@@ -71,6 +71,7 @@ export default function MirrorPage() {
   const [photoCountdown, setPhotoCountdown] = useState<number | null>(null);
   const [splitViewGarment, setSplitViewGarment] = useState<number | null>(null);
   const adjustmentHistoryRef = useRef<Array<{scale: number, scaleY: number, x: number, y: number, rotation: number, brightness: number, hue: number, opacity: number}>>([]);
+  const [colorTemp, setColorTemp] = useState(0); // -100 (cool) to +100 (warm)
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -1597,6 +1598,20 @@ export default function MirrorPage() {
             setStatus("⚠️ Nothing to undo");
           }
           break;
+        case ',': // Cooler color temperature
+          if (!adjustmentsLocked) {
+            setColorTemp(prev => Math.max(-100, prev - 20));
+            setStatus(`❄️ Temp: ${colorTemp - 20} (cooler)`);
+            vibrate(10);
+          }
+          break;
+        case '.': // Warmer color temperature
+          if (!adjustmentsLocked) {
+            setColorTemp(prev => Math.min(100, prev + 20));
+            setStatus(`🔥 Temp: ${colorTemp + 20} (warmer)`);
+            vibrate(10);
+          }
+          break;
         case 'c': // Copy to clipboard or copy config (with Shift)
           if (e.shiftKey) {
             // Shift+C: Copy garment config as URL params
@@ -2395,7 +2410,7 @@ export default function MirrorPage() {
             pointerEvents: "auto",
             cursor: isDragging ? "grabbing" : "grab",
             mixBlendMode: blendMode,
-            filter: `${showShadow ? "drop-shadow(4px 6px 8px rgba(0,0,0,0.4))" : ""} saturate(${garmentSaturation}%) contrast(${garmentContrast}%)`.trim(),
+            filter: `${showShadow ? "drop-shadow(4px 6px 8px rgba(0,0,0,0.4))" : ""} saturate(${garmentSaturation}%) contrast(${garmentContrast}%) sepia(${Math.abs(colorTemp) * 0.3}%) hue-rotate(${colorTemp > 0 ? 10 : colorTemp < 0 ? -10 : 0}deg)`.trim(),
           }}
           onMouseDown={(e) => {
             if (!cameraOn) return;
