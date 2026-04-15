@@ -80,6 +80,8 @@ export default function MirrorPage() {
   const [screenshotHistory, setScreenshotHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showSilhouette, setShowSilhouette] = useState(false);
+  const [autoLighting, setAutoLighting] = useState(false);
+  const ambientBrightnessRef = useRef(100);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -576,6 +578,29 @@ export default function MirrorPage() {
     const avgConfidence = keyLandmarks.reduce((sum, lm) => sum + (lm?.visibility ?? 0), 0) / keyLandmarks.length;
     const confidencePercent = Math.round(avgConfidence * 100);
     setTrackingConfidence(confidencePercent);
+    
+    // Auto-lighting: sample video brightness and adjust garment
+    if (autoLighting && videoRef.current && totalFramesRef.current % 30 === 0) {
+      try {
+        const video = videoRef.current;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = 64; tempCanvas.height = 48; // Small sample
+        const tctx = tempCanvas.getContext('2d');
+        if (tctx) {
+          tctx.drawImage(video, 0, 0, 64, 48);
+          const data = tctx.getImageData(0, 0, 64, 48).data;
+          let sum = 0;
+          for (let i = 0; i < data.length; i += 16) { // Sample every 4th pixel
+            sum += (data[i] + data[i+1] + data[i+2]) / 3;
+          }
+          const avgBrightness = sum / (data.length / 16);
+          // Map 0-255 brightness to 70-130% garment brightness
+          ambientBrightnessRef.current = 70 + (avgBrightness / 255) * 60;
+        }
+      } catch {
+        // Ignore errors
+      }
+    }
     
     // Calculate fit quality based on multiple factors
     const shoulderVisible = (ls?.visibility ?? 0) > 0.7 && (rs?.visibility ?? 0) > 0.7;
@@ -1515,7 +1540,9 @@ export default function MirrorPage() {
       const material = garmentMeshRef.current.material as THREE.MeshBasicMaterial | THREE.MeshStandardMaterial;
       // For MeshBasicMaterial, we can use color multiplier with hue shift
       if ('color' in material && material.color) {
-        const brightness = garmentBrightness;
+        // Apply auto-lighting if enabled
+        const effectiveBrightness = autoLighting ? (garmentBrightness * ambientBrightnessRef.current / 100) : garmentBrightness;
+        const brightness = effectiveBrightness;
         // Apply hue rotation (0-360) with brightness
         if (garmentHue === 0) {
           material.color.setRGB(brightness, brightness, brightness);
@@ -2119,11 +2146,16 @@ export default function MirrorPage() {
           setStatus(showSilhouette ? "👤 Silhouette off" : "👤 Silhouette on");
           vibrate(15);
           break;
+        case '@': // Toggle auto-lighting adaptation
+          setAutoLighting(prev => !prev);
+          setStatus(autoLighting ? "💡 Auto-light off" : "💡 Auto-light on");
+          vibrate(15);
+          break;
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
