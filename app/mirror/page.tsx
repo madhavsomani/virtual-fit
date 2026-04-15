@@ -147,6 +147,7 @@ export default function MirrorPage() {
   const [helpPage, setHelpPage] = useState(1);
   const [garmentLoading, setGarmentLoading] = useState(false);
   const [showGarmentInfo, setShowGarmentInfo] = useState(false);
+  const [viewportAspect, setViewportAspect] = useState<'auto' | '9:16' | '4:5' | '1:1'>('auto');
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2591,10 +2592,20 @@ export default function MirrorPage() {
         setStatus(showGarmentInfo ? 'ℹ️ Info closed' : 'ℹ️ Garment info');
         vibrate(15);
       }
+      
+      // Alt+A for viewport aspect ratio cycle
+      if ((e.key === 'a' || e.key === 'A') && e.altKey) {
+        const aspects: typeof viewportAspect[] = ['auto', '9:16', '4:5', '1:1'];
+        const currentIdx = aspects.indexOf(viewportAspect);
+        const nextAspect = aspects[(currentIdx + 1) % aspects.length];
+        setViewportAspect(nextAspect);
+        setStatus(`📏 Aspect: ${nextAspect}`);
+        vibrate(15);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -2912,7 +2923,13 @@ export default function MirrorPage() {
 
       {/* Camera + Three.js overlay */}
       <div 
-        style={{ position: "relative", width: "100%", maxWidth: 640 }}
+        style={{ 
+          position: "relative", 
+          width: "100%", 
+          maxWidth: 640,
+          aspectRatio: viewportAspect === 'auto' ? undefined : viewportAspect.replace(':', '/'),
+          overflow: "hidden",
+        }}
         onTouchStart={(e) => {
           touchStartXRef.current = e.touches[0].clientX;
           touchStartYRef.current = e.touches[0].clientY;
