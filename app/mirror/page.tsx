@@ -46,6 +46,7 @@ export default function MirrorPage() {
   const previousGarmentRef = useRef<number | null>(null);
   const [smoothMode, setSmoothMode] = useState(false);
   const [showPinchFeedback, setShowPinchFeedback] = useState(false);
+  const tapCountRef = useRef(0);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -1839,14 +1840,27 @@ export default function MirrorPage() {
             return;
           }
           
-          // Double tap detection (if no swipe)
+          // Double/triple tap detection (if no swipe)
           const now = Date.now();
           if (now - lastTapTimeRef.current < 300) {
-            // Double tap detected - cycle to next garment
-            vibrate([10, 30, 10]); // haptic pattern for double-tap
-            switchGarment((selectedGarment + 1) % GARMENTS.length);
-            lastTapTimeRef.current = 0;
+            tapCountRef.current++;
+            if (tapCountRef.current >= 2) {
+              // Triple tap detected - reset adjustments
+              vibrate([10, 20, 10, 20, 10]); // haptic pattern for triple-tap
+              saveAdjustmentsForUndo();
+              setGarmentScale(1.0);
+              setGarmentXOffset(0);
+              setGarmentYOffset(0);
+              setStatus("🔄 Position reset! Press Z to undo");
+              tapCountRef.current = 0;
+              lastTapTimeRef.current = 0;
+            } else {
+              // Double tap detected - cycle to next garment
+              vibrate([10, 30, 10]); // haptic pattern for double-tap
+              switchGarment((selectedGarment + 1) % GARMENTS.length);
+            }
           } else {
+            tapCountRef.current = 0;
             lastTapTimeRef.current = now;
           }
         }}
