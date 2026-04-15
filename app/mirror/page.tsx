@@ -1610,6 +1610,18 @@ export default function MirrorPage() {
           setStatus(aspectLocked ? "🔓 Aspect unlocked (stretch mode)" : "🔒 Aspect locked");
           vibrate(20);
           break;
+        case '[': // Decrease Y scale (only in stretch mode)
+          if (!aspectLocked && !adjustmentsLocked) {
+            setGarmentScaleY(prev => Math.max(0.5, prev - 0.05));
+            setStatus(`↕️ Y Scale: ${Math.round((garmentScaleY - 0.05) * 100)}%`);
+          }
+          break;
+        case ']': // Increase Y scale (only in stretch mode)
+          if (!aspectLocked && !adjustmentsLocked) {
+            setGarmentScaleY(prev => Math.min(2.0, prev + 0.05));
+            setStatus(`↕️ Y Scale: ${Math.round((garmentScaleY + 0.05) * 100)}%`);
+          }
+          break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select, scale, or brightness presets
           {
             if (e.shiftKey) {
