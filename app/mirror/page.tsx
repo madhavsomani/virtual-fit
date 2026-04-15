@@ -75,6 +75,8 @@ export default function MirrorPage() {
   const [showRecentPanel, setShowRecentPanel] = useState(false);
   const [comparisonMode, setComparisonMode] = useState(false);
   const [comparisonGarment, setComparisonGarment] = useState<number | null>(null);
+  const [autoPauseOnBlur, setAutoPauseOnBlur] = useState(true);
+  const wasPlayingBeforeBlur = useRef(false);
   const slideshowIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [flashCompare, setFlashCompare] = useState(false);
   const flashIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -354,6 +356,29 @@ export default function MirrorPage() {
     } catch {}
   }, []);
 
+  // Auto-pause camera when tab loses focus (battery saving)
+  useEffect(() => {
+    if (!autoPauseOnBlur) return;
+    
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Tab hidden - pause if playing
+        if (cameraOn && !isPaused) {
+          wasPlayingBeforeBlur.current = true;
+          setIsPaused(true);
+        }
+      } else {
+        // Tab visible - resume if was playing
+        if (wasPlayingBeforeBlur.current && cameraOn) {
+          setIsPaused(false);
+          wasPlayingBeforeBlur.current = false;
+        }
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [autoPauseOnBlur, cameraOn, isPaused]);
   // Haptic feedback helper (mobile)
   const vibrate = useCallback((pattern: number | number[] = 10) => {
     if ('vibrate' in navigator) {
@@ -2450,6 +2475,16 @@ export default function MirrorPage() {
           setComparisonMode(true);
           setStatus(`👁️ Comparing with ${GARMENTS[compareIdx]?.name || 'next'}`);
         }
+        vibrate(15);
+      }
+      
+      // Alt+B to toggle auto-pause on blur
+      if ((e.key === 'b' || e.key === 'B') && e.altKey) {
+        setAutoPauseOnBlur(prev => {
+          const newVal = !prev;
+          setStatus(newVal ? '🔋 Auto-pause on blur ON' : '🔋 Auto-pause on blur OFF');
+          return newVal;
+        });
         vibrate(15);
       }
     };
