@@ -3104,6 +3104,23 @@ export default function MirrorPage() {
           </div>
         )}
 
+        {/* Tint mode indicator */}
+        {cameraOn && tintMode !== 'none' && (
+          <div style={{
+            position: "absolute",
+            top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0) + (!autoFit ? 25 : 0) + (garmentFlipped ? 25 : 0) + (!aspectLocked ? 25 : 0) + (blendMode !== 'normal' ? 25 : 0) + (colorGradeIdx > 0 ? 25 : 0) + (colorTemp !== 0 ? 25 : 0) + (categoryFilter ? 25 : 0) + (autoLighting ? 25 : 0), left: 12,
+            background: tintMode === 'warm' ? "rgba(239, 68, 68, 0.85)" : tintMode === 'cool' ? "rgba(59, 130, 246, 0.85)" : tintMode === 'sepia' ? "rgba(180, 83, 9, 0.85)" : "rgba(79, 70, 229, 0.85)",
+            padding: "4px 10px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: 11,
+            fontWeight: 600,
+            pointerEvents: "none",
+          }}>
+            🎨 {tintMode.charAt(0).toUpperCase() + tintMode.slice(1)}
+          </div>
+        )}
+
         {/* Garment preview grid */}
         {showGarmentGrid && cameraOn && (
           <div style={{
