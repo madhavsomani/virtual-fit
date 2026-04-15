@@ -4141,6 +4141,30 @@ export default function MirrorPage() {
             {currentFps} FPS
           </div>
         )}
+        
+        {/* Active mode badges */}
+        {cameraOn && (batterySaver || adjustmentsLocked || autoLighting || slideshowMode) && (
+          <div style={{
+            position: "absolute",
+            top: showFps ? 44 : 12, right: 12,
+            display: "flex",
+            gap: 6,
+            zIndex: 100,
+          }}>
+            {batterySaver && (
+              <span style={{ background: "rgba(46, 204, 113, 0.8)", padding: "3px 8px", borderRadius: 4, color: "#fff", fontSize: 10, fontWeight: 600 }}>🔋 ECO</span>
+            )}
+            {adjustmentsLocked && (
+              <span style={{ background: "rgba(231, 76, 60, 0.8)", padding: "3px 8px", borderRadius: 4, color: "#fff", fontSize: 10, fontWeight: 600 }}>🔒 LOCK</span>
+            )}
+            {autoLighting && (
+              <span style={{ background: "rgba(241, 196, 15, 0.8)", padding: "3px 8px", borderRadius: 4, color: "#fff", fontSize: 10, fontWeight: 600 }}>💡 AUTO</span>
+            )}
+            {slideshowMode && (
+              <span style={{ background: "rgba(108, 92, 231, 0.8)", padding: "3px 8px", borderRadius: 4, color: "#fff", fontSize: 10, fontWeight: 600 }}>▶️ PLAY</span>
+            )}
+          </div>
+        )}
 
         {/* Loading indicator */}
         {garmentLoading && (
