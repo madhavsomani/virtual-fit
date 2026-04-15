@@ -172,6 +172,7 @@ export default function MirrorPage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [frameTime, setFrameTime] = useState(0);
   const [showDeviceInfo, setShowDeviceInfo] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2870,6 +2871,13 @@ export default function MirrorPage() {
         setStatus('🔗 Config URL copied!');
         vibrate(20);
       }
+      
+      // Alt+/ for about panel
+      if (e.key === '/' && e.altKey) {
+        e.preventDefault();
+        setShowAbout(prev => !prev);
+        vibrate(10);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
@@ -4653,6 +4661,37 @@ export default function MirrorPage() {
           }}>
             <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#fff", animation: "pulse 1s infinite" }} />
             REC {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
+          </div>
+        )}
+        
+        {/* About panel */}
+        {showAbout && (
+          <div style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.9)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2000,
+          }} onClick={() => setShowAbout(false)}>
+            <div style={{
+              background: "#1a1a2e",
+              padding: 32,
+              borderRadius: 16,
+              maxWidth: 400,
+              textAlign: "center",
+              color: "#fff",
+            }} onClick={e => e.stopPropagation()}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>👗</div>
+              <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>VirtualFit v2.5.0</div>
+              <div style={{ fontSize: 14, opacity: 0.8, marginBottom: 16 }}>200+ Features • Virtual Try-On</div>
+              <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 16 }}>
+                Built with Next.js, Three.js, MediaPipe<br/>
+                © 2026 VirtualFit Team
+              </div>
+              <div style={{ fontSize: 11, opacity: 0.5 }}>Press Alt+/ or click outside to close</div>
+            </div>
           </div>
         )}
         
