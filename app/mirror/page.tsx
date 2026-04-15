@@ -67,6 +67,7 @@ export default function MirrorPage() {
   const [tintMode, setTintMode] = useState<'none' | 'warm' | 'cool' | 'sepia' | 'night'>('none');
   const [distanceHint, setDistanceHint] = useState<'too-close' | 'optimal' | 'too-far' | null>(null);
   const [showFitGuide, setShowFitGuide] = useState(false);
+  const [garmentFadeIn, setGarmentFadeIn] = useState(true);
   const [flashCompare, setFlashCompare] = useState(false);
   const flashIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [garmentSaturation, setGarmentSaturation] = useState(100);
@@ -1011,9 +1012,13 @@ export default function MirrorPage() {
     const garment = GARMENTS[index];
     if (!garment) return;
     
-    // Trigger visual transition
+    // Trigger visual transition with fade
+    setGarmentFadeIn(false);
     setGarmentTransition(true);
-    setTimeout(() => setGarmentTransition(false), 300);
+    setTimeout(() => {
+      setGarmentTransition(false);
+      setGarmentFadeIn(true);
+    }, 300);
     
     // Track previous garment for quick switch
     previousGarmentRef.current = selectedGarment;
@@ -2830,7 +2835,8 @@ export default function MirrorPage() {
             top: 0, left: 0,
             width: "100%", height: "100%",
             transform: `${isMirrored ? "scaleX(-1)" : "none"} ${garmentTransition ? "scale(1.02)" : "scale(1)"}`,
-            transition: garmentTransition ? "transform 0.15s ease-out" : "transform 0.15s ease-in",
+            transition: `transform 0.15s ease-out, opacity 0.2s ease-in-out`,
+            opacity: garmentFadeIn ? 1 : 0.3,
             pointerEvents: "auto",
             cursor: isDragging ? "grabbing" : "grab",
             mixBlendMode: blendMode,
