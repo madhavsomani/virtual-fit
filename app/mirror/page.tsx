@@ -2943,6 +2943,23 @@ export default function MirrorPage() {
           </div>
         )}
 
+        {/* Auto-lighting indicator */}
+        {cameraOn && autoLighting && (
+          <div style={{
+            position: "absolute",
+            top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0) + (!autoFit ? 25 : 0) + (garmentFlipped ? 25 : 0) + (!aspectLocked ? 25 : 0) + (blendMode !== 'normal' ? 25 : 0) + (colorGradeIdx > 0 ? 25 : 0) + (colorTemp !== 0 ? 25 : 0) + (categoryFilter ? 25 : 0), left: 12,
+            background: "rgba(251, 191, 36, 0.85)",
+            padding: "4px 10px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: 11,
+            fontWeight: 600,
+            pointerEvents: "none",
+          }}>
+            💡 Auto-light: {Math.round(ambientBrightnessRef.current)}%
+          </div>
+        )}
+
         {/* Screenshot history overlay */}
         {showHistory && screenshotHistory.length > 0 && (
           <div style={{
