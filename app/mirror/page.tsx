@@ -503,11 +503,13 @@ export default function MirrorPage() {
     const sp = smoothPos.current;
 
     // Position & scale the 3D mesh
-    mesh.position.set(sp.x + garmentXOffset * sp.w * 0.01, sp.y + sp.h * 0.45 + garmentYOffset * sp.h * 0.01, 0);
-    const scaleX = sp.w * 1.35 * sp.depth * garmentScale * (garmentFlipped ? -1 : 1);
+    // Note: PlaneGeometry is 1x1.3 units, so scale directly maps to pixels
+    mesh.position.set(sp.x + garmentXOffset * sp.w * 0.01, sp.y + sp.h * 0.5 + garmentYOffset * sp.h * 0.01, 0);
+    const baseScaleX = sp.w * 1.2 * garmentScale * (garmentFlipped ? -1 : 1);
     const effectiveScaleY = aspectLocked ? garmentScale : garmentScaleY;
-    const scaleY = sp.h * 1.1 * sp.depth * effectiveScaleY;
-    mesh.scale.set(scaleX, scaleY, Math.abs(scaleX) * 0.3);
+    const baseScaleY = sp.h * 0.9 * effectiveScaleY;
+    // Apply depth scaling (subtle: closer = slightly larger)
+    mesh.scale.set(baseScaleX * sp.depth, baseScaleY * sp.depth, Math.abs(baseScaleX) * 0.3);
     
     // Apply shoulder tilt as Z-rotation
     mesh.rotation.z = sp.tilt + garmentRotation;
