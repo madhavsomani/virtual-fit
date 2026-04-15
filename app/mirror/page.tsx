@@ -81,6 +81,7 @@ export default function MirrorPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [showSilhouette, setShowSilhouette] = useState(false);
   const [autoLighting, setAutoLighting] = useState(false);
+  const [showGarmentGrid, setShowGarmentGrid] = useState(false);
   const ambientBrightnessRef = useRef(100);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
@@ -2151,11 +2152,19 @@ export default function MirrorPage() {
           setStatus(autoLighting ? "💡 Auto-light off" : "💡 Auto-light on");
           vibrate(15);
           break;
+        case '+': // Toggle garment preview grid
+        case '=': // Also = without shift
+          if (!e.shiftKey) {
+            setShowGarmentGrid(prev => !prev);
+            setStatus(showGarmentGrid ? "👕 Grid hidden" : "👕 Garment grid");
+            vibrate(15);
+          }
+          break;
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -2957,6 +2966,44 @@ export default function MirrorPage() {
             pointerEvents: "none",
           }}>
             💡 Auto-light: {Math.round(ambientBrightnessRef.current)}%
+          </div>
+        )}
+
+        {/* Garment preview grid */}
+        {showGarmentGrid && cameraOn && (
+          <div style={{
+            position: "absolute",
+            top: 50, left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(0,0,0,0.9)",
+            padding: 12,
+            borderRadius: 12,
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 8,
+            maxWidth: "80%",
+          }}>
+            {GARMENTS.map((g, idx) => (
+              <div
+                key={idx}
+                onClick={() => {
+                  switchGarment(idx);
+                  setShowGarmentGrid(false);
+                }}
+                style={{
+                  cursor: "pointer",
+                  padding: 8,
+                  borderRadius: 8,
+                  background: idx === selectedGarment ? "rgba(147, 51, 234, 0.5)" : "rgba(255,255,255,0.1)",
+                  border: idx === selectedGarment ? "2px solid #9333ea" : "2px solid transparent",
+                  textAlign: "center",
+                  transition: "all 0.2s",
+                }}
+              >
+                <div style={{ fontSize: 24 }}>{g.emoji}</div>
+                <div style={{ color: "#fff", fontSize: 10, marginTop: 4 }}>{g.name}</div>
+              </div>
+            ))}
           </div>
         )}
 
