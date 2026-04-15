@@ -76,6 +76,7 @@ export default function MirrorPage() {
   const shakeThreshold = 15; // acceleration threshold for shake detection
   const sessionStartRef = useRef<number | null>(null);
   const [sessionDuration, setSessionDuration] = useState(0);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -2014,11 +2015,31 @@ export default function MirrorPage() {
             }
           }
           break;
+        case '6': // Filter: All garments
+          setCategoryFilter(null);
+          setStatus("👕 Filter: All");
+          vibrate(15);
+          break;
+        case '7': // Filter: Shirts/T-shirts
+          setCategoryFilter('shirt');
+          setStatus("👕 Filter: Shirts");
+          vibrate(15);
+          break;
+        case '8': // Filter: Hoodies/Jackets
+          setCategoryFilter('outerwear');
+          setStatus("🧥 Filter: Outerwear");
+          vibrate(15);
+          break;
+        case '9': // Filter: Polos
+          setCategoryFilter('polo');
+          setStatus("🎽 Filter: Polos");
+          vibrate(15);
+          break;
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -2786,6 +2807,23 @@ export default function MirrorPage() {
             pointerEvents: "none",
           }}>
             {colorTemp > 0 ? '🔥' : '❄️'} Temp: {colorTemp > 0 ? '+' : ''}{colorTemp}
+          </div>
+        )}
+
+        {/* Category filter indicator */}
+        {cameraOn && categoryFilter && (
+          <div style={{
+            position: "absolute",
+            top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0) + (!autoFit ? 25 : 0) + (garmentFlipped ? 25 : 0) + (!aspectLocked ? 25 : 0) + (blendMode !== 'normal' ? 25 : 0) + (colorGradeIdx > 0 ? 25 : 0) + (colorTemp !== 0 ? 25 : 0), left: 12,
+            background: "rgba(16, 185, 129, 0.85)",
+            padding: "4px 10px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: 11,
+            fontWeight: 600,
+            pointerEvents: "none",
+          }}>
+            🏷️ {categoryFilter === 'shirt' ? 'Shirts' : categoryFilter === 'outerwear' ? 'Outerwear' : 'Polos'}
           </div>
         )}
         {/* Photo countdown overlay */}
