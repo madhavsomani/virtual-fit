@@ -176,6 +176,7 @@ export default function MirrorPage() {
   const [pressedKey, setPressedKey] = useState<string | null>(null);
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [lastTapTime, setLastTapTime] = useState(0);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -964,14 +965,18 @@ export default function MirrorPage() {
   // Start camera + pose detection
   const startCamera = useCallback(async () => {
     setIsLoading(true);
+    setLoadingProgress(10);
     try {
       setStatus("Starting camera...");
+      setLoadingProgress(20);
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: facingMode, width: { ideal: 640 }, height: { ideal: 480 } },
       });
+      setLoadingProgress(50);
       if (!videoRef.current) return;
       videoRef.current.srcObject = stream;
       await videoRef.current.play();
+      setLoadingProgress(80);
 
       // Check for zoom capability
       const track = stream.getVideoTracks()[0];
@@ -1010,6 +1015,7 @@ export default function MirrorPage() {
       poseLandmarkerRef.current = poseLandmarker;
 
       setCameraOn(true);
+      setLoadingProgress(100);
       setIsLoading(false);
       setStatus("✅ Tracking active — move around!");
       
@@ -3513,6 +3519,39 @@ export default function MirrorPage() {
             pointerEvents: "none",
           }}>
             X: {garmentXOffset.toFixed(0)} | Y: {garmentYOffset.toFixed(0)} | 🔍 {(garmentScale * 100).toFixed(0)}%
+          </div>
+        )}
+
+        {/* Initial loading with progress bar */}
+        {isLoading && !cameraOn && (
+          <div style={{
+            position: "absolute",
+            top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "rgba(0,0,0,0.85)",
+            color: "#fff",
+            padding: 24,
+            borderRadius: 16,
+            textAlign: "center",
+            minWidth: 200,
+          }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>📷</div>
+            <div style={{ marginBottom: 12 }}>Starting camera...</div>
+            <div style={{
+              width: "100%",
+              height: 6,
+              background: "rgba(255,255,255,0.2)",
+              borderRadius: 3,
+              overflow: "hidden",
+            }}>
+              <div style={{
+                width: `${loadingProgress}%`,
+                height: "100%",
+                background: "linear-gradient(90deg, #6c5ce7, #a29bfe)",
+                transition: "width 0.3s ease",
+              }} />
+            </div>
+            <div style={{ fontSize: 12, opacity: 0.7, marginTop: 8 }}>{loadingProgress}%</div>
           </div>
         )}
 
