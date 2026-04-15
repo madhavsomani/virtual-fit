@@ -4936,6 +4936,8 @@ export default function MirrorPage() {
             <div style={{ marginBottom: 8 }}>📸 Screenshots: {screenshotHistory.length}</div>
             <div style={{ marginBottom: 8 }}>🎨 Adjustments: {sessionStats.adjustments}</div>
             <div style={{ marginBottom: 8 }}>💾 Presets: {Object.keys(savedPresets).length}</div>
+            <div style={{ marginBottom: 8 }}>👗 Garments: {GARMENTS.length}</div>
+            <div style={{ marginBottom: 8 }}>⭐ Favorites: {favoriteGarments.length}</div>
             <div style={{ marginBottom: 8 }}>⏱️ Duration: {Math.floor(sessionDuration / 60)}:{String(sessionDuration % 60).padStart(2, '0')}</div>
             <div style={{ opacity: 0.7, fontSize: 10, marginTop: 8 }}>Alt+Q to close</div>
           </div>
