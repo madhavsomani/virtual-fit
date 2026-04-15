@@ -2452,6 +2452,23 @@ export default function MirrorPage() {
           </div>
         )}
 
+        {/* Color grade indicator */}
+        {cameraOn && colorGradeIdx > 0 && (
+          <div style={{
+            position: "absolute",
+            top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0) + (!autoFit ? 25 : 0) + (garmentFlipped ? 25 : 0) + (!aspectLocked ? 25 : 0) + (blendMode !== 'normal' ? 25 : 0), left: 12,
+            background: "rgba(234, 88, 12, 0.85)",
+            padding: "4px 10px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: 11,
+            fontWeight: 600,
+            pointerEvents: "none",
+          }}>
+            🎬 {['None', 'Warm', 'Cool', 'Vintage', 'Vivid', 'Noir'][colorGradeIdx]}
+          </div>
+        )}
+
         {/* Quick menu (long press) */}
         {showQuickMenu && (
           <div
