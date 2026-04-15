@@ -173,6 +173,7 @@ export default function MirrorPage() {
   const [frameTime, setFrameTime] = useState(0);
   const [showDeviceInfo, setShowDeviceInfo] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
+  const [pressedKey, setPressedKey] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2879,8 +2880,23 @@ export default function MirrorPage() {
         vibrate(10);
       }
     };
+    
+    // Key indicator handler
+    const handleKeyIndicator = (e: KeyboardEvent) => {
+      let keyLabel = e.key.toUpperCase();
+      if (e.altKey && e.key !== 'Alt') keyLabel = `Alt+${keyLabel}`;
+      if (e.ctrlKey && e.key !== 'Control') keyLabel = `Ctrl+${keyLabel}`;
+      if (e.shiftKey && e.key !== 'Shift') keyLabel = `Shift+${keyLabel}`;
+      setPressedKey(keyLabel);
+      setTimeout(() => setPressedKey(null), 500);
+    };
+    
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    document.addEventListener("keydown", handleKeyIndicator);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("keydown", handleKeyIndicator);
+    };
   }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled, nightMode, privacyMode, selfieCountdown, uiTheme, compactMode, showPerformance]);
 
   // Toggle torch/flashlight
@@ -4661,6 +4677,25 @@ export default function MirrorPage() {
           }}>
             <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#fff", animation: "pulse 1s infinite" }} />
             REC {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
+          </div>
+        )}
+        
+        {/* Pressed key indicator */}
+        {pressedKey && cameraOn && (
+          <div style={{
+            position: "absolute",
+            bottom: 130, right: 12,
+            background: "rgba(108, 92, 231, 0.9)",
+            padding: "6px 12px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: 13,
+            fontWeight: 600,
+            fontFamily: "monospace",
+            zIndex: 150,
+            animation: "fadeIn 0.1s ease-out",
+          }}>
+            ⌨️ {pressedKey}
           </div>
         )}
         
