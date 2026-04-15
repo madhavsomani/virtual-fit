@@ -160,6 +160,7 @@ export default function MirrorPage() {
   const [nightMode, setNightMode] = useState(false);
   const [showMilestone, setShowMilestone] = useState(false);
   const [garmentSearch, setGarmentSearch] = useState('');
+  const [showGestureTip, setShowGestureTip] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -3090,6 +3091,9 @@ export default function MirrorPage() {
             setShowEdgeHints(true);
             setHasSeenEdgeHints(true);
             setTimeout(() => setShowEdgeHints(false), 2000);
+            // Also show gesture tip for mobile users
+            setShowGestureTip(true);
+            setTimeout(() => setShowGestureTip(false), 5000);
           }
           
           // Long press detection for quick menu (single finger only)
@@ -4201,6 +4205,36 @@ export default function MirrorPage() {
               }}
             >
               Got it!
+            </button>
+          </div>
+        )}
+        
+        {/* Touch gesture tip for mobile */}
+        {showGestureTip && cameraOn && (
+          <div style={{
+            position: "absolute",
+            bottom: 80, left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(0,0,0,0.85)",
+            padding: "12px 20px",
+            borderRadius: 12,
+            color: "#fff",
+            fontSize: 12,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            zIndex: 150,
+          }}>
+            <div style={{ fontSize: 24, animation: "bounce 1s infinite" }}>🤏</div>
+            <div>
+              <div style={{ fontWeight: 600 }}>Pinch to resize</div>
+              <div style={{ opacity: 0.7, fontSize: 11 }}>Two-finger pinch to scale garment</div>
+            </div>
+            <button
+              onClick={() => setShowGestureTip(false)}
+              style={{ background: "transparent", border: "none", color: "#fff", cursor: "pointer", fontSize: 16 }}
+            >
+              ✕
             </button>
           </div>
         )}
