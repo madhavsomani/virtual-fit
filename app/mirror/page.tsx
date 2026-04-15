@@ -56,6 +56,8 @@ export default function MirrorPage() {
     rotation: number; brightness: number; hue: number; flipped: boolean;
   }>>({});
   const tapCountRef = useRef(0);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [showQuickMenu, setShowQuickMenu] = useState(false);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -2043,8 +2045,21 @@ export default function MirrorPage() {
         style={{ position: "relative", width: "100%", maxWidth: 640 }}
         onTouchStart={(e) => {
           touchStartXRef.current = e.touches[0].clientX;
+          
+          // Long press detection for quick menu (single finger only)
+          if (e.touches.length === 1) {
+            longPressTimerRef.current = setTimeout(() => {
+              vibrate(30);
+              setShowQuickMenu(true);
+            }, 500);
+          }
+          
           // Two-finger touch starts drag mode + pinch
           if (e.touches.length === 2) {
+            if (longPressTimerRef.current) {
+              clearTimeout(longPressTimerRef.current);
+              longPressTimerRef.current = null;
+            }
             const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
             dragStartRef.current = { x: midX, y: midY, offsetX: garmentXOffset, offsetY: garmentYOffset };
@@ -2058,6 +2073,11 @@ export default function MirrorPage() {
           }
         }}
         onTouchMove={(e) => {
+          // Cancel long press on move
+          if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
+          }
           // Two-finger drag for positioning + pinch for scale
           if (isDragging && e.touches.length === 2 && !adjustmentsLocked) {
             const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
@@ -2080,6 +2100,11 @@ export default function MirrorPage() {
           }
         }}
         onTouchEnd={(e) => {
+          // Clear long press timer
+          if (longPressTimerRef.current) {
+            clearTimeout(longPressTimerRef.current);
+            longPressTimerRef.current = null;
+          }
           if (isDragging) {
             setIsDragging(false);
             setShowPinchFeedback(false);
@@ -2342,6 +2367,61 @@ export default function MirrorPage() {
             pointerEvents: "none",
           }}>
             ↔️ Stretch
+          </div>
+        )}
+
+        {/* Quick menu (long press) */}
+        {showQuickMenu && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.7)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+            }}
+            onClick={() => setShowQuickMenu(false)}
+          >
+            <div style={{
+              background: "#1e1e1e",
+              borderRadius: 16,
+              padding: 16,
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 12,
+              maxWidth: 280,
+            }} onClick={e => e.stopPropagation()}>
+              {[
+                { icon: "❤️", label: "Favorite", action: () => { toggleFavorite(selectedGarment); setShowQuickMenu(false); } },
+                { icon: "📸", label: "Screenshot", action: () => { captureScreenshot(); setShowQuickMenu(false); } },
+                { icon: "🔄", label: "Reset", action: () => { setGarmentScale(1); setGarmentXOffset(0); setGarmentYOffset(0); setShowQuickMenu(false); } },
+                { icon: "↪️", label: "Flip", action: () => { setGarmentFlipped(!garmentFlipped); setShowQuickMenu(false); } },
+                { icon: "🔒", label: adjustmentsLocked ? "Unlock" : "Lock", action: () => { setAdjustmentsLocked(!adjustmentsLocked); setShowQuickMenu(false); } },
+                { icon: "⚙️", label: "Settings", action: () => { setShowHelp(true); setShowQuickMenu(false); } },
+              ].map((item, i) => (
+                <button
+                  key={i}
+                  onClick={item.action}
+                  style={{
+                    background: "#333",
+                    border: "none",
+                    borderRadius: 12,
+                    padding: "12px 8px",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 4,
+                    color: "#fff",
+                    cursor: "pointer",
+                  }}
+                >
+                  <span style={{ fontSize: 24 }}>{item.icon}</span>
+                  <span style={{ fontSize: 11 }}>{item.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
