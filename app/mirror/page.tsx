@@ -45,6 +45,7 @@ export default function MirrorPage() {
   } | null>(null);
   const previousGarmentRef = useRef<number | null>(null);
   const [smoothMode, setSmoothMode] = useState(false);
+  const [showPinchFeedback, setShowPinchFeedback] = useState(false);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -1788,6 +1789,7 @@ export default function MirrorPage() {
             pinchStartDistRef.current = Math.sqrt(dx * dx + dy * dy);
             pinchStartScaleRef.current = garmentScale;
             setIsDragging(true);
+            setShowPinchFeedback(true);
           }
         }}
         onTouchMove={(e) => {
@@ -1808,12 +1810,14 @@ export default function MirrorPage() {
               const ratio = dist / pinchStartDistRef.current;
               const newScale = Math.max(0.5, Math.min(2.0, pinchStartScaleRef.current * ratio));
               setGarmentScale(newScale);
+              setShowPinchFeedback(true);
             }
           }
         }}
         onTouchEnd={(e) => {
           if (isDragging) {
             setIsDragging(false);
+            setShowPinchFeedback(false);
             return;
           }
           if (!cameraOn) return;
@@ -1953,6 +1957,28 @@ export default function MirrorPage() {
             <span style={{ color: "#fff", fontSize: 11 }}>
               {trackingConfidence >= 70 ? "✨ Great fit" : trackingConfidence >= 40 ? "👍 Good" : "👀 Move closer"}
             </span>
+          </div>
+        )}
+
+        {/* Pinch zoom feedback */}
+        {cameraOn && showPinchFeedback && (
+          <div style={{
+            position: "absolute",
+            top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "rgba(0,0,0,0.7)",
+            padding: "16px 24px",
+            borderRadius: 12,
+            color: "#fff",
+            fontSize: 24,
+            fontWeight: 700,
+            pointerEvents: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}>
+            <span>🔍</span>
+            <span>{Math.round(garmentScale * 100)}%</span>
           </div>
         )}
 
