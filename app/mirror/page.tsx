@@ -2879,6 +2879,23 @@ export default function MirrorPage() {
         setShowAbout(prev => !prev);
         vibrate(10);
       }
+      
+      // Escape to close all panels
+      if (e.key === 'Escape') {
+        setShowHelp(false);
+        setShowGarmentGrid(false);
+        setShowHistory(false);
+        setShowStats(false);
+        setShowGarmentInfo(false);
+        setShowColorPicker(false);
+        setShowFitGuide(false);
+        setShowQuickMenu(false);
+        setShowPerformance(false);
+        setShowDeviceInfo(false);
+        setShowAbout(false);
+        setStatus('❌ All panels closed');
+        vibrate(10);
+      }
     };
     
     // Key indicator handler
