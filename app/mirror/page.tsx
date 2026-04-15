@@ -1438,8 +1438,28 @@ export default function MirrorPage() {
         case 's': // Screenshot
           if (cameraOn) captureScreenshot();
           break;
-        case 'c': // Copy to clipboard
-          if (cameraOn) copyToClipboard();
+        case 'c': // Copy to clipboard or copy config (with Shift)
+          if (e.shiftKey) {
+            // Shift+C: Copy garment config as URL params
+            const params = new URLSearchParams({
+              g: String(selectedGarment),
+              s: garmentScale.toFixed(2),
+              sy: garmentScaleY.toFixed(2),
+              x: String(garmentXOffset),
+              y: String(garmentYOffset),
+              r: garmentRotation.toFixed(2),
+              b: String(garmentBrightness),
+              h: String(garmentHue),
+              f: garmentFlipped ? '1' : '0',
+            });
+            const shareUrl = `${window.location.origin}/mirror?${params.toString()}`;
+            navigator.clipboard.writeText(shareUrl).then(() => {
+              setStatus("📎 Config URL copied!");
+              vibrate(20);
+            });
+          } else if (cameraOn) {
+            copyToClipboard();
+          }
           break;
         case 'arrowright': // Next garment or nudge right
         case 'n':
