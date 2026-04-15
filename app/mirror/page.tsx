@@ -77,6 +77,8 @@ export default function MirrorPage() {
   const sessionStartRef = useRef<number | null>(null);
   const [sessionDuration, setSessionDuration] = useState(0);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [screenshotHistory, setScreenshotHistory] = useState<string[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -1184,6 +1186,14 @@ export default function MirrorPage() {
       a.href = url;
       a.download = `virtualfit-${Date.now()}.png`;
       a.click();
+      
+      // Save to history (keep last 10)
+      const dataUrl = compositeCanvas.toDataURL('image/png');
+      setScreenshotHistory(prev => {
+        const updated = [dataUrl, ...prev].slice(0, 10);
+        return updated;
+      });
+      
       URL.revokeObjectURL(url);
       vibrate(25);
       setStatus("📸 Screenshot saved!");
@@ -2035,11 +2045,16 @@ export default function MirrorPage() {
           setStatus("🎽 Filter: Polos");
           vibrate(15);
           break;
+        case '0': // Toggle screenshot history
+          setShowHistory(prev => !prev);
+          setStatus(showHistory ? "🖼️ History hidden" : `🖼️ History (${screenshotHistory.length})`);
+          vibrate(15);
+          break;
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -2824,6 +2839,41 @@ export default function MirrorPage() {
             pointerEvents: "none",
           }}>
             🏷️ {categoryFilter === 'shirt' ? 'Shirts' : categoryFilter === 'outerwear' ? 'Outerwear' : 'Polos'}
+          </div>
+        )}
+
+        {/* Screenshot history overlay */}
+        {showHistory && screenshotHistory.length > 0 && (
+          <div style={{
+            position: "absolute",
+            top: 50, right: 12,
+            background: "rgba(0,0,0,0.9)",
+            padding: 12,
+            borderRadius: 12,
+            maxWidth: 200,
+            maxHeight: 300,
+            overflowY: "auto",
+          }}>
+            <div style={{ color: "#fff", fontSize: 12, fontWeight: 600, marginBottom: 8 }}>
+              🖼️ Recent ({screenshotHistory.length})
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {screenshotHistory.map((img, idx) => (
+                <img
+                  key={idx}
+                  src={img}
+                  alt={`Screenshot ${idx + 1}`}
+                  style={{ width: "100%", borderRadius: 6, cursor: "pointer" }}
+                  onClick={() => {
+                    const a = document.createElement('a');
+                    a.href = img;
+                    a.download = `virtualfit-history-${idx}.png`;
+                    a.click();
+                  }}
+                />
+              ))}
+            </div>
+            <div style={{ color: "#9ca3af", fontSize: 10, marginTop: 8 }}>Click to download • 0 to close</div>
           </div>
         )}
         {/* Photo countdown overlay */}
