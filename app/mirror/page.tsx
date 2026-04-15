@@ -2576,6 +2576,41 @@ export default function MirrorPage() {
         </div>
       )}
 
+      {/* Touch-friendly size buttons */}
+      {cameraOn && isMobileDevice && (
+        <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 16, justifyContent: "center" }}>
+          <button
+            onClick={() => {
+              setGarmentScale(prev => Math.max(0.5, prev - 0.1));
+              vibrate(15);
+            }}
+            style={{
+              width: 48, height: 48, fontSize: 24, fontWeight: 700,
+              background: "#1e293b", color: "#fff", border: "1px solid #334155",
+              borderRadius: 12, cursor: "pointer",
+            }}
+          >
+            −
+          </button>
+          <span style={{ color: "#9ca3af", fontSize: 14, minWidth: 80, textAlign: "center" }}>
+            👕 {Math.round(garmentScale * 100)}%
+          </span>
+          <button
+            onClick={() => {
+              setGarmentScale(prev => Math.min(1.5, prev + 0.1));
+              vibrate(15);
+            }}
+            style={{
+              width: 48, height: 48, fontSize: 24, fontWeight: 700,
+              background: "#1e293b", color: "#fff", border: "1px solid #334155",
+              borderRadius: 12, cursor: "pointer",
+            }}
+          >
+            +
+          </button>
+        </div>
+      )}
+
       {/* Quick Presets */}
       {cameraOn && (
         <div style={{ marginTop: 12, display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
