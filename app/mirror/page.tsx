@@ -164,18 +164,28 @@ export default function MirrorPage() {
       
       // Load config from URL params (for shareable links)
       const params = new URLSearchParams(window.location.search);
+      let loadedFromUrl = false;
       if (params.has('g')) {
         const g = parseInt(params.get('g') || '0', 10);
-        if (!isNaN(g) && g >= 0) setSelectedGarment(g);
+        if (!isNaN(g) && g >= 0) {
+          setSelectedGarment(g);
+          loadedFromUrl = true;
+        }
       }
-      if (params.has('s')) setGarmentScale(parseFloat(params.get('s') || '1'));
-      if (params.has('sy')) setGarmentScaleY(parseFloat(params.get('sy') || '1'));
-      if (params.has('x')) setGarmentXOffset(parseInt(params.get('x') || '0', 10));
-      if (params.has('y')) setGarmentYOffset(parseInt(params.get('y') || '0', 10));
-      if (params.has('r')) setGarmentRotation(parseFloat(params.get('r') || '0'));
-      if (params.has('b')) setGarmentBrightness(parseInt(params.get('b') || '100', 10));
-      if (params.has('h')) setGarmentHue(parseInt(params.get('h') || '0', 10));
-      if (params.has('f')) setGarmentFlipped(params.get('f') === '1');
+      if (params.has('s')) { setGarmentScale(parseFloat(params.get('s') || '1')); loadedFromUrl = true; }
+      if (params.has('sy')) { setGarmentScaleY(parseFloat(params.get('sy') || '1')); loadedFromUrl = true; }
+      if (params.has('x')) { setGarmentXOffset(parseInt(params.get('x') || '0', 10)); loadedFromUrl = true; }
+      if (params.has('y')) { setGarmentYOffset(parseInt(params.get('y') || '0', 10)); loadedFromUrl = true; }
+      if (params.has('r')) { setGarmentRotation(parseFloat(params.get('r') || '0')); loadedFromUrl = true; }
+      if (params.has('b')) { setGarmentBrightness(parseInt(params.get('b') || '100', 10)); loadedFromUrl = true; }
+      if (params.has('h')) { setGarmentHue(parseInt(params.get('h') || '0', 10)); loadedFromUrl = true; }
+      if (params.has('f')) { setGarmentFlipped(params.get('f') === '1'); loadedFromUrl = true; }
+      
+      if (loadedFromUrl) {
+        // Show toast and clear URL params
+        setTimeout(() => setStatus("📥 Loaded shared config!"), 500);
+        window.history.replaceState({}, '', '/mirror');
+      }
     } catch {
       console.warn("Failed to load saved garments");
     }
