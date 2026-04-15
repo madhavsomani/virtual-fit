@@ -51,6 +51,10 @@ export default function MirrorPage() {
   const [autoFit, setAutoFit] = useState(true);
   const [garmentFlipped, setGarmentFlipped] = useState(false);
   const [aspectLocked, setAspectLocked] = useState(true);
+  const [perGarmentAdjustments, setPerGarmentAdjustments] = useState<Record<number, {
+    scale: number; scaleY: number; xOffset: number; yOffset: number;
+    rotation: number; brightness: number; hue: number; flipped: boolean;
+  }>>({});
   const tapCountRef = useRef(0);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
@@ -761,6 +765,35 @@ export default function MirrorPage() {
     } catch {
       // Ignore
     }
+    
+    // Save current garment's adjustments before switching
+    setPerGarmentAdjustments(prev => ({
+      ...prev,
+      [selectedGarment]: {
+        scale: garmentScale,
+        scaleY: garmentScaleY,
+        xOffset: garmentXOffset,
+        yOffset: garmentYOffset,
+        rotation: garmentRotation,
+        brightness: garmentBrightness,
+        hue: garmentHue,
+        flipped: garmentFlipped,
+      }
+    }));
+    
+    // Restore new garment's adjustments if saved
+    const saved = perGarmentAdjustments[index];
+    if (saved) {
+      setGarmentScale(saved.scale);
+      setGarmentScaleY(saved.scaleY);
+      setGarmentXOffset(saved.xOffset);
+      setGarmentYOffset(saved.yOffset);
+      setGarmentRotation(saved.rotation);
+      setGarmentBrightness(saved.brightness);
+      setGarmentHue(saved.hue);
+      setGarmentFlipped(saved.flipped);
+    }
+    
     setStatus(`Loading ${garment.name}...`);
     
     // Fade out current garment
