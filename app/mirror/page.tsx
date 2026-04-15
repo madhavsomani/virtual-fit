@@ -59,6 +59,7 @@ export default function MirrorPage() {
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [showQuickMenu, setShowQuickMenu] = useState(false);
   const [blendMode, setBlendMode] = useState<'normal' | 'multiply' | 'screen' | 'overlay'>('normal');
+  const [showShadow, setShowShadow] = useState(true);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -1728,6 +1729,11 @@ export default function MirrorPage() {
             vibrate(20);
           }
           break;
+        case ';': // Toggle shadow
+          setShowShadow(prev => !prev);
+          setStatus(showShadow ? "🌑 Shadow off" : "🌞 Shadow on");
+          vibrate(20);
+          break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select, scale, or brightness presets
           {
             if (e.shiftKey) {
@@ -2182,6 +2188,7 @@ export default function MirrorPage() {
             pointerEvents: "auto",
             cursor: isDragging ? "grabbing" : "grab",
             mixBlendMode: blendMode,
+            filter: showShadow ? "drop-shadow(4px 6px 8px rgba(0,0,0,0.4))" : "none",
           }}
           onMouseDown={(e) => {
             if (!cameraOn) return;
