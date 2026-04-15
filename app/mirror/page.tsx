@@ -38,6 +38,7 @@ export default function MirrorPage() {
   const [showGrid, setShowGrid] = useState(false);
   const [garmentTransition, setGarmentTransition] = useState(false);
   const [showKeyboardHint, setShowKeyboardHint] = useState(false);
+  const [showStats, setShowStats] = useState(false);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -1401,6 +1402,9 @@ export default function MirrorPage() {
           setShowGrid(prev => !prev);
           setStatus(showGrid ? "📷 Grid off" : "📷 Grid overlay on");
           break;
+        case 'i': // Stats info toggle
+          setShowStats(prev => !prev);
+          break;
         case 'r': // Quick reset adjustments
           setGarmentOpacity(0.9);
           setGarmentScale(1.0);
@@ -1895,6 +1899,32 @@ export default function MirrorPage() {
             <span style={{ color: "#fff", fontSize: 11 }}>
               {trackingConfidence >= 70 ? "✨ Great fit" : trackingConfidence >= 40 ? "👍 Good" : "👀 Move closer"}
             </span>
+          </div>
+        )}
+
+        {/* Stats info overlay */}
+        {cameraOn && showStats && (
+          <div style={{
+            position: "absolute",
+            top: 50, right: 12,
+            background: "rgba(0,0,0,0.8)",
+            padding: "10px 14px",
+            borderRadius: 10,
+            color: "#fff",
+            fontSize: 11,
+            fontFamily: "monospace",
+            pointerEvents: "none",
+            lineHeight: 1.6,
+          }}>
+            <div style={{ fontWeight: 600, marginBottom: 6, color: "#a78bfa" }}>📊 Adjustments</div>
+            <div>Opacity: {Math.round(garmentOpacity * 100)}%</div>
+            <div>Scale: {Math.round(garmentScale * 100)}%</div>
+            <div>Y Offset: {garmentYOffset}px</div>
+            <div>X Offset: {garmentXOffset}px</div>
+            <div>Rotation: {garmentRotation === 0 ? "Auto" : `${Math.round(garmentRotation * 180 / Math.PI)}°`}</div>
+            <div>Brightness: {Math.round(garmentBrightness * 100)}%</div>
+            <div>Hue: {garmentHue}°</div>
+            <div style={{ marginTop: 6, color: "#9ca3af", fontSize: 10 }}>Press I to hide</div>
           </div>
         )}
 
