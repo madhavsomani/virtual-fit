@@ -168,6 +168,9 @@ export default function MirrorPage() {
   const [compactMode, setCompactMode] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [autoSaveSettings, setAutoSaveSettings] = useState(true);
+  const [showPerformance, setShowPerformance] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [frameTime, setFrameTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2831,10 +2834,18 @@ export default function MirrorPage() {
         setStatus(compactMode ? '📱 Normal layout' : '📏 Compact mode');
         vibrate(10);
       }
+      
+      // Alt+N for performance stats toggle
+      if ((e.key === 'n' || e.key === 'N') && e.altKey) {
+        e.preventDefault();
+        setShowPerformance(prev => !prev);
+        setStatus(showPerformance ? '📊 Perf stats off' : '⚡ Perf stats on');
+        vibrate(10);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled, nightMode, privacyMode, selfieCountdown, uiTheme, compactMode]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled, nightMode, privacyMode, selfieCountdown, uiTheme, compactMode, showPerformance]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -4614,6 +4625,26 @@ export default function MirrorPage() {
           }}>
             <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#fff", animation: "pulse 1s infinite" }} />
             REC {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
+          </div>
+        )}
+        
+        {/* Performance stats panel */}
+        {showPerformance && cameraOn && (
+          <div style={{
+            position: "absolute",
+            bottom: 70, left: 12,
+            background: "rgba(0,0,0,0.85)",
+            padding: 10,
+            borderRadius: 8,
+            color: "#0f0",
+            fontSize: 11,
+            fontFamily: "monospace",
+            zIndex: 150,
+          }}>
+            <div>⚡ Frame: {frameTime.toFixed(1)}ms</div>
+            <div>🎮 FPS: {currentFps}</div>
+            <div>💾 Memory: {(performance as Performance & { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize ? Math.round(((performance as Performance & { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize || 0) / 1024 / 1024) : '?'}MB</div>
+            <div style={{ opacity: 0.7, marginTop: 4 }}>Alt+N to close</div>
           </div>
         )}
         
