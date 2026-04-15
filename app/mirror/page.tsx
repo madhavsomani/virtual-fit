@@ -154,6 +154,7 @@ export default function MirrorPage() {
   const fpsCounterRef = useRef({ frames: 0, lastTime: Date.now() });
   const [batterySaver, setBatterySaver] = useState(false);
   const frameSkipRef = useRef(0);
+  const lastClickTimeRef = useRef(0);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2992,6 +2993,24 @@ export default function MirrorPage() {
           overflow: "hidden",
           transform: `scale(${zoomLevel})`,
           transformOrigin: "center center",
+        }}
+        onClick={(e) => {
+          // Shift+click to center garment
+          if (e.shiftKey && cameraOn) {
+            setGarmentXOffset(0);
+            setGarmentYOffset(0);
+            setStatus('🎯 Centered!');
+            vibrate(15);
+          }
+          // Double-click to reset scale
+          const now = Date.now();
+          if (now - lastClickTimeRef.current < 300 && cameraOn) {
+            setGarmentScale(1.0);
+            setGarmentScaleY(1.0);
+            setStatus('🔄 Scale reset!');
+            vibrate(15);
+          }
+          lastClickTimeRef.current = now;
         }}
         onTouchStart={(e) => {
           touchStartXRef.current = e.touches[0].clientX;
