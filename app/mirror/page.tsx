@@ -2461,6 +2461,17 @@ export default function MirrorPage() {
           touchStartXRef.current = e.touches[0].clientX;
           touchStartYRef.current = e.touches[0].clientY;
           
+          // Double-tap detection for garment grid
+          const now = Date.now();
+          if (now - lastTapTimeRef.current < 300 && cameraOn) {
+            // Double tap detected
+            setShowGarmentGrid(prev => !prev);
+            vibrate(30);
+            lastTapTimeRef.current = 0; // Reset to prevent triple-tap
+          } else {
+            lastTapTimeRef.current = now;
+          }
+          
           // Show edge hints on first touch (once per session)
           if (!hasSeenEdgeHints && cameraOn) {
             setShowEdgeHints(true);
