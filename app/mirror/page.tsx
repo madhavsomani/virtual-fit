@@ -334,6 +334,13 @@ export default function MirrorPage() {
     } catch {}
   }, []);
 
+  // Load per-garment adjustments from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("virtualfit-per-garment");
+      if (stored) setPerGarmentAdjustments(JSON.parse(stored));
+    } catch {}
+  }, []);
 
   // Haptic feedback helper (mobile)
   const vibrate = useCallback((pattern: number | number[] = 10) => {
@@ -1018,19 +1025,26 @@ export default function MirrorPage() {
     }
     
     // Save current garment's adjustments before switching
-    setPerGarmentAdjustments(prev => ({
-      ...prev,
-      [selectedGarment]: {
-        scale: garmentScale,
-        scaleY: garmentScaleY,
-        xOffset: garmentXOffset,
-        yOffset: garmentYOffset,
-        rotation: garmentRotation,
-        brightness: garmentBrightness,
-        hue: garmentHue,
-        flipped: garmentFlipped,
-      }
-    }));
+    setPerGarmentAdjustments(prev => {
+      const updated = {
+        ...prev,
+        [selectedGarment]: {
+          scale: garmentScale,
+          scaleY: garmentScaleY,
+          xOffset: garmentXOffset,
+          yOffset: garmentYOffset,
+          rotation: garmentRotation,
+          brightness: garmentBrightness,
+          hue: garmentHue,
+          flipped: garmentFlipped,
+        }
+      };
+      // Persist to localStorage
+      try {
+        localStorage.setItem("virtualfit-per-garment", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
     
     // Restore new garment's adjustments if saved
     const saved = perGarmentAdjustments[index];
