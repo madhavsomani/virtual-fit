@@ -61,6 +61,7 @@ export default function MirrorPage() {
   const [blendMode, setBlendMode] = useState<'normal' | 'multiply' | 'screen' | 'overlay'>('normal');
   const [showShadow, setShowShadow] = useState(true);
   const [shadowAngle, setShadowAngle] = useState(135); // degrees, 135 = bottom-right
+  const [savedPresets, setSavedPresets] = useState<{name: string, settings: Record<string, number | boolean>}[]>([]);
   const [garmentSaturation, setGarmentSaturation] = useState(100);
   const [garmentContrast, setGarmentContrast] = useState(100);
   const [colorGradeIdx, setColorGradeIdx] = useState(0);
@@ -273,6 +274,60 @@ export default function MirrorPage() {
       setStatus("❌ Failed to clear data");
     }
   }, []);
+
+  // Save current adjustments as a preset
+  const savePreset = useCallback((name: string) => {
+    const preset = {
+      name,
+      settings: {
+        opacity: garmentOpacity,
+        scale: garmentScale,
+        scaleY: garmentScaleY,
+        yOffset: garmentYOffset,
+        xOffset: garmentXOffset,
+        brightness: garmentBrightness,
+        hue: garmentHue,
+        rotation: garmentRotation,
+        saturation: garmentSaturation,
+        contrast: garmentContrast,
+        shadowAngle,
+        showShadow,
+      }
+    };
+    setSavedPresets(prev => {
+      const updated = [...prev.filter(p => p.name !== name), preset].slice(-5); // Keep last 5
+      try { localStorage.setItem("virtualfit-presets", JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+    setStatus(`💾 Preset "${name}" saved!`);
+  }, [garmentOpacity, garmentScale, garmentScaleY, garmentYOffset, garmentXOffset, garmentBrightness, garmentHue, garmentRotation, garmentSaturation, garmentContrast, shadowAngle, showShadow]);
+
+  // Load a preset
+  const loadPreset = useCallback((preset: typeof savedPresets[0]) => {
+    const s = preset.settings;
+    if (s.opacity !== undefined) setGarmentOpacity(s.opacity as number);
+    if (s.scale !== undefined) setGarmentScale(s.scale as number);
+    if (s.scaleY !== undefined) setGarmentScaleY(s.scaleY as number);
+    if (s.yOffset !== undefined) setGarmentYOffset(s.yOffset as number);
+    if (s.xOffset !== undefined) setGarmentXOffset(s.xOffset as number);
+    if (s.brightness !== undefined) setGarmentBrightness(s.brightness as number);
+    if (s.hue !== undefined) setGarmentHue(s.hue as number);
+    if (s.rotation !== undefined) setGarmentRotation(s.rotation as number);
+    if (s.saturation !== undefined) setGarmentSaturation(s.saturation as number);
+    if (s.contrast !== undefined) setGarmentContrast(s.contrast as number);
+    if (s.shadowAngle !== undefined) setShadowAngle(s.shadowAngle as number);
+    if (s.showShadow !== undefined) setShowShadow(s.showShadow as boolean);
+    setStatus(`📥 Loaded "${preset.name}"`);
+  }, []);
+
+  // Load presets from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("virtualfit-presets");
+      if (stored) setSavedPresets(JSON.parse(stored));
+    } catch {}
+  }, []);
+
 
   // Haptic feedback helper (mobile)
   const vibrate = useCallback((pattern: number | number[] = 10) => {
@@ -2169,8 +2224,8 @@ export default function MirrorPage() {
             vibrate(10);
           }
           break;
-        case '>': // Rotate shadow right
-        case '.': // Also period
+        case '>':
+        case '.':
           if (showShadow) {
             setShadowAngle(prev => (prev + 45) % 360);
             setStatus(`🌞 Shadow: ${((shadowAngle + 45) % 360)}°`);
@@ -2178,10 +2233,28 @@ export default function MirrorPage() {
           }
           break;
       }
+      
+      // Ctrl+1-5 to save/load presets
+      if (e.ctrlKey && ['1','2','3','4','5'].includes(e.key)) {
+        e.preventDefault();
+        const idx = parseInt(e.key) - 1;
+        if (e.shiftKey) {
+          // Ctrl+Shift+N to save
+          savePreset(`Preset ${e.key}`);
+        } else {
+          // Ctrl+N to load
+          if (savedPresets[idx]) {
+            loadPreset(savedPresets[idx]);
+          } else {
+            setStatus(`⚠️ Preset ${e.key} not saved yet (Ctrl+Shift+${e.key} to save)`);
+          }
+        }
+        vibrate(15);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
