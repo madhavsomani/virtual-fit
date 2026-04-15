@@ -149,6 +149,9 @@ export default function MirrorPage() {
   const [showGarmentInfo, setShowGarmentInfo] = useState(false);
   const [viewportAspect, setViewportAspect] = useState<'auto' | '9:16' | '4:5' | '1:1'>('auto');
   const [zoomLevel, setZoomLevel] = useState(1.0);
+  const [showFps, setShowFps] = useState(false);
+  const [currentFps, setCurrentFps] = useState(0);
+  const fpsCounterRef = useRef({ frames: 0, lastTime: Date.now() });
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -965,6 +968,15 @@ export default function MirrorPage() {
         // Render Three.js
         if (rendererRef.current && sceneRef.current && cameraRef.current) {
           rendererRef.current.render(sceneRef.current, cameraRef.current);
+        }
+        
+        // FPS counter
+        fpsCounterRef.current.frames++;
+        const fpsNow = Date.now();
+        if (fpsNow - fpsCounterRef.current.lastTime >= 1000) {
+          setCurrentFps(fpsCounterRef.current.frames);
+          fpsCounterRef.current.frames = 0;
+          fpsCounterRef.current.lastTime = fpsNow;
         }
 
         animFrameRef.current = requestAnimationFrame(loop);
@@ -2624,10 +2636,18 @@ export default function MirrorPage() {
         setStatus(`🔍 Zoom: ${Math.max(0.5, zoomLevel - 0.25).toFixed(2)}x`);
         vibrate(10);
       }
+      
+      // Alt+F for FPS counter toggle
+      if ((e.key === 'f' || e.key === 'F') && e.altKey) {
+        e.preventDefault();
+        setShowFps(prev => !prev);
+        setStatus(showFps ? '📊 FPS off' : '📊 FPS on');
+        vibrate(10);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -4082,6 +4102,24 @@ export default function MirrorPage() {
             <div style={{ marginTop: 12, fontSize: 10, opacity: 0.6 }}>
               Alt+G to close
             </div>
+          </div>
+        )}
+
+        {/* FPS counter */}
+        {showFps && cameraOn && (
+          <div style={{
+            position: "absolute",
+            top: 12, right: 12,
+            background: currentFps >= 30 ? "rgba(46, 204, 113, 0.8)" : currentFps >= 15 ? "rgba(241, 196, 15, 0.8)" : "rgba(231, 76, 60, 0.8)",
+            padding: "4px 10px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: 12,
+            fontWeight: 700,
+            fontFamily: "monospace",
+            zIndex: 100,
+          }}>
+            {currentFps} FPS
           </div>
         )}
 
