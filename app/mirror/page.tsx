@@ -1543,6 +1543,18 @@ export default function MirrorPage() {
             setStatus(favoritesOnly ? "👕 Showing all garments" : `❤️ Favorites only (${favoriteGarments.length})`);
           }
           break;
+        case 'u': // Cycle through hue presets
+          {
+            const huePresets = [0, 30, 60, 120, 180, 240, 300];
+            const currentIdx = huePresets.findIndex(h => Math.abs(h - garmentHue) < 15);
+            const nextIdx = (currentIdx + 1) % huePresets.length;
+            if (!adjustmentsLocked) {
+              setGarmentHue(huePresets[nextIdx]);
+              const hueNames = ['Normal', 'Warm', 'Yellow', 'Green', 'Cyan', 'Blue', 'Purple'];
+              setStatus(`🎨 Hue: ${hueNames[nextIdx]} (${huePresets[nextIdx]}°)`);
+            }
+          }
+          break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select, scale, or brightness presets
           {
             if (e.shiftKey) {
