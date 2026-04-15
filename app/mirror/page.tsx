@@ -66,6 +66,7 @@ export default function MirrorPage() {
   const opacityPresets = [0.25, 0.5, 0.75, 0.9, 1.0]; // Quick opacity levels
   const [tintMode, setTintMode] = useState<'none' | 'warm' | 'cool' | 'sepia' | 'night'>('none');
   const [distanceHint, setDistanceHint] = useState<'too-close' | 'optimal' | 'too-far' | null>(null);
+  const [showFitGuide, setShowFitGuide] = useState(false);
   const [flashCompare, setFlashCompare] = useState(false);
   const flashIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [garmentSaturation, setGarmentSaturation] = useState(100);
@@ -2349,6 +2350,7 @@ export default function MirrorPage() {
         setShowGarmentGrid(false);
         setShowQuickMenu(false);
         setShowStats(false);
+        setShowFitGuide(false);
         if (flashIntervalRef.current) {
           clearInterval(flashIntervalRef.current);
           flashIntervalRef.current = null;
@@ -2358,10 +2360,17 @@ export default function MirrorPage() {
         setStatus('❌ Overlays closed');
         vibrate(10);
       }
+      
+      // Backtick key to toggle fit guide
+      if (e.key === '`') {
+        setShowFitGuide(prev => !prev);
+        setStatus(showFitGuide ? '📏 Fit guide off' : '📏 Fit guide on');
+        vibrate(15);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -3229,6 +3238,59 @@ export default function MirrorPage() {
             animation: "pulse 0.5s infinite",
           }}>
             🔄 Comparing... (Q to stop)
+          </div>
+        )}
+
+        {/* Fit guide overlay */}
+        {showFitGuide && cameraOn && (
+          <div style={{
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
+            pointerEvents: "none",
+          }}>
+            {/* Center crosshair */}
+            <div style={{
+              position: "absolute",
+              top: "50%", left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 40, height: 40,
+              border: "2px dashed rgba(147, 51, 234, 0.6)",
+              borderRadius: "50%",
+            }} />
+            {/* Shoulder line guide */}
+            <div style={{
+              position: "absolute",
+              top: "25%", left: "15%", right: "15%",
+              height: 2,
+              background: "linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.5), transparent)",
+            }} />
+            {/* Hip line guide */}
+            <div style={{
+              position: "absolute",
+              top: "65%", left: "20%", right: "20%",
+              height: 2,
+              background: "linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.5), transparent)",
+            }} />
+            {/* Optimal zone box */}
+            <div style={{
+              position: "absolute",
+              top: "20%", left: "10%", right: "10%", bottom: "30%",
+              border: "2px dashed rgba(34, 197, 94, 0.3)",
+              borderRadius: 12,
+            }} />
+            {/* Guide label */}
+            <div style={{
+              position: "absolute",
+              bottom: 100, left: "50%",
+              transform: "translateX(-50%)",
+              background: "rgba(0,0,0,0.7)",
+              padding: "6px 12px",
+              borderRadius: 6,
+              color: "#fff",
+              fontSize: 11,
+            }}>
+              📏 Align shoulders to green line | ` to close
+            </div>
           </div>
         )}
 
