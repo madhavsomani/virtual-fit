@@ -2194,6 +2194,23 @@ export default function MirrorPage() {
           </div>
         )}
 
+        {/* Flipped indicator */}
+        {cameraOn && garmentFlipped && (
+          <div style={{
+            position: "absolute",
+            top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0) + (!autoFit ? 25 : 0), left: 12,
+            background: "rgba(168, 85, 247, 0.85)",
+            padding: "4px 10px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: 11,
+            fontWeight: 600,
+            pointerEvents: "none",
+          }}>
+            ↪️ Flipped
+          </div>
+        )}
+
         {/* Smooth mode indicator */}
         {cameraOn && smoothMode && (
           <div style={{
