@@ -47,6 +47,7 @@ export default function MirrorPage() {
   const [smoothMode, setSmoothMode] = useState(false);
   const [showPinchFeedback, setShowPinchFeedback] = useState(false);
   const [adjustmentsLocked, setAdjustmentsLocked] = useState(false);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const tapCountRef = useRef(0);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
@@ -1403,15 +1404,29 @@ export default function MirrorPage() {
         case 'arrowright': // Next garment
         case 'n':
           if (cameraOn) {
-            const nextIdx = (selectedGarment + 1) % GARMENTS.length;
-            switchGarment(nextIdx);
+            if (favoritesOnly && favoriteGarments.length > 0) {
+              // Navigate through favorites only
+              const currentFavIdx = favoriteGarments.indexOf(selectedGarment);
+              const nextFavIdx = (currentFavIdx + 1) % favoriteGarments.length;
+              switchGarment(favoriteGarments[nextFavIdx]);
+            } else {
+              const nextIdx = (selectedGarment + 1) % GARMENTS.length;
+              switchGarment(nextIdx);
+            }
           }
           break;
         case 'arrowleft': // Previous garment
         case 'p':
           if (cameraOn) {
-            const prevIdx = (selectedGarment - 1 + GARMENTS.length) % GARMENTS.length;
-            switchGarment(prevIdx);
+            if (favoritesOnly && favoriteGarments.length > 0) {
+              // Navigate through favorites only
+              const currentFavIdx = favoriteGarments.indexOf(selectedGarment);
+              const prevFavIdx = (currentFavIdx - 1 + favoriteGarments.length) % favoriteGarments.length;
+              switchGarment(favoriteGarments[prevFavIdx]);
+            } else {
+              const prevIdx = (selectedGarment - 1 + GARMENTS.length) % GARMENTS.length;
+              switchGarment(prevIdx);
+            }
           }
           break;
         case 'escape': // Exit fullscreen or close help
@@ -1517,6 +1532,15 @@ export default function MirrorPage() {
               setStatus(`🎲 Random: ${GARMENTS[randomIdx]?.name || 'Unknown'}`);
               vibrate([10, 20, 10, 20, 10]);
             }
+          }
+          break;
+        case 'a': // Toggle favorites-only mode
+          setFavoritesOnly(prev => !prev);
+          if (!favoritesOnly && favoriteGarments.length === 0) {
+            setStatus("❤️ No favorites yet! Add some first");
+            setFavoritesOnly(false);
+          } else {
+            setStatus(favoritesOnly ? "👕 Showing all garments" : `❤️ Favorites only (${favoriteGarments.length})`);
           }
           break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select or scale presets
@@ -2069,6 +2093,23 @@ export default function MirrorPage() {
             pointerEvents: "none",
           }}>
             🔒 Locked
+          </div>
+        )}
+
+        {/* Favorites-only indicator */}
+        {cameraOn && favoritesOnly && favoriteGarments.length > 0 && (
+          <div style={{
+            position: "absolute",
+            top: adjustmentsLocked ? 100 : 75, left: 12,
+            background: "rgba(239, 68, 68, 0.85)",
+            padding: "4px 10px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: 11,
+            fontWeight: 600,
+            pointerEvents: "none",
+          }}>
+            ❤️ Favorites ({favoriteGarments.length})
           </div>
         )}
 
