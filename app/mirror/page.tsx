@@ -70,6 +70,7 @@ export default function MirrorPage() {
   const [showFitGuide, setShowFitGuide] = useState(false);
   const [garmentFadeIn, setGarmentFadeIn] = useState(true);
   const [slideshowMode, setSlideshowMode] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
   const slideshowIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [flashCompare, setFlashCompare] = useState(false);
   const flashIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -2408,10 +2409,17 @@ export default function MirrorPage() {
         }
         vibrate(15);
       }
+      
+      // Y key for quick color picker
+      if (e.key === 'y' || e.key === 'Y') {
+        setShowColorPicker(prev => !prev);
+        setStatus(showColorPicker ? '🎨 Color picker closed' : '🎨 Color picker open');
+        vibrate(15);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -3312,6 +3320,60 @@ export default function MirrorPage() {
           </div>
         )}
 
+        {/* Color picker panel */}
+        {showColorPicker && cameraOn && (
+          <div style={{
+            position: "absolute",
+            bottom: 140, right: 12,
+            background: "rgba(0,0,0,0.85)",
+            padding: 12,
+            borderRadius: 12,
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}>
+            <div style={{ color: "#fff", fontSize: 11, fontWeight: 600, marginBottom: 4 }}>
+              🎨 Quick Hue Shift
+            </div>
+            {[0, 30, 60, 120, 180, 240, 300].map(hue => (
+              <button
+                key={hue}
+                onClick={() => {
+                  setGarmentHue(hue);
+                  setStatus(`🎨 Hue: ${hue}°`);
+                  vibrate(15);
+                }}
+                style={{
+                  width: 36, height: 36,
+                  borderRadius: "50%",
+                  border: garmentHue === hue ? "3px solid #fff" : "2px solid rgba(255,255,255,0.3)",
+                  background: `linear-gradient(135deg, hsl(${hue}, 70%, 60%), hsl(${hue}, 70%, 40%))`,
+                  cursor: "pointer",
+                }}
+              />
+            ))}
+            <button
+              onClick={() => {
+                setGarmentHue(0);
+                setShowColorPicker(false);
+                setStatus('🎨 Hue reset');
+                vibrate(10);
+              }}
+              style={{
+                marginTop: 4,
+                padding: "6px 12px",
+                background: "rgba(255,255,255,0.1)",
+                border: "1px solid rgba(255,255,255,0.3)",
+                borderRadius: 6,
+                color: "#fff",
+                fontSize: 10,
+                cursor: "pointer",
+              }}
+            >
+              Reset & Close
+            </button>
+          </div>
+        )}
         {/* Fit guide overlay */}
         {showFitGuide && cameraOn && (
           <div style={{
