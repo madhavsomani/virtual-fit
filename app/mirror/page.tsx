@@ -43,6 +43,7 @@ export default function MirrorPage() {
     opacity: number; scale: number; yOffset: number; xOffset: number;
     brightness: number; hue: number; rotation: number;
   } | null>(null);
+  const previousGarmentRef = useRef<number | null>(null);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -735,6 +736,8 @@ export default function MirrorPage() {
     setGarmentTransition(true);
     setTimeout(() => setGarmentTransition(false), 300);
     
+    // Track previous garment for quick switch
+    previousGarmentRef.current = selectedGarment;
     setSelectedGarment(index);
     // Save to localStorage for persistence
     try {
@@ -1449,6 +1452,13 @@ export default function MirrorPage() {
           break;
         case 'z': // Undo last adjustment change
           undoAdjustments();
+          break;
+        case 'Tab': // Quick switch to previous garment
+          e.preventDefault();
+          if (previousGarmentRef.current !== null && cameraOn) {
+            switchGarment(previousGarmentRef.current);
+            setStatus("⇄ Switched to previous garment");
+          }
           break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select
           {
