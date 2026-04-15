@@ -159,6 +159,7 @@ export default function MirrorPage() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [nightMode, setNightMode] = useState(false);
   const [showMilestone, setShowMilestone] = useState(false);
+  const [garmentSearch, setGarmentSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -3875,17 +3876,44 @@ export default function MirrorPage() {
             background: "rgba(0,0,0,0.9)",
             padding: 12,
             borderRadius: 12,
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 8,
             maxWidth: "80%",
           }}>
-            {GARMENTS.map((g, idx) => (
+            <input
+              type="text"
+              placeholder="Search garments..."
+              value={garmentSearch}
+              onChange={(e) => setGarmentSearch(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "8px 12px",
+                marginBottom: 12,
+                border: "none",
+                borderRadius: 8,
+                background: "rgba(255,255,255,0.1)",
+                color: "#fff",
+                fontSize: 12,
+                outline: "none",
+              }}
+              autoFocus
+            />
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: 8,
+            }}>
+            {GARMENTS.filter(g => 
+              garmentSearch === '' || 
+              g.name.toLowerCase().includes(garmentSearch.toLowerCase()) ||
+              (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))
+            ).map((g) => {
+              const idx = GARMENTS.indexOf(g);
+              return (
               <div
                 key={idx}
                 onClick={() => {
                   switchGarment(idx);
                   setShowGarmentGrid(false);
+                  setGarmentSearch('');
                 }}
                 style={{
                   cursor: "pointer",
@@ -3900,7 +3928,9 @@ export default function MirrorPage() {
                 <div style={{ fontSize: 24 }}>{g.emoji}</div>
                 <div style={{ color: "#fff", fontSize: 10, marginTop: 4 }}>{g.name}</div>
               </div>
-            ))}
+            );
+            })}
+            </div>
           </div>
         )}
 
