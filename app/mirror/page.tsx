@@ -66,6 +66,7 @@ export default function MirrorPage() {
   const [showEdgeHints, setShowEdgeHints] = useState(false);
   const [hasSeenEdgeHints, setHasSeenEdgeHints] = useState(false);
   const [fitQuality, setFitQuality] = useState<'excellent' | 'good' | 'fair' | 'poor'>('good');
+  const prevFitQualityRef = useRef<'excellent' | 'good' | 'fair' | 'poor'>('good');
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -550,15 +551,27 @@ export default function MirrorPage() {
     const hipVisible = (lh?.visibility ?? 0) > 0.5 && (rh?.visibility ?? 0) > 0.5;
     const bodyStable = Math.abs(sp.tilt) < 0.15; // radians, ~8.5 degrees
     
+    let newFitQuality: 'excellent' | 'good' | 'fair' | 'poor';
     if (confidencePercent > 80 && shoulderVisible && hipVisible && bodyStable) {
-      setFitQuality('excellent');
+      newFitQuality = 'excellent';
     } else if (confidencePercent > 60 && shoulderVisible) {
-      setFitQuality('good');
+      newFitQuality = 'good';
     } else if (confidencePercent > 40) {
-      setFitQuality('fair');
+      newFitQuality = 'fair';
     } else {
-      setFitQuality('poor');
+      newFitQuality = 'poor';
     }
+    
+    // Haptic feedback on quality change
+    if (newFitQuality !== prevFitQualityRef.current) {
+      if (newFitQuality === 'excellent') {
+        vibrate([15, 30, 15]); // celebratory pattern
+      } else if (newFitQuality === 'poor' && prevFitQualityRef.current !== 'poor') {
+        vibrate(50); // warning buzz
+      }
+      prevFitQualityRef.current = newFitQuality;
+    }
+    setFitQuality(newFitQuality);
     
     // Update last pose detected time
     if (confidencePercent > 20) {
