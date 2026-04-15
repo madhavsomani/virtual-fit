@@ -162,6 +162,7 @@ export default function MirrorPage() {
   const [garmentSearch, setGarmentSearch] = useState('');
   const [showGestureTip, setShowGestureTip] = useState(false);
   const [privacyMode, setPrivacyMode] = useState(false);
+  const [selfieCountdown, setSelfieCountdown] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2732,10 +2733,29 @@ export default function MirrorPage() {
         setStatus(privacyMode ? '👁️ Privacy off' : '🔒 Privacy mode ON');
         vibrate(15);
       }
+      
+      // Alt+S for selfie countdown (3 seconds)
+      if ((e.key === 's' || e.key === 'S') && e.altKey && !selfieCountdown) {
+        e.preventDefault();
+        vibrate(20);
+        setSelfieCountdown(3);
+        const countdownInterval = setInterval(() => {
+          setSelfieCountdown(prev => {
+            if (prev === null || prev <= 1) {
+              clearInterval(countdownInterval);
+              captureScreenshot();
+              vibrate([50, 30, 50]);
+              return null;
+            }
+            vibrate(15);
+            return prev - 1;
+          });
+        }, 1000);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled, nightMode, privacyMode]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled, nightMode, privacyMode, selfieCountdown]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -4469,6 +4489,29 @@ export default function MirrorPage() {
             <div style={{ fontSize: 48, fontWeight: 800, color: "#fff", marginBottom: 10 }}>200 Features!</div>
             <div style={{ fontSize: 18, color: "rgba(255,255,255,0.9)", marginBottom: 20 }}>VirtualFit Milestone Achieved</div>
             <div style={{ fontSize: 14, color: "rgba(255,255,255,0.7)" }}>Alt+C to celebrate anytime</div>
+          </div>
+        )}
+        
+        {/* Selfie countdown display */}
+        {selfieCountdown !== null && (
+          <div style={{
+            position: "fixed",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.5)",
+            zIndex: 1500,
+          }}>
+            <div style={{
+              fontSize: 120,
+              fontWeight: 800,
+              color: "#fff",
+              textShadow: "0 4px 30px rgba(0,0,0,0.5)",
+              animation: "pulse 1s ease-in-out",
+            }}>
+              {selfieCountdown}
+            </div>
           </div>
         )}
         
