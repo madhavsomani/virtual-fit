@@ -4175,7 +4175,7 @@ export default function MirrorPage() {
               style={{
                 width: "100%",
                 padding: "8px 12px",
-                marginBottom: 12,
+                marginBottom: 8,
                 border: "none",
                 borderRadius: 8,
                 background: "rgba(255,255,255,0.1)",
@@ -4185,15 +4185,46 @@ export default function MirrorPage() {
               }}
               autoFocus
             />
+            {/* Category filter buttons */}
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
+              <button
+                onClick={() => setCategoryFilter(null)}
+                style={{
+                  padding: "4px 8px",
+                  borderRadius: 4,
+                  border: "none",
+                  background: categoryFilter === null ? "#9333ea" : "rgba(255,255,255,0.1)",
+                  color: "#fff",
+                  fontSize: 10,
+                  cursor: "pointer",
+                }}
+              >All</button>
+              {[...new Set(GARMENTS.map(g => g.category).filter(Boolean))].map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setCategoryFilter(cat === categoryFilter ? null : cat!)}
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: 4,
+                    border: "none",
+                    background: categoryFilter === cat ? "#9333ea" : "rgba(255,255,255,0.1)",
+                    color: "#fff",
+                    fontSize: 10,
+                    cursor: "pointer",
+                  }}
+                >{cat}</button>
+              ))}
+            </div>
             <div style={{
               display: "grid",
               gridTemplateColumns: "repeat(3, 1fr)",
               gap: 8,
             }}>
             {GARMENTS.filter(g => 
-              garmentSearch === '' || 
-              g.name.toLowerCase().includes(garmentSearch.toLowerCase()) ||
-              (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))
+              (garmentSearch === '' || 
+               g.name.toLowerCase().includes(garmentSearch.toLowerCase()) ||
+               (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+              (categoryFilter === null || g.category === categoryFilter)
             ).map((g) => {
               const idx = GARMENTS.indexOf(g);
               return (
