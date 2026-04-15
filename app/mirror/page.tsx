@@ -157,6 +157,7 @@ export default function MirrorPage() {
   const lastClickTimeRef = useRef(0);
   const [showGarmentPreview, setShowGarmentPreview] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [nightMode, setNightMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2703,10 +2704,18 @@ export default function MirrorPage() {
         setStatus(soundEnabled ? '🔇 Sound off' : '🔊 Sound on');
         vibrate(10);
       }
+      
+      // Alt+D for night mode toggle
+      if ((e.key === 'd' || e.key === 'D') && e.altKey) {
+        e.preventDefault();
+        setNightMode(prev => !prev);
+        setStatus(nightMode ? '☀️ Day mode' : '🌙 Night mode');
+        vibrate(15);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled, nightMode]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -3218,7 +3227,13 @@ export default function MirrorPage() {
       >
         <video
           ref={videoRef}
-          style={{ width: "100%", transform: isMirrored ? "scaleX(-1)" : "none", borderRadius: 12, background: "#000" }}
+          style={{ 
+            width: "100%", 
+            transform: isMirrored ? "scaleX(-1)" : "none", 
+            borderRadius: 12, 
+            background: "#000",
+            filter: nightMode ? "brightness(1.5) contrast(1.2) saturate(0.8)" : "none",
+          }}
           playsInline
           muted
         />
