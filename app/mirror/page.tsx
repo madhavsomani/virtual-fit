@@ -148,6 +148,7 @@ export default function MirrorPage() {
   const [garmentLoading, setGarmentLoading] = useState(false);
   const [showGarmentInfo, setShowGarmentInfo] = useState(false);
   const [viewportAspect, setViewportAspect] = useState<'auto' | '9:16' | '4:5' | '1:1'>('auto');
+  const [zoomLevel, setZoomLevel] = useState(1.0);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2609,10 +2610,24 @@ export default function MirrorPage() {
         setStatus(`📏 Aspect: ${nextAspect}`);
         vibrate(15);
       }
+      
+      // Alt+Z for zoom in, Alt+X for zoom out
+      if ((e.key === 'z' || e.key === 'Z') && e.altKey) {
+        e.preventDefault();
+        setZoomLevel(prev => Math.min(3.0, prev + 0.25));
+        setStatus(`🔍 Zoom: ${Math.min(3.0, zoomLevel + 0.25).toFixed(2)}x`);
+        vibrate(10);
+      }
+      if ((e.key === 'x' || e.key === 'X') && e.altKey) {
+        e.preventDefault();
+        setZoomLevel(prev => Math.max(0.5, prev - 0.25));
+        setStatus(`🔍 Zoom: ${Math.max(0.5, zoomLevel - 0.25).toFixed(2)}x`);
+        vibrate(10);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -2936,6 +2951,8 @@ export default function MirrorPage() {
           maxWidth: 640,
           aspectRatio: viewportAspect === 'auto' ? undefined : viewportAspect.replace(':', '/'),
           overflow: "hidden",
+          transform: `scale(${zoomLevel})`,
+          transformOrigin: "center center",
         }}
         onTouchStart={(e) => {
           touchStartXRef.current = e.touches[0].clientX;
