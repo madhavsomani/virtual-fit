@@ -64,6 +64,7 @@ export default function MirrorPage() {
   const [savedPresets, setSavedPresets] = useState<{name: string, settings: Record<string, number | boolean>}[]>([]);
   const [edgeFeather, setEdgeFeather] = useState(0); // 0-10px blur for soft edges
   const opacityPresets = [0.25, 0.5, 0.75, 0.9, 1.0]; // Quick opacity levels
+  const [tintMode, setTintMode] = useState<'none' | 'warm' | 'cool' | 'sepia' | 'night'>('none');
   const [garmentSaturation, setGarmentSaturation] = useState(100);
   const [garmentContrast, setGarmentContrast] = useState(100);
   const [colorGradeIdx, setColorGradeIdx] = useState(0);
@@ -2274,10 +2275,20 @@ export default function MirrorPage() {
         setStatus(`💧 Opacity: ${Math.round(opacity * 100)}%`);
         vibrate(15);
       }
+      
+      // T key to cycle tint modes
+      if (e.key === 't' || e.key === 'T') {
+        const modes: typeof tintMode[] = ['none', 'warm', 'cool', 'sepia', 'night'];
+        const currentIdx = modes.indexOf(tintMode);
+        const nextMode = modes[(currentIdx + 1) % modes.length];
+        setTintMode(nextMode);
+        setStatus(`🎨 Tint: ${nextMode === 'none' ? 'Off' : nextMode.charAt(0).toUpperCase() + nextMode.slice(1)}`);
+        vibrate(15);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -2741,7 +2752,7 @@ export default function MirrorPage() {
             pointerEvents: "auto",
             cursor: isDragging ? "grabbing" : "grab",
             mixBlendMode: blendMode,
-            filter: `${showShadow ? `drop-shadow(${Math.round(Math.cos(shadowAngle * Math.PI / 180) * 6)}px ${Math.round(Math.sin(shadowAngle * Math.PI / 180) * 6)}px 8px rgba(0,0,0,0.4))` : ""} ${edgeFeather > 0 ? `blur(${edgeFeather * 0.3}px)` : ""} saturate(${garmentSaturation}%) contrast(${garmentContrast}%) sepia(${Math.abs(colorTemp) * 0.3}%) hue-rotate(${colorTemp > 0 ? 10 : colorTemp < 0 ? -10 : 0}deg)`.trim(),
+            filter: `${showShadow ? `drop-shadow(${Math.round(Math.cos(shadowAngle * Math.PI / 180) * 6)}px ${Math.round(Math.sin(shadowAngle * Math.PI / 180) * 6)}px 8px rgba(0,0,0,0.4))` : ""} ${edgeFeather > 0 ? `blur(${edgeFeather * 0.3}px)` : ""} saturate(${garmentSaturation}%) contrast(${garmentContrast}%) sepia(${Math.abs(colorTemp) * 0.3}%) hue-rotate(${colorTemp > 0 ? 10 : colorTemp < 0 ? -10 : 0}deg) ${tintMode === 'warm' ? 'sepia(20%) hue-rotate(-10deg)' : tintMode === 'cool' ? 'hue-rotate(20deg) saturate(110%)' : tintMode === 'sepia' ? 'sepia(50%)' : tintMode === 'night' ? 'hue-rotate(200deg) saturate(70%)' : ''}`.trim(),
           }}
           onMouseDown={(e) => {
             if (!cameraOn) return;
