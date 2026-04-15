@@ -2711,6 +2711,22 @@ export default function MirrorPage() {
           </div>
         )}
 
+        {/* Color temperature indicator */}
+        {cameraOn && colorTemp !== 0 && (
+          <div style={{
+            position: "absolute",
+            top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0) + (!autoFit ? 25 : 0) + (garmentFlipped ? 25 : 0) + (!aspectLocked ? 25 : 0) + (blendMode !== 'normal' ? 25 : 0) + (colorGradeIdx > 0 ? 25 : 0), left: 12,
+            background: colorTemp > 0 ? "rgba(251, 146, 60, 0.85)" : "rgba(96, 165, 250, 0.85)",
+            padding: "4px 10px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: 11,
+            fontWeight: 600,
+            pointerEvents: "none",
+          }}>
+            {colorTemp > 0 ? '🔥' : '❄️'} Temp: {colorTemp > 0 ? '+' : ''}{colorTemp}
+          </div>
+        )}
         {/* Photo countdown overlay */}
         {photoCountdown !== null && (
           <div style={{
