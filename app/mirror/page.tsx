@@ -175,6 +175,7 @@ export default function MirrorPage() {
   const [showAbout, setShowAbout] = useState(false);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
+  const [lastTapTime, setLastTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2927,6 +2928,17 @@ export default function MirrorPage() {
     };
   }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled, nightMode, privacyMode, selfieCountdown, uiTheme, compactMode, showPerformance]);
 
+  // Double-tap handler for mobile garment toggle
+  const handleDoubleTap = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTapTime < 300) {
+      setShowGarment(prev => !prev);
+      setStatus(showGarment ? '👗 Garment hidden' : '👗 Garment shown');
+      vibrate(20);
+    }
+    setLastTapTime(now);
+  }, [lastTapTime, showGarment, vibrate]);
+
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
     if (!videoRef.current?.srcObject) return;
@@ -3440,6 +3452,7 @@ export default function MirrorPage() {
       >
         <video
           ref={videoRef}
+          onTouchEnd={handleDoubleTap}
           style={{ 
             width: "100%", 
             transform: isMirrored ? "scaleX(-1)" : "none", 
