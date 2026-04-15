@@ -4273,6 +4273,50 @@ export default function MirrorPage() {
           </button>
         )}
         
+        {/* Print button */}
+        {cameraOn && screenshotHistory.length > 0 && (
+          <button
+            onClick={() => {
+              const lastScreenshot = screenshotHistory[screenshotHistory.length - 1];
+              if (lastScreenshot) {
+                const printWindow = window.open('', '_blank');
+                if (printWindow) {
+                  printWindow.document.write(`
+                    <html>
+                      <head><title>VirtualFit Screenshot</title></head>
+                      <body style="margin:0;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#000;">
+                        <img src="${lastScreenshot}" style="max-width:100%;max-height:100vh;" />
+                      </body>
+                    </html>
+                  `);
+                  printWindow.document.close();
+                  printWindow.print();
+                }
+                setStatus('🖨️ Printing...');
+                vibrate(15);
+              }
+            }}
+            style={{
+              position: "absolute",
+              bottom: 12, right: 116,
+              width: 44, height: 44,
+              borderRadius: "50%",
+              background: "rgba(241, 196, 15, 0.8)",
+              border: "none",
+              color: "#fff",
+              fontSize: 20,
+              cursor: "pointer",
+              zIndex: 100,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            title="Print last screenshot"
+          >
+            🖨️
+          </button>
+        )}
+        
         {/* Garment thumbnail preview */}
         {showGarmentPreview && cameraOn && GARMENTS[selectedGarment] && (
           <div 
