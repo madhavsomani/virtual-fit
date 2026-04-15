@@ -2914,6 +2914,31 @@ export default function MirrorPage() {
         setStatus('❌ All panels closed');
         vibrate(10);
       }
+      
+      // Ctrl+Shift+R to reset all settings to defaults
+      if (e.key === 'R' && e.ctrlKey && e.shiftKey) {
+        e.preventDefault();
+        // Reset garment adjustments
+        setGarmentScale(100);
+        setGarmentScaleY(100);
+        setGarmentXOffset(0);
+        setGarmentYOffset(0);
+        setGarmentRotation(0);
+        setGarmentOpacity(100);
+        setGarmentBrightness(100);
+        setGarmentHue(0);
+        setGarmentFlipped(false);
+        setEdgeFeather(0);
+        // Reset UI toggles
+        setAutoLighting(false);
+        setSmoothMode(false);
+        setBatterySaver(false);
+        setNightMode(false);
+        setPrivacyMode(false);
+        setCompactMode(false);
+        setStatus('🔄 All settings reset to defaults!');
+        vibrate([50, 30, 50]);
+      }
     };
     
     // Key indicator handler
