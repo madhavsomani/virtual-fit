@@ -1480,6 +1480,25 @@ export default function MirrorPage() {
             setStatus(`👓 Opacity: ${Math.round(levels[nextIdx] * 100)}%`);
           }
           break;
+        case 'e': // Export adjustments to clipboard
+          {
+            const exportData = {
+              garment: GARMENTS[selectedGarment]?.name || 'Unknown',
+              adjustments: {
+                opacity: Math.round(garmentOpacity * 100),
+                scale: Math.round(garmentScale * 100),
+                xOffset: garmentXOffset,
+                yOffset: garmentYOffset,
+                brightness: Math.round(garmentBrightness * 100),
+                hue: garmentHue,
+              },
+              timestamp: new Date().toISOString(),
+            };
+            navigator.clipboard.writeText(JSON.stringify(exportData, null, 2))
+              .then(() => setStatus("📋 Adjustments copied to clipboard!"))
+              .catch(() => setStatus("❌ Failed to copy"));
+          }
+          break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select
           {
             const idx = parseInt(e.key) - 1;
