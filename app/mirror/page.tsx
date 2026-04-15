@@ -63,6 +63,7 @@ export default function MirrorPage() {
   const [shadowAngle, setShadowAngle] = useState(135); // degrees, 135 = bottom-right
   const [savedPresets, setSavedPresets] = useState<{name: string, settings: Record<string, number | boolean>}[]>([]);
   const [edgeFeather, setEdgeFeather] = useState(0); // 0-10px blur for soft edges
+  const opacityPresets = [0.25, 0.5, 0.75, 0.9, 1.0]; // Quick opacity levels
   const [garmentSaturation, setGarmentSaturation] = useState(100);
   const [garmentContrast, setGarmentContrast] = useState(100);
   const [colorGradeIdx, setColorGradeIdx] = useState(0);
@@ -2262,6 +2263,16 @@ export default function MirrorPage() {
         setEdgeFeather(prev => Math.min(10, prev + 1));
         setStatus(`🚶 Edge feather: ${Math.min(10, edgeFeather + 1)}`);
         vibrate(10);
+      }
+      
+      // Alt+1-5 for quick opacity presets
+      if (e.altKey && ['1','2','3','4','5'].includes(e.key)) {
+        e.preventDefault();
+        const idx = parseInt(e.key) - 1;
+        const opacity = opacityPresets[idx];
+        setGarmentOpacity(opacity);
+        setStatus(`💧 Opacity: ${Math.round(opacity * 100)}%`);
+        vibrate(15);
       }
     };
     document.addEventListener("keydown", handleKeyDown);
