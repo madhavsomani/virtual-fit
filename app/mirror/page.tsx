@@ -2507,10 +2507,59 @@ export default function MirrorPage() {
         setStatus(`🎰 Shuffle: ${GARMENTS[randomIdx]?.name || 'Random'} | Hue: ${randomHue}° | Scale: ${Math.round(randomScale * 100)}%`);
         vibrate(30);
       }
+      
+      // Alt+E to export settings to clipboard
+      if ((e.key === 'e' || e.key === 'E') && e.altKey) {
+        const settings = {
+          garment: selectedGarment,
+          scale: garmentScale,
+          scaleY: garmentScaleY,
+          xOffset: garmentXOffset,
+          yOffset: garmentYOffset,
+          rotation: garmentRotation,
+          brightness: garmentBrightness,
+          hue: garmentHue,
+          flipped: garmentFlipped,
+          opacity: garmentOpacity,
+          tintMode,
+          edgeFeather,
+          shadowAngle,
+        };
+        navigator.clipboard.writeText(JSON.stringify(settings, null, 2)).then(() => {
+          setStatus('💾 Settings exported to clipboard!');
+          vibrate(20);
+        });
+      }
+      
+      // Alt+I to import settings from clipboard
+      if ((e.key === 'i' || e.key === 'I') && e.altKey) {
+        navigator.clipboard.readText().then(text => {
+          try {
+            const settings = JSON.parse(text);
+            if (settings.garment !== undefined) switchGarment(settings.garment);
+            if (settings.scale !== undefined) setGarmentScale(settings.scale);
+            if (settings.scaleY !== undefined) setGarmentScaleY(settings.scaleY);
+            if (settings.xOffset !== undefined) setGarmentXOffset(settings.xOffset);
+            if (settings.yOffset !== undefined) setGarmentYOffset(settings.yOffset);
+            if (settings.rotation !== undefined) setGarmentRotation(settings.rotation);
+            if (settings.brightness !== undefined) setGarmentBrightness(settings.brightness);
+            if (settings.hue !== undefined) setGarmentHue(settings.hue);
+            if (settings.flipped !== undefined) setGarmentFlipped(settings.flipped);
+            if (settings.opacity !== undefined) setGarmentOpacity(settings.opacity);
+            if (settings.tintMode !== undefined) setTintMode(settings.tintMode);
+            if (settings.edgeFeather !== undefined) setEdgeFeather(settings.edgeFeather);
+            if (settings.shadowAngle !== undefined) setShadowAngle(settings.shadowAngle);
+            setStatus('📥 Settings imported!');
+            vibrate(20);
+          } catch {
+            setStatus('❌ Invalid settings JSON');
+          }
+        }).catch(() => setStatus('❌ Clipboard read failed'));
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
