@@ -35,6 +35,7 @@ export default function MirrorPage() {
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [compareMode, setCompareMode] = useState(false);
   const [cameraZoom, setCameraZoom] = useState(1);
+  const [showGrid, setShowGrid] = useState(false);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -1384,6 +1385,10 @@ export default function MirrorPage() {
           setCompareMode(prev => !prev);
           setStatus(compareMode ? "👁️ Compare off" : "👁️ Compare mode: showing before/after");
           break;
+        case 'o': // Grid overlay toggle
+          setShowGrid(prev => !prev);
+          setStatus(showGrid ? "📷 Grid off" : "📷 Grid overlay on");
+          break;
         case 'r': // Quick reset adjustments
           setGarmentOpacity(0.9);
           setGarmentScale(1.0);
@@ -1630,6 +1635,8 @@ export default function MirrorPage() {
               <span>Toggle garment on/off</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>B</kbd>
               <span>Before/after compare mode</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>O</kbd>
+              <span>Grid overlay for positioning</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>R</kbd>
               <span>Reset all adjustments</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>1-5</kbd>
@@ -1892,6 +1899,46 @@ export default function MirrorPage() {
           }}>
             <span>{showGarment ? GARMENTS[selectedGarment].emoji : "👁️‍🗨️"}</span>
             <span>{showGarment ? GARMENTS[selectedGarment].name : "Garment Hidden"}</span>
+          </div>
+        )}
+
+        {/* Grid overlay for positioning */}
+        {cameraOn && showGrid && (
+          <div style={{
+            position: "absolute",
+            top: 0, left: 0, right: 0, bottom: 0,
+            pointerEvents: "none",
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateRows: "repeat(3, 1fr)",
+          }}>
+            {[...Array(9)].map((_, i) => (
+              <div key={i} style={{
+                border: "1px solid rgba(255,255,255,0.2)",
+              }} />
+            ))}
+            {/* Center crosshair */}
+            <div style={{
+              position: "absolute",
+              top: "50%", left: "50%",
+              width: 40, height: 40,
+              transform: "translate(-50%, -50%)",
+              border: "2px solid rgba(108, 92, 231, 0.8)",
+              borderRadius: "50%",
+            }}>
+              <div style={{
+                position: "absolute",
+                top: "50%", left: 0, right: 0,
+                height: 1,
+                background: "rgba(108, 92, 231, 0.8)",
+              }} />
+              <div style={{
+                position: "absolute",
+                left: "50%", top: 0, bottom: 0,
+                width: 1,
+                background: "rgba(108, 92, 231, 0.8)",
+              }} />
+            </div>
           </div>
         )}
 
