@@ -1886,19 +1886,41 @@ export default function MirrorPage() {
           <div style={{
             position: "absolute",
             top: 12, left: 12,
-            background: showGarment ? "rgba(108, 92, 231, 0.8)" : "rgba(75, 85, 99, 0.8)",
-            padding: "6px 12px",
-            borderRadius: 8,
-            color: "#fff",
-            fontSize: 12,
-            fontWeight: 600,
-            pointerEvents: "none",
             display: "flex",
             alignItems: "center",
-            gap: 6,
+            gap: 8,
           }}>
-            <span>{showGarment ? GARMENTS[selectedGarment].emoji : "👁️‍🗨️"}</span>
-            <span>{showGarment ? GARMENTS[selectedGarment].name : "Garment Hidden"}</span>
+            <div style={{
+              background: showGarment ? "rgba(108, 92, 231, 0.8)" : "rgba(75, 85, 99, 0.8)",
+              padding: "6px 12px",
+              borderRadius: 8,
+              color: "#fff",
+              fontSize: 12,
+              fontWeight: 600,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}>
+              <span>{showGarment ? GARMENTS[selectedGarment].emoji : "👁️‍🗨️"}</span>
+              <span>{showGarment ? GARMENTS[selectedGarment].name : "Garment Hidden"}</span>
+            </div>
+            <button
+              onClick={() => {
+                toggleFavorite(selectedGarment);
+                vibrate(20);
+              }}
+              style={{
+                background: "rgba(0,0,0,0.6)",
+                border: "none",
+                borderRadius: 8,
+                padding: "6px 10px",
+                cursor: "pointer",
+                fontSize: 16,
+              }}
+              title={favoriteGarments.includes(selectedGarment) ? "Remove from favorites" : "Add to favorites"}
+            >
+              {favoriteGarments.includes(selectedGarment) ? "❤️" : "🤍"}
+            </button>
           </div>
         )}
 
