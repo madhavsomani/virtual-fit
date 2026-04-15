@@ -155,6 +155,7 @@ export default function MirrorPage() {
   const [batterySaver, setBatterySaver] = useState(false);
   const frameSkipRef = useRef(0);
   const lastClickTimeRef = useRef(0);
+  const [showGarmentPreview, setShowGarmentPreview] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2664,10 +2665,18 @@ export default function MirrorPage() {
         setStatus(batterySaver ? '🔋 Full power' : '🔋 Battery saver ON');
         vibrate(15);
       }
+      
+      // Alt+T for garment thumbnail preview toggle
+      if ((e.key === 't' || e.key === 'T') && e.altKey) {
+        e.preventDefault();
+        setShowGarmentPreview(prev => !prev);
+        setStatus(showGarmentPreview ? '🖼️ Preview off' : '🖼️ Preview on');
+        vibrate(10);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -4158,6 +4167,44 @@ export default function MirrorPage() {
             zIndex: 100,
           }}>
             {currentFps} FPS
+          </div>
+        )}
+        
+        {/* Garment thumbnail preview */}
+        {showGarmentPreview && cameraOn && GARMENTS[selectedGarment] && (
+          <div 
+            onClick={() => setShowGarmentGrid(true)}
+            style={{
+              position: "absolute",
+              bottom: 12, left: 12,
+              width: 60,
+              height: 60,
+              borderRadius: 8,
+              overflow: "hidden",
+              border: "2px solid rgba(255,255,255,0.5)",
+              cursor: "pointer",
+              background: "rgba(0,0,0,0.5)",
+              zIndex: 100,
+            }}
+          >
+            <img 
+              src={GARMENTS[selectedGarment].path} 
+              alt={GARMENTS[selectedGarment].name}
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
+            />
+            <div style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              background: "rgba(0,0,0,0.7)",
+              color: "#fff",
+              fontSize: 8,
+              textAlign: "center",
+              padding: 2,
+            }}>
+              {selectedGarment + 1}/{GARMENTS.length}
+            </div>
           </div>
         )}
         
