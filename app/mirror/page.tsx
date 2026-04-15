@@ -1974,16 +1974,23 @@ export default function MirrorPage() {
         case 'i': // Stats info toggle
           setShowStats(prev => !prev);
           break;
-        case 'r': // Quick reset adjustments
-          saveAdjustmentsForUndo();
-          setGarmentOpacity(0.9);
-          setGarmentScale(1.0);
-          setGarmentYOffset(0);
-          setGarmentXOffset(0);
-          setGarmentBrightness(1.0);
-          setGarmentHue(0);
-          setGarmentRotation(0);
-          setStatus("🔄 Adjustments reset! Press Z to undo");
+        case 'r': // Quick reset adjustments (without shift)
+        case 'R': // Quick rotation 90° with Shift+R
+          if (e.shiftKey) {
+            setGarmentRotation(prev => (prev + 90) % 360);
+            setStatus(`🔄 Rotation: ${(garmentRotation + 90) % 360}°`);
+            vibrate(15);
+          } else {
+            saveAdjustmentsForUndo();
+            setGarmentOpacity(0.9);
+            setGarmentScale(1.0);
+            setGarmentYOffset(0);
+            setGarmentXOffset(0);
+            setGarmentBrightness(1.0);
+            setGarmentHue(0);
+            setGarmentRotation(0);
+            setStatus("🔄 Adjustments reset! Press Z to undo");
+          }
           break;
         case 'z': // Undo last adjustment change
           undoAdjustments();
