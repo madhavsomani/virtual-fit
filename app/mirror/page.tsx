@@ -39,6 +39,10 @@ export default function MirrorPage() {
   const [garmentTransition, setGarmentTransition] = useState(false);
   const [showKeyboardHint, setShowKeyboardHint] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const lastAdjustmentsRef = useRef<{
+    opacity: number; scale: number; yOffset: number; xOffset: number;
+    brightness: number; hue: number; rotation: number;
+  } | null>(null);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -219,6 +223,33 @@ export default function MirrorPage() {
       track.applyConstraints(constraints).catch(() => {});
       setCameraZoom(zoomLevel);
     }
+  }, []);
+
+  // Save current adjustments for undo
+  const saveAdjustmentsForUndo = useCallback(() => {
+    lastAdjustmentsRef.current = {
+      opacity: garmentOpacity, scale: garmentScale, yOffset: garmentYOffset,
+      xOffset: garmentXOffset, brightness: garmentBrightness, hue: garmentHue,
+      rotation: garmentRotation,
+    };
+  }, [garmentOpacity, garmentScale, garmentYOffset, garmentXOffset, garmentBrightness, garmentHue, garmentRotation]);
+
+  // Undo last adjustment change
+  const undoAdjustments = useCallback(() => {
+    if (!lastAdjustmentsRef.current) {
+      setStatus("❌ Nothing to undo");
+      return;
+    }
+    const prev = lastAdjustmentsRef.current;
+    setGarmentOpacity(prev.opacity);
+    setGarmentScale(prev.scale);
+    setGarmentYOffset(prev.yOffset);
+    setGarmentXOffset(prev.xOffset);
+    setGarmentBrightness(prev.brightness);
+    setGarmentHue(prev.hue);
+    setGarmentRotation(prev.rotation);
+    setStatus("↩️ Adjustments restored!");
+    lastAdjustmentsRef.current = null;
   }, []);
 
   // Garment gallery
@@ -1406,6 +1437,7 @@ export default function MirrorPage() {
           setShowStats(prev => !prev);
           break;
         case 'r': // Quick reset adjustments
+          saveAdjustmentsForUndo();
           setGarmentOpacity(0.9);
           setGarmentScale(1.0);
           setGarmentYOffset(0);
@@ -1413,7 +1445,10 @@ export default function MirrorPage() {
           setGarmentBrightness(1.0);
           setGarmentHue(0);
           setGarmentRotation(0);
-          setStatus("🔄 Adjustments reset!");
+          setStatus("🔄 Adjustments reset! Press Z to undo");
+          break;
+        case 'z': // Undo last adjustment change
+          undoAdjustments();
           break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select
           {
@@ -1427,7 +1462,7 @@ export default function MirrorPage() {
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
