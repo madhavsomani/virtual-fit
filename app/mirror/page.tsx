@@ -69,6 +69,8 @@ export default function MirrorPage() {
   const [distanceHint, setDistanceHint] = useState<'too-close' | 'optimal' | 'too-far' | null>(null);
   const [showFitGuide, setShowFitGuide] = useState(false);
   const [garmentFadeIn, setGarmentFadeIn] = useState(true);
+  const [slideshowMode, setSlideshowMode] = useState(false);
+  const slideshowIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [flashCompare, setFlashCompare] = useState(false);
   const flashIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [garmentSaturation, setGarmentSaturation] = useState(100);
@@ -2387,6 +2389,23 @@ export default function MirrorPage() {
         setStatus(showFitGuide ? '📏 Fit guide off' : '📏 Fit guide on');
         vibrate(15);
       }
+      
+      // K key for slideshow mode (auto-cycle garments)
+      if (e.key === 'k' || e.key === 'K') {
+        if (slideshowIntervalRef.current) {
+          clearInterval(slideshowIntervalRef.current);
+          slideshowIntervalRef.current = null;
+          setSlideshowMode(false);
+          setStatus('🎥 Slideshow off');
+        } else if (cameraOn) {
+          setSlideshowMode(true);
+          slideshowIntervalRef.current = setInterval(() => {
+            setSelectedGarment(prev => (prev + 1) % GARMENTS.length);
+          }, 3000);
+          setStatus('🎥 Slideshow on (3s per garment)');
+        }
+        vibrate(15);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
@@ -3259,6 +3278,24 @@ export default function MirrorPage() {
             animation: "pulse 0.5s infinite",
           }}>
             🔄 Comparing... (Q to stop)
+          </div>
+        )}
+
+        {/* Slideshow indicator */}
+        {slideshowMode && (
+          <div style={{
+            position: "absolute",
+            top: 90, left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(34, 197, 94, 0.9)",
+            padding: "8px 16px",
+            borderRadius: 8,
+            color: "#fff",
+            fontSize: 12,
+            fontWeight: 600,
+            pointerEvents: "none",
+          }}>
+            🎥 Slideshow... (K to stop)
           </div>
         )}
 
