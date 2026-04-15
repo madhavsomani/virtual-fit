@@ -46,6 +46,7 @@ export default function MirrorPage() {
   const previousGarmentRef = useRef<number | null>(null);
   const [smoothMode, setSmoothMode] = useState(false);
   const [showPinchFeedback, setShowPinchFeedback] = useState(false);
+  const [adjustmentsLocked, setAdjustmentsLocked] = useState(false);
   const tapCountRef = useRef(0);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
@@ -1499,6 +1500,11 @@ export default function MirrorPage() {
               .catch(() => setStatus("❌ Failed to copy"));
           }
           break;
+        case 'l': // Toggle adjustments lock
+          setAdjustmentsLocked(prev => !prev);
+          setStatus(adjustmentsLocked ? "🔓 Adjustments unlocked" : "🔒 Adjustments locked");
+          vibrate(adjustmentsLocked ? 20 : [20, 30, 20]);
+          break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select
           {
             const idx = parseInt(e.key) - 1;
@@ -1823,7 +1829,7 @@ export default function MirrorPage() {
         }}
         onTouchMove={(e) => {
           // Two-finger drag for positioning + pinch for scale
-          if (isDragging && e.touches.length === 2) {
+          if (isDragging && e.touches.length === 2 && !adjustmentsLocked) {
             const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
             const posX = midX - dragStartRef.current.x;
@@ -1921,7 +1927,7 @@ export default function MirrorPage() {
             };
           }}
           onMouseMove={(e) => {
-            if (!isDragging) return;
+            if (!isDragging || adjustmentsLocked) return;
             const dx = e.clientX - dragStartRef.current.x;
             const dy = e.clientY - dragStartRef.current.y;
             setGarmentXOffset(dragStartRef.current.offsetX + dx * 0.5);
@@ -2021,6 +2027,23 @@ export default function MirrorPage() {
           }}>
             <span>🔍</span>
             <span>{Math.round(garmentScale * 100)}%</span>
+          </div>
+        )}
+
+        {/* Lock indicator */}
+        {cameraOn && adjustmentsLocked && (
+          <div style={{
+            position: "absolute",
+            top: 75, left: 12,
+            background: "rgba(239, 68, 68, 0.85)",
+            padding: "4px 10px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: 11,
+            fontWeight: 600,
+            pointerEvents: "none",
+          }}>
+            🔒 Locked
           </div>
         )}
 
