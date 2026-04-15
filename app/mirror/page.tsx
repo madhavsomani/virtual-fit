@@ -79,6 +79,7 @@ export default function MirrorPage() {
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [screenshotHistory, setScreenshotHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [showSilhouette, setShowSilhouette] = useState(false);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -661,7 +662,50 @@ export default function MirrorPage() {
         ctx.stroke();
       }
     }
-  }, [debugMode, garmentScale, garmentYOffset]);
+    
+    // Draw body silhouette outline if enabled
+    if (showSilhouette && debugCanvasRef.current) {
+      const ctx = debugCanvasRef.current.getContext("2d");
+      if (ctx) {
+        if (!debugMode) ctx.clearRect(0, 0, vw, vh);
+        
+        // Draw torso outline
+        ctx.strokeStyle = "rgba(147, 51, 234, 0.7)";
+        ctx.lineWidth = 3;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        
+        // Shoulders
+        const lsx = (1 - ls.x) * vw, lsy = ls.y * vh;
+        const rsx = (1 - rs.x) * vw, rsy = rs.y * vh;
+        // Hips
+        const lhx = (1 - lh.x) * vw, lhy = lh.y * vh;
+        const rhx = (1 - rh.x) * vw, rhy = rh.y * vh;
+        
+        // Draw torso polygon
+        ctx.moveTo(lsx, lsy);
+        ctx.lineTo(rsx, rsy);
+        ctx.lineTo(rhx, rhy);
+        ctx.lineTo(lhx, lhy);
+        ctx.closePath();
+        ctx.stroke();
+        
+        // Draw centerline
+        ctx.strokeStyle = "rgba(234, 179, 8, 0.5)";
+        ctx.setLineDash([3, 3]);
+        const centerTopX = (lsx + rsx) / 2;
+        const centerTopY = (lsy + rsy) / 2;
+        const centerBottomX = (lhx + rhx) / 2;
+        const centerBottomY = (lhy + rhy) / 2;
+        ctx.beginPath();
+        ctx.moveTo(centerTopX, centerTopY);
+        ctx.lineTo(centerBottomX, centerBottomY);
+        ctx.stroke();
+        
+        ctx.setLineDash([]);
+      }
+    }
+  }, [debugMode, garmentScale, garmentYOffset, showSilhouette]);
 
   // Start camera + pose detection
   const startCamera = useCallback(async () => {
@@ -2068,6 +2112,11 @@ export default function MirrorPage() {
         case '0': // Toggle screenshot history
           setShowHistory(prev => !prev);
           setStatus(showHistory ? "🖼️ History hidden" : `🖼️ History (${screenshotHistory.length})`);
+          vibrate(15);
+          break;
+        case '-': // Toggle body silhouette outline
+          setShowSilhouette(prev => !prev);
+          setStatus(showSilhouette ? "👤 Silhouette off" : "👤 Silhouette on");
           vibrate(15);
           break;
       }
