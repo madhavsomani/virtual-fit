@@ -36,6 +36,7 @@ export default function MirrorPage() {
   const [compareMode, setCompareMode] = useState(false);
   const [cameraZoom, setCameraZoom] = useState(1);
   const [showGrid, setShowGrid] = useState(false);
+  const [garmentTransition, setGarmentTransition] = useState(false);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -690,6 +691,10 @@ export default function MirrorPage() {
     
     const garment = GARMENTS[index];
     if (!garment) return;
+    
+    // Trigger visual transition
+    setGarmentTransition(true);
+    setTimeout(() => setGarmentTransition(false), 300);
     
     setSelectedGarment(index);
     // Save to localStorage for persistence
@@ -1762,7 +1767,8 @@ export default function MirrorPage() {
             position: "absolute",
             top: 0, left: 0,
             width: "100%", height: "100%",
-            transform: isMirrored ? "scaleX(-1)" : "none",
+            transform: `${isMirrored ? "scaleX(-1)" : "none"} ${garmentTransition ? "scale(1.02)" : "scale(1)"}`,
+            transition: garmentTransition ? "transform 0.15s ease-out" : "transform 0.15s ease-in",
             pointerEvents: "auto",
             cursor: isDragging ? "grabbing" : "grab",
           }}
