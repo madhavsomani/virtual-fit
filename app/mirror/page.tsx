@@ -164,6 +164,7 @@ export default function MirrorPage() {
   const [privacyMode, setPrivacyMode] = useState(false);
   const [selfieCountdown, setSelfieCountdown] = useState<number | null>(null);
   const [showAspectBadge, setShowAspectBadge] = useState(false);
+  const [uiTheme, setUiTheme] = useState<'purple' | 'blue' | 'green' | 'pink'>('purple');
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -494,6 +495,16 @@ export default function MirrorPage() {
     lastAdjustmentsRef.current = null;
   }, []);
 
+  // Theme colors
+  const themeColors = {
+    purple: '#6C5CE7',
+    blue: '#0984E3',
+    green: '#00B894',
+    pink: '#E84393',
+  };
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const primaryColor = themeColors[uiTheme];
+  
   // Garment gallery
   const GARMENTS = [
     { name: "Yellow Shirt", path: "/garments/yellow-shirt-nobg.png", emoji: "👕", category: "Shirt" },
@@ -2771,10 +2782,21 @@ export default function MirrorPage() {
         setShowStats(prev => !prev);
         vibrate(10);
       }
+      
+      // Alt+J for UI theme cycle
+      if ((e.key === 'j' || e.key === 'J') && e.altKey) {
+        e.preventDefault();
+        const themes: typeof uiTheme[] = ['purple', 'blue', 'green', 'pink'];
+        const currentIdx = themes.indexOf(uiTheme);
+        const nextTheme = themes[(currentIdx + 1) % themes.length];
+        setUiTheme(nextTheme);
+        setStatus(`🎨 Theme: ${nextTheme}`);
+        vibrate(15);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled, nightMode, privacyMode, selfieCountdown]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled, nightMode, privacyMode, selfieCountdown, uiTheme]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
