@@ -144,6 +144,7 @@ export default function MirrorPage() {
   const debugCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [helpPage, setHelpPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2844,22 +2845,48 @@ export default function MirrorPage() {
               👋 Swipe gestures also work with your hand!<br/>
               🤏 Pinch to resize garment on touch devices!
             </p>
-            <button
-              onClick={() => setShowHelp(false)}
-              style={{
-                marginTop: 16,
-                width: "100%",
-                padding: "10px",
-                background: "#6C5CE7",
-                color: "#fff",
-                border: "none",
-                borderRadius: 8,
-                fontSize: 15,
-                cursor: "pointer",
-              }}
-            >
-              Got it!
-            </button>
+            <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+              <button
+                onClick={() => setHelpPage(helpPage === 1 ? 2 : 1)}
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  background: "#374151",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  fontSize: 13,
+                  cursor: "pointer",
+                }}
+              >
+                {helpPage === 1 ? '→ More Shortcuts' : '← Basic Shortcuts'}
+              </button>
+              <button
+                onClick={() => setShowHelp(false)}
+                style={{
+                  flex: 1,
+                  padding: "10px",
+                  background: "#6C5CE7",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  fontSize: 13,
+                  cursor: "pointer",
+                }}
+              >
+                Close (Esc)
+              </button>
+            </div>
+            {helpPage === 2 && (
+              <div style={{ marginTop: 16, fontSize: 12, color: "#9ca3af", lineHeight: 1.8 }}>
+                <strong>Advanced:</strong><br/>
+                K → Slideshow | Y → Color picker | U → Recent | O → Compare<br/>
+                Alt+S → Shuffle | Alt+E → Export | Alt+I → Import | Alt+R → Full reset<br/>
+                Alt+N → Random | Shift+Tab → Size cycle | Shift+R → Rotate 90°<br/>
+                ` → Fit guide | @ → Auto-light | ; → Shadow | T → Tint modes<br/>
+                [ ] → Edge feather | &lt; &gt; → Shadow angle | Ctrl+1-5 → Presets
+              </div>
+            )}
           </div>
         </div>
       )}
