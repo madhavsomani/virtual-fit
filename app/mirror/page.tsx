@@ -174,6 +174,7 @@ export default function MirrorPage() {
   const [showDeviceInfo, setShowDeviceInfo] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
+  const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -298,6 +299,16 @@ export default function MirrorPage() {
       // Ignore storage errors
     }
   }, [garmentOpacity, garmentScale, garmentYOffset, garmentXOffset, garmentBrightness, garmentRotation, garmentHue]);
+  
+  // Orientation tracking
+  useEffect(() => {
+    const updateOrientation = () => {
+      setOrientation(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
+    };
+    updateOrientation();
+    window.addEventListener('resize', updateOrientation);
+    return () => window.removeEventListener('resize', updateOrientation);
+  }, []);
   
   // Auto-save UI preferences
   useEffect(() => {
@@ -4765,6 +4776,7 @@ export default function MirrorPage() {
             <div>🖼️ Viewport: {typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : '?'}</div>
             <div>🌐 Pixel Ratio: {typeof window !== 'undefined' ? window.devicePixelRatio : '?'}x</div>
             <div>👆 Touch: {typeof navigator !== 'undefined' && 'maxTouchPoints' in navigator ? navigator.maxTouchPoints > 0 ? 'Yes' : 'No' : '?'}</div>
+            <div>📏 Orientation: {orientation === 'portrait' ? '📱 Portrait' : '📺 Landscape'}</div>
             <div style={{ opacity: 0.7, marginTop: 8, fontSize: 10 }}>Alt+B to close</div>
           </div>
         )}
