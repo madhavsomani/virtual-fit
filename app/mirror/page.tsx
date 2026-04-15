@@ -166,6 +166,8 @@ export default function MirrorPage() {
   const [showAspectBadge, setShowAspectBadge] = useState(false);
   const [uiTheme, setUiTheme] = useState<'purple' | 'blue' | 'green' | 'pink'>('purple');
   const [compactMode, setCompactMode] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [autoSaveSettings, setAutoSaveSettings] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -234,6 +236,17 @@ export default function MirrorPage() {
         }
       }
       
+      // Load UI preferences
+      const uiPrefs = localStorage.getItem("virtualfit-ui-prefs");
+      if (uiPrefs) {
+        const prefs = JSON.parse(uiPrefs);
+        if (prefs.uiTheme) setUiTheme(prefs.uiTheme);
+        if (prefs.compactMode !== undefined) setCompactMode(prefs.compactMode);
+        if (prefs.nightMode !== undefined) setNightMode(prefs.nightMode);
+        if (prefs.batterySaver !== undefined) setBatterySaver(prefs.batterySaver);
+        if (prefs.soundEnabled !== undefined) setSoundEnabled(prefs.soundEnabled);
+      }
+      
       // Load config from URL params (for shareable links)
       const params = new URLSearchParams(window.location.search);
       let loadedFromUrl = false;
@@ -279,6 +292,22 @@ export default function MirrorPage() {
       // Ignore storage errors
     }
   }, [garmentOpacity, garmentScale, garmentYOffset, garmentXOffset, garmentBrightness, garmentRotation, garmentHue]);
+  
+  // Auto-save UI preferences
+  useEffect(() => {
+    if (!autoSaveSettings) return;
+    try {
+      localStorage.setItem("virtualfit-ui-prefs", JSON.stringify({
+        uiTheme,
+        compactMode,
+        nightMode,
+        batterySaver,
+        soundEnabled,
+      }));
+    } catch {
+      // Ignore
+    }
+  }, [uiTheme, compactMode, nightMode, batterySaver, soundEnabled, autoSaveSettings]);
 
   // Toggle favorite status for a garment
   const toggleFavorite = useCallback((index: number) => {
