@@ -74,6 +74,8 @@ export default function MirrorPage() {
   const [colorTemp, setColorTemp] = useState(0); // -100 (cool) to +100 (warm)
   const lastShakeTimeRef = useRef(0);
   const shakeThreshold = 15; // acceleration threshold for shake detection
+  const sessionStartRef = useRef<number | null>(null);
+  const [sessionDuration, setSessionDuration] = useState(0);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -98,7 +100,6 @@ export default function MirrorPage() {
   const [renameValue, setRenameValue] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [sessionStartTime, setSessionStartTime] = useState<number | null>(null);
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const lastTouchDistanceRef = useRef<number | null>(null);
@@ -708,7 +709,6 @@ export default function MirrorPage() {
       poseLandmarkerRef.current = poseLandmarker;
 
       setCameraOn(true);
-      setSessionStartTime(Date.now());
       setIsLoading(false);
       setStatus("✅ Tracking active — move around!");
       
@@ -958,6 +958,26 @@ export default function MirrorPage() {
       }
     );
   }, [createShirtMesh]);
+
+  // Session duration timer
+  useEffect(() => {
+    if (cameraOn && !sessionStartRef.current) {
+      sessionStartRef.current = Date.now();
+    }
+    if (!cameraOn) {
+      sessionStartRef.current = null;
+      setSessionDuration(0);
+      return;
+    }
+    
+    const interval = setInterval(() => {
+      if (sessionStartRef.current) {
+        setSessionDuration(Math.floor((Date.now() - sessionStartRef.current) / 1000));
+      }
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, [cameraOn]);
 
   // Shake-to-randomize detection for mobile
   useEffect(() => {
@@ -2035,7 +2055,6 @@ export default function MirrorPage() {
       garmentMeshRef.current.visible = false;
     }
     setCameraOn(false);
-    setSessionStartTime(null);
     setTorchOn(false);
     setFps(0);
     setLowFpsWarning(false);
@@ -2935,7 +2954,7 @@ export default function MirrorPage() {
         )}
 
         {/* Session duration timer */}
-        {cameraOn && sessionStartTime && (
+        {cameraOn && sessionDuration > 0 && (
           <div style={{
             position: "absolute",
             bottom: 12, left: 12,
@@ -2947,7 +2966,7 @@ export default function MirrorPage() {
             fontFamily: "monospace",
             pointerEvents: "none",
           }}>
-            ⏱️ {Math.floor((Date.now() - sessionStartTime) / 60000)}:{String(Math.floor(((Date.now() - sessionStartTime) % 60000) / 1000)).padStart(2, "0")}
+            ⏱️ {Math.floor(sessionDuration / 60)}:{String(sessionDuration % 60).padStart(2, "0")}
             {debugMode && ` | 🎬 ${totalFramesRef.current.toLocaleString()}f`}
             {batteryLevel !== null && batteryLevel <= 20 && (
               <span style={{ color: batteryLevel <= 10 ? "#ef4444" : "#eab308" }}>
