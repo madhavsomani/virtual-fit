@@ -158,6 +158,7 @@ export default function MirrorPage() {
   const [showGarmentPreview, setShowGarmentPreview] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [nightMode, setNightMode] = useState(false);
+  const [showMilestone, setShowMilestone] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2712,6 +2713,14 @@ export default function MirrorPage() {
         setStatus(nightMode ? '☀️ Day mode' : '🌙 Night mode');
         vibrate(15);
       }
+      
+      // Alt+C for 200 features celebration
+      if ((e.key === 'c' || e.key === 'C') && e.altKey) {
+        e.preventDefault();
+        setShowMilestone(true);
+        vibrate([100, 50, 100, 50, 100]);
+        setTimeout(() => setShowMilestone(false), 3000);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
@@ -4370,6 +4379,26 @@ export default function MirrorPage() {
           </div>
         )}
         
+        {/* 200 Features Milestone Celebration */}
+        {showMilestone && (
+          <div style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(108, 92, 231, 0.95)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 2000,
+            animation: "fadeIn 0.3s ease-out",
+          }}>
+            <div style={{ fontSize: 80, marginBottom: 20 }}>🎉</div>
+            <div style={{ fontSize: 48, fontWeight: 800, color: "#fff", marginBottom: 10 }}>200 Features!</div>
+            <div style={{ fontSize: 18, color: "rgba(255,255,255,0.9)", marginBottom: 20 }}>VirtualFit Milestone Achieved</div>
+            <div style={{ fontSize: 14, color: "rgba(255,255,255,0.7)" }}>Alt+C to celebrate anytime</div>
+          </div>
+        )}
+        
         {/* Recording time indicator */}
         {isRecording && (
           <div style={{
@@ -5408,7 +5437,7 @@ export default function MirrorPage() {
 
       {/* Version footer */}
       <div style={{ marginTop: 32, color: "#444", fontSize: 11, textAlign: "center" }}>
-        <p>VirtualFit v2.5.0 • 194 features • Built with Next.js + Three.js + MediaPipe</p>
+        <p>VirtualFit v2.5.0 • 200 features • Built with Next.js + Three.js + MediaPipe</p>
         <p style={{ marginTop: 4 }}>
           <a href="#" onClick={(e) => { e.preventDefault(); setShowHelp(true); }} style={{ color: "#6C5CE7", textDecoration: "none" }}>
             ❓ Help
