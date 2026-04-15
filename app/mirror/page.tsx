@@ -65,6 +65,7 @@ export default function MirrorPage() {
   const [colorGradeIdx, setColorGradeIdx] = useState(0);
   const [showEdgeHints, setShowEdgeHints] = useState(false);
   const [hasSeenEdgeHints, setHasSeenEdgeHints] = useState(false);
+  const [fitQuality, setFitQuality] = useState<'excellent' | 'good' | 'fair' | 'poor'>('good');
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -543,6 +544,21 @@ export default function MirrorPage() {
     const avgConfidence = keyLandmarks.reduce((sum, lm) => sum + (lm?.visibility ?? 0), 0) / keyLandmarks.length;
     const confidencePercent = Math.round(avgConfidence * 100);
     setTrackingConfidence(confidencePercent);
+    
+    // Calculate fit quality based on multiple factors
+    const shoulderVisible = (ls?.visibility ?? 0) > 0.7 && (rs?.visibility ?? 0) > 0.7;
+    const hipVisible = (lh?.visibility ?? 0) > 0.5 && (rh?.visibility ?? 0) > 0.5;
+    const bodyStable = Math.abs(sp.tilt) < 0.15; // radians, ~8.5 degrees
+    
+    if (confidencePercent > 80 && shoulderVisible && hipVisible && bodyStable) {
+      setFitQuality('excellent');
+    } else if (confidencePercent > 60 && shoulderVisible) {
+      setFitQuality('good');
+    } else if (confidencePercent > 40) {
+      setFitQuality('fair');
+    } else {
+      setFitQuality('poor');
+    }
     
     // Update last pose detected time
     if (confidencePercent > 20) {
@@ -2503,6 +2519,30 @@ export default function MirrorPage() {
             pointerEvents: "none",
           }}>
             🎬 {['None', 'Warm', 'Cool', 'Vintage', 'Vivid', 'Noir'][colorGradeIdx]}
+          </div>
+        )}
+
+        {/* Fit quality indicator */}
+        {cameraOn && showGarment && (
+          <div style={{
+            position: "absolute",
+            bottom: 12, right: 12,
+            background: fitQuality === 'excellent' ? "rgba(34, 197, 94, 0.85)" :
+                        fitQuality === 'good' ? "rgba(59, 130, 246, 0.85)" :
+                        fitQuality === 'fair' ? "rgba(251, 191, 36, 0.85)" :
+                        "rgba(239, 68, 68, 0.85)",
+            padding: "4px 10px",
+            borderRadius: 6,
+            color: "#fff",
+            fontSize: 10,
+            fontWeight: 600,
+            pointerEvents: "none",
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+          }}>
+            {fitQuality === 'excellent' ? '✨' : fitQuality === 'good' ? '✅' : fitQuality === 'fair' ? '⚠️' : '❌'}
+            Fit: {fitQuality}
           </div>
         )}
 
