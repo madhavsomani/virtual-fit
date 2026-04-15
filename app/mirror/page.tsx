@@ -165,6 +165,7 @@ export default function MirrorPage() {
   const [selfieCountdown, setSelfieCountdown] = useState<number | null>(null);
   const [showAspectBadge, setShowAspectBadge] = useState(false);
   const [uiTheme, setUiTheme] = useState<'purple' | 'blue' | 'green' | 'pink'>('purple');
+  const [compactMode, setCompactMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2793,10 +2794,18 @@ export default function MirrorPage() {
         setStatus(`🎨 Theme: ${nextTheme}`);
         vibrate(15);
       }
+      
+      // Alt+K for compact mode toggle
+      if ((e.key === 'k' || e.key === 'K') && e.altKey) {
+        e.preventDefault();
+        setCompactMode(prev => !prev);
+        setStatus(compactMode ? '📱 Normal layout' : '📏 Compact mode');
+        vibrate(10);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled, nightMode, privacyMode, selfieCountdown, uiTheme]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled, nightMode, privacyMode, selfieCountdown, uiTheme, compactMode]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
