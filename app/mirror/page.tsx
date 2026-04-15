@@ -37,6 +37,7 @@ export default function MirrorPage() {
   const [cameraZoom, setCameraZoom] = useState(1);
   const [showGrid, setShowGrid] = useState(false);
   const [garmentTransition, setGarmentTransition] = useState(false);
+  const [showKeyboardHint, setShowKeyboardHint] = useState(false);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -555,6 +556,12 @@ export default function MirrorPage() {
       setSessionStartTime(Date.now());
       setIsLoading(false);
       setStatus("✅ Tracking active — move around!");
+      
+      // Show keyboard hints briefly for desktop users
+      if (!isMobileDevice) {
+        setShowKeyboardHint(true);
+        setTimeout(() => setShowKeyboardHint(false), 5000);
+      }
 
       // Detection + render loop
       let lastTime = -1;
@@ -1546,6 +1553,33 @@ export default function MirrorPage() {
         >
           🔄 Rotate your device for a better try-on experience
           <span style={{ display: "block", fontSize: 11, marginTop: 4, opacity: 0.8 }}>Tap to dismiss</span>
+        </div>
+      )}
+
+      {/* Quick keyboard hints toast for desktop */}
+      {showKeyboardHint && cameraOn && !isMobileDevice && (
+        <div
+          onClick={() => setShowKeyboardHint(false)}
+          style={{
+            position: "fixed",
+            bottom: 80, left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(0,0,0,0.85)",
+            color: "#fff",
+            padding: "12px 20px",
+            borderRadius: 12,
+            fontSize: 13,
+            zIndex: 250,
+            cursor: "pointer",
+            display: "flex",
+            gap: 16,
+            alignItems: "center",
+          }}
+        >
+          <span>⌨️ <kbd style={{ background: "#374151", padding: "2px 6px", borderRadius: 4, fontSize: 11 }}>H</kbd> Help</span>
+          <span><kbd style={{ background: "#374151", padding: "2px 6px", borderRadius: 4, fontSize: 11 }}>S</kbd> Screenshot</span>
+          <span><kbd style={{ background: "#374151", padding: "2px 6px", borderRadius: 4, fontSize: 11 }}>F</kbd> Fullscreen</span>
+          <span><kbd style={{ background: "#374151", padding: "2px 6px", borderRadius: 4, fontSize: 11 }}>←→</kbd> Switch</span>
         </div>
       )}
 
