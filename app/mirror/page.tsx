@@ -66,6 +66,8 @@ export default function MirrorPage() {
   const opacityPresets = [0.25, 0.5, 0.75, 0.9, 1.0]; // Quick opacity levels
   const [tintMode, setTintMode] = useState<'none' | 'warm' | 'cool' | 'sepia' | 'night'>('none');
   const [distanceHint, setDistanceHint] = useState<'too-close' | 'optimal' | 'too-far' | null>(null);
+  const [flashCompare, setFlashCompare] = useState(false);
+  const flashIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [garmentSaturation, setGarmentSaturation] = useState(100);
   const [garmentContrast, setGarmentContrast] = useState(100);
   const [colorGradeIdx, setColorGradeIdx] = useState(0);
@@ -2300,6 +2302,24 @@ export default function MirrorPage() {
         setStatus(`🎨 Tint: ${nextMode === 'none' ? 'Off' : nextMode.charAt(0).toUpperCase() + nextMode.slice(1)}`);
         vibrate(15);
       }
+      
+      // Q key for flash compare (toggle garment on/off rapidly)
+      if (e.key === 'q' || e.key === 'Q') {
+        if (flashIntervalRef.current) {
+          clearInterval(flashIntervalRef.current);
+          flashIntervalRef.current = null;
+          setFlashCompare(false);
+          setShowGarment(true);
+          setStatus('🔄 Flash compare off');
+        } else {
+          setFlashCompare(true);
+          flashIntervalRef.current = setInterval(() => {
+            setShowGarment(prev => !prev);
+          }, 500);
+          setStatus('🔄 Flash compare on');
+        }
+        vibrate(15);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
@@ -3152,6 +3172,25 @@ export default function MirrorPage() {
             animation: "pulse 1s infinite",
           }}>
             {distanceHint === 'too-close' ? '🚨 Step back!' : '👋 Come closer!'}
+          </div>
+        )}
+
+        {/* Flash compare indicator */}
+        {flashCompare && (
+          <div style={{
+            position: "absolute",
+            top: 50, left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(147, 51, 234, 0.9)",
+            padding: "8px 16px",
+            borderRadius: 8,
+            color: "#fff",
+            fontSize: 12,
+            fontWeight: 600,
+            pointerEvents: "none",
+            animation: "pulse 0.5s infinite",
+          }}>
+            🔄 Comparing... (Q to stop)
           </div>
         )}
 
