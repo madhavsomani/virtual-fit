@@ -1456,8 +1456,23 @@ export default function MirrorPage() {
             setStatus(`↕️ Y: ${garmentYOffset + 5}px`);
           }
           break;
-        case 'escape': // Exit fullscreen or close help
-          if (showHelp) {
+        case 'escape': // Exit fullscreen, close help, or reset all (with Shift)
+          if (e.shiftKey && !adjustmentsLocked) {
+            // Shift+Escape: Reset ALL adjustments
+            saveAdjustmentsForUndo();
+            setGarmentOpacity(1.0);
+            setGarmentScale(1.0);
+            setGarmentScaleY(1.0);
+            setGarmentXOffset(0);
+            setGarmentYOffset(0);
+            setGarmentRotation(0);
+            setGarmentBrightness(100);
+            setGarmentHue(0);
+            setGarmentFlipped(false);
+            setAspectLocked(true);
+            setStatus("🔄 All adjustments reset! Press Z to undo");
+            vibrate(30);
+          } else if (showHelp) {
             setShowHelp(false);
           } else if (isFullscreen) {
             document.exitFullscreen();
