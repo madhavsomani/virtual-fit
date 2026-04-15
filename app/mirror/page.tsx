@@ -49,6 +49,7 @@ export default function MirrorPage() {
   const [adjustmentsLocked, setAdjustmentsLocked] = useState(false);
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [autoFit, setAutoFit] = useState(true);
+  const [garmentFlipped, setGarmentFlipped] = useState(false);
   const tapCountRef = useRef(0);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
@@ -462,9 +463,9 @@ export default function MirrorPage() {
 
     // Position & scale the 3D mesh
     mesh.position.set(sp.x + garmentXOffset * sp.w * 0.01, sp.y + sp.h * 0.45 + garmentYOffset * sp.h * 0.01, 0);
-    const scaleX = sp.w * 1.35 * sp.depth * garmentScale;
+    const scaleX = sp.w * 1.35 * sp.depth * garmentScale * (garmentFlipped ? -1 : 1);
     const scaleY = sp.h * 1.1 * sp.depth * garmentScale;
-    mesh.scale.set(scaleX, scaleY, scaleX * 0.3);
+    mesh.scale.set(scaleX, scaleY, Math.abs(scaleX) * 0.3);
     
     // Apply shoulder tilt as Z-rotation
     mesh.rotation.z = sp.tilt + garmentRotation;
@@ -1590,6 +1591,11 @@ export default function MirrorPage() {
         case 't': // Toggle auto-fit mode
           setAutoFit(prev => !prev);
           setStatus(autoFit ? "📏 Manual scale mode" : "✨ Auto-fit enabled");
+          vibrate(20);
+          break;
+        case 'j': // Flip garment horizontally
+          setGarmentFlipped(prev => !prev);
+          setStatus(garmentFlipped ? "↩️ Garment normal" : "↪️ Garment flipped");
           vibrate(20);
           break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select, scale, or brightness presets
