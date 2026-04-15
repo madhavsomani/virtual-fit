@@ -133,6 +133,7 @@ export default function MirrorPage() {
         if (adj.xOffset !== undefined) setGarmentXOffset(adj.xOffset);
         if (adj.brightness !== undefined) setGarmentBrightness(adj.brightness);
         if (adj.rotation !== undefined) setGarmentRotation(adj.rotation);
+        if (adj.hue !== undefined) setGarmentHue(adj.hue);
       }
       // Check if first-time user
       const hasSeenOnboarding = localStorage.getItem("virtualfit-onboarding-seen");
@@ -167,11 +168,12 @@ export default function MirrorPage() {
         xOffset: garmentXOffset,
         brightness: garmentBrightness,
         rotation: garmentRotation,
+        hue: garmentHue,
       }));
     } catch {
       // Ignore storage errors
     }
-  }, [garmentOpacity, garmentScale, garmentYOffset, garmentXOffset, garmentBrightness, garmentRotation]);
+  }, [garmentOpacity, garmentScale, garmentYOffset, garmentXOffset, garmentBrightness, garmentRotation, garmentHue]);
 
   // Toggle favorite status for a garment
   const toggleFavorite = useCallback((index: number) => {
