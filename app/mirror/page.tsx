@@ -67,6 +67,7 @@ export default function MirrorPage() {
   const [hasSeenEdgeHints, setHasSeenEdgeHints] = useState(false);
   const [fitQuality, setFitQuality] = useState<'excellent' | 'good' | 'fair' | 'poor'>('good');
   const prevFitQualityRef = useRef<'excellent' | 'good' | 'fair' | 'poor'>('good');
+  const [postureTip, setPostureTip] = useState<string | null>(null);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -552,15 +553,25 @@ export default function MirrorPage() {
     const bodyStable = Math.abs(sp.tilt) < 0.15; // radians, ~8.5 degrees
     
     let newFitQuality: 'excellent' | 'good' | 'fair' | 'poor';
+    let tip: string | null = null;
+    
     if (confidencePercent > 80 && shoulderVisible && hipVisible && bodyStable) {
       newFitQuality = 'excellent';
     } else if (confidencePercent > 60 && shoulderVisible) {
       newFitQuality = 'good';
     } else if (confidencePercent > 40) {
       newFitQuality = 'fair';
+      // Provide specific guidance
+      if (!shoulderVisible) tip = "💪 Show both shoulders";
+      else if (!bodyStable) tip = "🧘 Stand straighter";
     } else {
       newFitQuality = 'poor';
+      // More urgent guidance
+      if (confidencePercent < 20) tip = "📷 Step into frame";
+      else if (!shoulderVisible) tip = "💪 Face the camera";
+      else tip = "💡 Better lighting needed";
     }
+    setPostureTip(tip);
     
     // Haptic feedback on quality change
     if (newFitQuality !== prevFitQualityRef.current) {
@@ -2556,6 +2567,25 @@ export default function MirrorPage() {
           }}>
             {fitQuality === 'excellent' ? '✨' : fitQuality === 'good' ? '✅' : fitQuality === 'fair' ? '⚠️' : '❌'}
             Fit: {fitQuality}
+          </div>
+        )}
+
+        {/* Posture guidance tip */}
+        {cameraOn && postureTip && (fitQuality === 'fair' || fitQuality === 'poor') && (
+          <div style={{
+            position: "absolute",
+            bottom: 40, right: 12,
+            background: "rgba(0, 0, 0, 0.75)",
+            padding: "6px 12px",
+            borderRadius: 8,
+            color: "#fff",
+            fontSize: 12,
+            fontWeight: 500,
+            pointerEvents: "none",
+            maxWidth: 180,
+            textAlign: "center",
+          }}>
+            {postureTip}
           </div>
         )}
 
