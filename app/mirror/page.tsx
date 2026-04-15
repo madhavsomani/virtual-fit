@@ -65,6 +65,7 @@ export default function MirrorPage() {
   const [edgeFeather, setEdgeFeather] = useState(0); // 0-10px blur for soft edges
   const opacityPresets = [0.25, 0.5, 0.75, 0.9, 1.0]; // Quick opacity levels
   const [tintMode, setTintMode] = useState<'none' | 'warm' | 'cool' | 'sepia' | 'night'>('none');
+  const [distanceHint, setDistanceHint] = useState<'too-close' | 'optimal' | 'too-far' | null>(null);
   const [garmentSaturation, setGarmentSaturation] = useState(100);
   const [garmentContrast, setGarmentContrast] = useState(100);
   const [colorGradeIdx, setColorGradeIdx] = useState(0);
@@ -638,6 +639,20 @@ export default function MirrorPage() {
     const avgConfidence = keyLandmarks.reduce((sum, lm) => sum + (lm?.visibility ?? 0), 0) / keyLandmarks.length;
     const confidencePercent = Math.round(avgConfidence * 100);
     setTrackingConfidence(confidencePercent);
+    
+    // Distance hint based on shoulder width in frame
+    if ((ls?.visibility ?? 0) > 0.7 && (rs?.visibility ?? 0) > 0.7) {
+      const shoulderWidthPx = Math.abs(ls.x - rs.x) * vw;
+      if (shoulderWidthPx > vw * 0.6) {
+        setDistanceHint('too-close');
+      } else if (shoulderWidthPx < vw * 0.2) {
+        setDistanceHint('too-far');
+      } else {
+        setDistanceHint('optimal');
+      }
+    } else {
+      setDistanceHint(null);
+    }
     
     // Auto-lighting: sample video brightness and adjust garment
     if (autoLighting && videoRef.current && totalFramesRef.current % 30 === 0) {
@@ -3118,6 +3133,25 @@ export default function MirrorPage() {
             pointerEvents: "none",
           }}>
             🎨 {tintMode.charAt(0).toUpperCase() + tintMode.slice(1)}
+          </div>
+        )}
+
+        {/* Distance hint indicator */}
+        {cameraOn && distanceHint && distanceHint !== 'optimal' && (
+          <div style={{
+            position: "absolute",
+            bottom: 80, left: "50%",
+            transform: "translateX(-50%)",
+            background: distanceHint === 'too-close' ? "rgba(239, 68, 68, 0.9)" : "rgba(251, 191, 36, 0.9)",
+            padding: "8px 16px",
+            borderRadius: 8,
+            color: "#fff",
+            fontSize: 12,
+            fontWeight: 600,
+            pointerEvents: "none",
+            animation: "pulse 1s infinite",
+          }}>
+            {distanceHint === 'too-close' ? '🚨 Step back!' : '👋 Come closer!'}
           </div>
         )}
 
