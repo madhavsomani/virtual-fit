@@ -73,6 +73,8 @@ export default function MirrorPage() {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [recentGarments, setRecentGarments] = useState<number[]>([]);
   const [showRecentPanel, setShowRecentPanel] = useState(false);
+  const [comparisonMode, setComparisonMode] = useState(false);
+  const [comparisonGarment, setComparisonGarment] = useState<number | null>(null);
   const slideshowIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [flashCompare, setFlashCompare] = useState(false);
   const flashIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -2432,10 +2434,28 @@ export default function MirrorPage() {
         setStatus(showRecentPanel ? '🕒 Recent panel closed' : '🕒 Recent garments');
         vibrate(15);
       }
+      
+      // O key for comparison mode
+      if (e.key === 'o' || e.key === 'O') {
+        if (comparisonMode) {
+          setComparisonMode(false);
+          setComparisonGarment(null);
+          setStatus('👁️ Comparison off');
+        } else if (cameraOn) {
+          // Set comparison to previous garment or next one
+          const compareIdx = previousGarmentRef.current !== null 
+            ? previousGarmentRef.current 
+            : (selectedGarment + 1) % GARMENTS.length;
+          setComparisonGarment(compareIdx);
+          setComparisonMode(true);
+          setStatus(`👁️ Comparing with ${GARMENTS[compareIdx]?.name || 'next'}`);
+        }
+        vibrate(15);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -3336,6 +3356,38 @@ export default function MirrorPage() {
           </div>
         )}
 
+        {/* Comparison mode indicator */}
+        {comparisonMode && comparisonGarment !== null && (
+          <div style={{
+            position: "absolute",
+            top: 130, left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(59, 130, 246, 0.9)",
+            padding: "8px 16px",
+            borderRadius: 8,
+            color: "#fff",
+            fontSize: 12,
+            fontWeight: 600,
+            pointerEvents: "none",
+            display: "flex",
+            gap: 8,
+            alignItems: "center",
+          }}>
+            👁️ {GARMENTS[selectedGarment]?.name} vs {GARMENTS[comparisonGarment]?.name}
+            <button
+              onClick={() => { setComparisonMode(false); setComparisonGarment(null); }}
+              style={{
+                background: "rgba(255,255,255,0.2)",
+                border: "none",
+                borderRadius: 4,
+                padding: "2px 6px",
+                color: "#fff",
+                fontSize: 10,
+                cursor: "pointer",
+              }}
+            >O to close</button>
+          </div>
+        )}
         {/* Color picker panel */}
         {showColorPicker && cameraOn && (
           <div style={{
