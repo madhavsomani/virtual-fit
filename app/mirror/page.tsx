@@ -2494,6 +2494,19 @@ export default function MirrorPage() {
         });
         vibrate(15);
       }
+      
+      // Alt+S for outfit shuffle (random garment + hue + scale)
+      if ((e.key === 's' || e.key === 'S') && e.altKey && cameraOn) {
+        e.preventDefault();
+        const randomIdx = Math.floor(Math.random() * GARMENTS.length);
+        const randomHue = Math.floor(Math.random() * 360);
+        const randomScale = 0.8 + Math.random() * 0.4; // 0.8 - 1.2
+        switchGarment(randomIdx);
+        setGarmentHue(randomHue);
+        setGarmentScale(randomScale);
+        setStatus(`🎰 Shuffle: ${GARMENTS[randomIdx]?.name || 'Random'} | Hue: ${randomHue}° | Scale: ${Math.round(randomScale * 100)}%`);
+        vibrate(30);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
