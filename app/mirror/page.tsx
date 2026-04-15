@@ -4200,6 +4200,49 @@ export default function MirrorPage() {
           </button>
         )}
         
+        {/* Share button */}
+        {cameraOn && (
+          <button
+            onClick={async () => {
+              const shareUrl = window.location.href;
+              if (navigator.share) {
+                try {
+                  await navigator.share({
+                    title: 'VirtualFit - Virtual Try-On',
+                    text: 'Try on clothes virtually!',
+                    url: shareUrl,
+                  });
+                  setStatus('🚀 Shared!');
+                } catch {
+                  // User cancelled or share failed
+                }
+              } else {
+                await navigator.clipboard.writeText(shareUrl);
+                setStatus('📋 Link copied!');
+              }
+              vibrate(15);
+            }}
+            style={{
+              position: "absolute",
+              bottom: 12, right: 64,
+              width: 44, height: 44,
+              borderRadius: "50%",
+              background: "rgba(46, 204, 113, 0.8)",
+              border: "none",
+              color: "#fff",
+              fontSize: 20,
+              cursor: "pointer",
+              zIndex: 100,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            title="Share"
+          >
+            🚀
+          </button>
+        )}
+        
         {/* Garment thumbnail preview */}
         {showGarmentPreview && cameraOn && GARMENTS[selectedGarment] && (
           <div 
