@@ -2341,6 +2341,23 @@ export default function MirrorPage() {
         }
         vibrate(15);
       }
+      
+      // Escape key to close all overlays
+      if (e.key === 'Escape') {
+        setShowHelp(false);
+        setShowHistory(false);
+        setShowGarmentGrid(false);
+        setShowQuickMenu(false);
+        setShowStats(false);
+        if (flashIntervalRef.current) {
+          clearInterval(flashIntervalRef.current);
+          flashIntervalRef.current = null;
+          setFlashCompare(false);
+          setShowGarment(true);
+        }
+        setStatus('❌ Overlays closed');
+        vibrate(10);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
