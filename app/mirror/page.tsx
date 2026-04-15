@@ -60,6 +60,7 @@ export default function MirrorPage() {
   const [showQuickMenu, setShowQuickMenu] = useState(false);
   const [blendMode, setBlendMode] = useState<'normal' | 'multiply' | 'screen' | 'overlay'>('normal');
   const [showShadow, setShowShadow] = useState(true);
+  const [garmentSaturation, setGarmentSaturation] = useState(100);
   const [maxZoom, setMaxZoom] = useState(1);
   const [shareImageBlob, setShareImageBlob] = useState<Blob | null>(null);
   const [debugMode, setDebugMode] = useState(false);
@@ -1734,6 +1735,17 @@ export default function MirrorPage() {
           setStatus(showShadow ? "🌑 Shadow off" : "🌞 Shadow on");
           vibrate(20);
           break;
+        case '/': // Cycle saturation levels
+          {
+            const levels = [100, 125, 150, 75, 50, 0];
+            const currentIdx = levels.findIndex(l => Math.abs(l - garmentSaturation) < 10);
+            const nextIdx = (currentIdx + 1) % levels.length;
+            setGarmentSaturation(levels[nextIdx]);
+            const names = ['Normal', 'Vibrant', 'Vivid', 'Muted', 'Desaturated', 'Grayscale'];
+            setStatus(`🎨 Saturation: ${names[nextIdx]} (${levels[nextIdx]}%)`);
+            vibrate(20);
+          }
+          break;
         case '1': case '2': case '3': case '4': case '5': // Quick garment select, scale, or brightness presets
           {
             if (e.shiftKey) {
@@ -2188,7 +2200,7 @@ export default function MirrorPage() {
             pointerEvents: "auto",
             cursor: isDragging ? "grabbing" : "grab",
             mixBlendMode: blendMode,
-            filter: showShadow ? "drop-shadow(4px 6px 8px rgba(0,0,0,0.4))" : "none",
+            filter: `${showShadow ? "drop-shadow(4px 6px 8px rgba(0,0,0,0.4))" : ""} saturate(${garmentSaturation}%)`.trim(),
           }}
           onMouseDown={(e) => {
             if (!cameraOn) return;
