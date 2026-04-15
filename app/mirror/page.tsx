@@ -145,6 +145,7 @@ export default function MirrorPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [helpPage, setHelpPage] = useState(1);
+  const [garmentLoading, setGarmentLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -1123,10 +1124,12 @@ export default function MirrorPage() {
       }
     }
     
+    setGarmentLoading(true);
     const loader = new THREE.TextureLoader();
     loader.load(
       garment.path,
       (texture) => {
+        setGarmentLoading(false);
         texture.colorSpace = THREE.SRGBColorSpace;
         
         if (sceneRef.current && garmentMeshRef.current) {
@@ -1169,6 +1172,7 @@ export default function MirrorPage() {
       },
       undefined,
       (err) => {
+        setGarmentLoading(false);
         console.error("Failed to load garment:", err);
         setStatus(`Failed to load ${garment.name}`);
       }
@@ -3952,6 +3956,34 @@ export default function MirrorPage() {
                 {" | "}🔋 {batteryLevel}%
               </span>
             )}
+          </div>
+        )}
+
+        {/* Loading indicator */}
+        {garmentLoading && (
+          <div style={{
+            position: "absolute",
+            top: "50%", left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "rgba(0,0,0,0.8)",
+            padding: "16px 24px",
+            borderRadius: 12,
+            color: "#fff",
+            fontSize: 14,
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            zIndex: 100,
+          }}>
+            <div style={{
+              width: 20, height: 20,
+              border: "3px solid rgba(255,255,255,0.3)",
+              borderTop: "3px solid #fff",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+            }} />
+            Loading...
           </div>
         )}
 
