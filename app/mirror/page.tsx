@@ -449,11 +449,11 @@ export default function MirrorPage() {
 
   // Garment gallery
   const GARMENTS = [
-    { name: "Yellow Shirt", path: "/garments/yellow-shirt-nobg.png", emoji: "👕" },
-    { name: "Blue T-Shirt", path: "/garments/tshirt-blue.png", emoji: "👔" },
-    { name: "Green Polo", path: "/garments/polo-green.png", emoji: "🎽" },
-    { name: "Red Hoodie", path: "/garments/hoodie-red.png", emoji: "🧥" },
-    { name: "Black Jacket", path: "/garments/jacket-black.png", emoji: "🧥" },
+    { name: "Yellow Shirt", path: "/garments/yellow-shirt-nobg.png", emoji: "👕", category: "Shirt" },
+    { name: "Blue T-Shirt", path: "/garments/tshirt-blue.png", emoji: "👔", category: "T-Shirt" },
+    { name: "Green Polo", path: "/garments/polo-green.png", emoji: "🎽", category: "Polo" },
+    { name: "Red Hoodie", path: "/garments/hoodie-red.png", emoji: "🧥", category: "Hoodie" },
+    { name: "Black Jacket", path: "/garments/jacket-black.png", emoji: "🧥", category: "Jacket" },
   ];
 
   // Three.js refs
@@ -3977,6 +3977,15 @@ export default function MirrorPage() {
             }}>
               <span>{showGarment ? GARMENTS[selectedGarment].emoji : "👁️‍🗨️"}</span>
               <span>{showGarment ? GARMENTS[selectedGarment].name : "Garment Hidden"}</span>
+              {showGarment && GARMENTS[selectedGarment].category && (
+                <span style={{
+                  background: "rgba(255,255,255,0.2)",
+                  padding: "2px 6px",
+                  borderRadius: 4,
+                  fontSize: 10,
+                  marginLeft: 4,
+                }}>{GARMENTS[selectedGarment].category}</span>
+              )}
             </div>
             <button
               onClick={() => {
