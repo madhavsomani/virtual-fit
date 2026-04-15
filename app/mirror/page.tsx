@@ -2119,9 +2119,9 @@ export default function MirrorPage() {
               tapCountRef.current = 0;
               lastTapTimeRef.current = 0;
             } else {
-              // Double tap detected - cycle to next garment
+              // Double tap detected - toggle favorite
               vibrate([10, 30, 10]); // haptic pattern for double-tap
-              switchGarment((selectedGarment + 1) % GARMENTS.length);
+              toggleFavorite(selectedGarment);
             }
           } else {
             tapCountRef.current = 0;
