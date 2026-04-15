@@ -64,6 +64,7 @@ export default function MirrorPage() {
   const [savedPresets, setSavedPresets] = useState<{name: string, settings: Record<string, number | boolean>}[]>([]);
   const [edgeFeather, setEdgeFeather] = useState(0); // 0-10px blur for soft edges
   const opacityPresets = [0.25, 0.5, 0.75, 0.9, 1.0]; // Quick opacity levels
+  const scalePresets = [0.7, 0.85, 1.0, 1.15, 1.3]; // Quick size levels
   const [tintMode, setTintMode] = useState<'none' | 'warm' | 'cool' | 'sepia' | 'night'>('none');
   const [distanceHint, setDistanceHint] = useState<'too-close' | 'optimal' | 'too-far' | null>(null);
   const [showFitGuide, setShowFitGuide] = useState(false);
@@ -2021,9 +2022,17 @@ export default function MirrorPage() {
         case 'z': // Undo last adjustment change
           undoAdjustments();
           break;
-        case 'Tab': // Quick switch to previous garment
+        case 'Tab': // Quick switch to previous garment OR cycle sizes with Shift
           e.preventDefault();
-          if (previousGarmentRef.current !== null && cameraOn) {
+          if (e.shiftKey && cameraOn) {
+            // Shift+Tab: Cycle through size presets
+            const currentIdx = scalePresets.findIndex(s => Math.abs(s - garmentScale) < 0.05);
+            const nextIdx = (currentIdx + 1) % scalePresets.length;
+            const newScale = scalePresets[nextIdx];
+            setGarmentScale(newScale);
+            setStatus(`📏 Size: ${Math.round(newScale * 100)}%`);
+            vibrate(15);
+          } else if (previousGarmentRef.current !== null && cameraOn) {
             switchGarment(previousGarmentRef.current);
             setStatus("⇄ Switched to previous garment");
           }
