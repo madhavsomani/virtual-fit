@@ -62,6 +62,7 @@ export default function MirrorPage() {
   const [showShadow, setShowShadow] = useState(true);
   const [shadowAngle, setShadowAngle] = useState(135); // degrees, 135 = bottom-right
   const [savedPresets, setSavedPresets] = useState<{name: string, settings: Record<string, number | boolean>}[]>([]);
+  const [edgeFeather, setEdgeFeather] = useState(0); // 0-10px blur for soft edges
   const [garmentSaturation, setGarmentSaturation] = useState(100);
   const [garmentContrast, setGarmentContrast] = useState(100);
   const [colorGradeIdx, setColorGradeIdx] = useState(0);
@@ -2251,10 +2252,21 @@ export default function MirrorPage() {
         }
         vibrate(15);
       }
+      
+      // Edge feather control [ and ]
+      if (e.key === '[') {
+        setEdgeFeather(prev => Math.max(0, prev - 1));
+        setStatus(`🚶 Edge feather: ${Math.max(0, edgeFeather - 1)}`);
+        vibrate(10);
+      } else if (e.key === ']') {
+        setEdgeFeather(prev => Math.min(10, prev + 1));
+        setStatus(`🚶 Edge feather: ${Math.min(10, edgeFeather + 1)}`);
+        vibrate(10);
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -2718,7 +2730,7 @@ export default function MirrorPage() {
             pointerEvents: "auto",
             cursor: isDragging ? "grabbing" : "grab",
             mixBlendMode: blendMode,
-            filter: `${showShadow ? `drop-shadow(${Math.round(Math.cos(shadowAngle * Math.PI / 180) * 6)}px ${Math.round(Math.sin(shadowAngle * Math.PI / 180) * 6)}px 8px rgba(0,0,0,0.4))` : ""} saturate(${garmentSaturation}%) contrast(${garmentContrast}%) sepia(${Math.abs(colorTemp) * 0.3}%) hue-rotate(${colorTemp > 0 ? 10 : colorTemp < 0 ? -10 : 0}deg)`.trim(),
+            filter: `${showShadow ? `drop-shadow(${Math.round(Math.cos(shadowAngle * Math.PI / 180) * 6)}px ${Math.round(Math.sin(shadowAngle * Math.PI / 180) * 6)}px 8px rgba(0,0,0,0.4))` : ""} ${edgeFeather > 0 ? `blur(${edgeFeather * 0.3}px)` : ""} saturate(${garmentSaturation}%) contrast(${garmentContrast}%) sepia(${Math.abs(colorTemp) * 0.3}%) hue-rotate(${colorTemp > 0 ? 10 : colorTemp < 0 ? -10 : 0}deg)`.trim(),
           }}
           onMouseDown={(e) => {
             if (!cameraOn) return;
