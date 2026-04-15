@@ -109,6 +109,8 @@ export default function MirrorPage() {
   const dragStartRef = useRef({ x: 0, y: 0, offsetX: 0, offsetY: 0 });
   const pinchStartDistRef = useRef(0);
   const pinchStartScaleRef = useRef(1.0);
+  const pinchStartAngleRef = useRef(0);
+  const pinchStartRotationRef = useRef(0);
   const [showControls, setShowControls] = useState(true);
   const [lowLightWarning, setLowLightWarning] = useState(false);
   const [garmentBrightness, setGarmentBrightness] = useState(1.0);
@@ -2741,11 +2743,13 @@ export default function MirrorPage() {
             const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
             const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
             dragStartRef.current = { x: midX, y: midY, offsetX: garmentXOffset, offsetY: garmentYOffset };
-            // Calculate initial pinch distance
+            // Calculate initial pinch distance and angle
             const dx = e.touches[1].clientX - e.touches[0].clientX;
             const dy = e.touches[1].clientY - e.touches[0].clientY;
             pinchStartDistRef.current = Math.sqrt(dx * dx + dy * dy);
             pinchStartScaleRef.current = garmentScale;
+            pinchStartAngleRef.current = Math.atan2(dy, dx);
+            pinchStartRotationRef.current = garmentRotation;
             setIsDragging(true);
             setShowPinchFeedback(true);
           }
@@ -2765,14 +2769,23 @@ export default function MirrorPage() {
             setGarmentXOffset(dragStartRef.current.offsetX + posX * 0.3);
             setGarmentYOffset(dragStartRef.current.offsetY + posY * 0.3);
             
-            // Pinch-to-zoom
+            // Pinch-to-zoom and rotate
             const dx = e.touches[1].clientX - e.touches[0].clientX;
             const dy = e.touches[1].clientY - e.touches[0].clientY;
             const dist = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx);
+            
             if (pinchStartDistRef.current > 0) {
+              // Scale
               const ratio = dist / pinchStartDistRef.current;
               const newScale = Math.max(0.5, Math.min(2.0, pinchStartScaleRef.current * ratio));
               setGarmentScale(newScale);
+              
+              // Rotation (convert radians to degrees)
+              const angleDiff = (angle - pinchStartAngleRef.current) * (180 / Math.PI);
+              const newRotation = pinchStartRotationRef.current + angleDiff;
+              setGarmentRotation(newRotation);
+              
               setShowPinchFeedback(true);
             }
           }
