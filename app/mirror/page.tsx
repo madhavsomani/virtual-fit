@@ -4754,6 +4754,13 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                     ✕ Clear
                   </button>
                 )}
+                <span style={{ color: "#6b7280", fontSize: 9, fontFamily: "monospace" }}>
+                  {gridHighlightIdx + 1}/{GARMENTS.filter(g => 
+                    (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+                    (categoryFilter === null || g.category === categoryFilter) &&
+                    (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
+                  ).length}
+                </span>
                 <span style={{ color: "#9ca3af", fontSize: 10 }}>Tab to switch</span>
                 <button
                   onClick={() => { setShowGarmentGrid(false); setGarmentSearch(''); }}
