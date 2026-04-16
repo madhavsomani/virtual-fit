@@ -4786,6 +4786,9 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                   position: "relative",
                 }}
               >
+                {favoriteGarments.includes(idx) && (
+                  <div style={{ position: "absolute", top: 2, right: 2, fontSize: 10 }}>❤️</div>
+                )}
                 <div style={{ fontSize: 24 }}>{g.emoji}</div>
                 <div style={{ color: "#fff", fontSize: 10, marginTop: 4 }}>{g.name}</div>
                 {g.category && (
