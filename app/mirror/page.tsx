@@ -2341,6 +2341,20 @@ export default function MirrorPage() {
             setStatus('👕 Filters cleared');
           }
           break;
+        case 'r': // Random garment in grid
+          if (showGarmentGrid) {
+            const filteredForRandom = GARMENTS.filter(g => 
+              (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+              (categoryFilter === null || g.category === categoryFilter) &&
+              (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
+            );
+            if (filteredForRandom.length > 0) {
+              const randomIdx = Math.floor(Math.random() * filteredForRandom.length);
+              setGridHighlightIdx(randomIdx);
+              setStatus(`🎲 Random: ${filteredForRandom[randomIdx].name}`);
+            }
+          }
+          break;
         case 'escape': // Exit fullscreen, close help, close garment grid, or reset all (with Shift)
           if (e.shiftKey && !adjustmentsLocked) {
             // Shift+Escape: Reset ALL adjustments
