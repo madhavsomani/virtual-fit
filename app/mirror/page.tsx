@@ -179,6 +179,7 @@ export default function MirrorPage() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showResizeInfo, setShowResizeInfo] = useState(false);
   const [tipIndex, setTipIndex] = useState(0);
+  const [garmentTryOns, setGarmentTryOns] = useState<Record<number, number>>({});
   const [tapCount, setTapCount] = useState(0);
   const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -1204,6 +1205,9 @@ export default function MirrorPage() {
     
     // Track session stats
     setSessionStats(prev => ({ ...prev, tryOns: prev.tryOns + 1 }));
+    
+    // Track per-garment try-ons
+    setGarmentTryOns(prev => ({ ...prev, [index]: (prev[index] || 0) + 1 }));
     
     // Track recent garments (last 5)
     setRecentGarments(prev => {
@@ -4667,6 +4671,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               <span>Brightness:</span><span>{Math.round(garmentBrightness * 100)}%</span>
               <span>Position:</span><span>({garmentXOffset}, {garmentYOffset})</span>
               <span>Flipped:</span><span>{garmentFlipped ? 'Yes' : 'No'}</span>
+              <span>Try-ons:</span><span>{garmentTryOns[selectedGarment] || 0}</span>
             </div>
             <div style={{ marginTop: 12, fontSize: 10, opacity: 0.6 }}>
               Alt+G to close
