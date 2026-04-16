@@ -4982,10 +4982,13 @@ export default function MirrorPage() {
             fontSize: 11,
             fontFamily: "monospace",
             zIndex: 150,
+            minWidth: 150,
           }}>
             <div>⚡ Frame: {frameTime.toFixed(1)}ms</div>
             <div>🎮 FPS: {currentFps}</div>
             <div>💾 Memory: {(performance as Performance & { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize ? Math.round(((performance as Performance & { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize || 0) / 1024 / 1024) : '?'}MB</div>
+            <div>📱 Device: {typeof navigator !== 'undefined' && navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} cores` : '?'}</div>
+            <div>🌐 Online: {isOnline ? '✅' : '❌'}</div>
             <div style={{ opacity: 0.7, marginTop: 4 }}>Alt+N to close</div>
           </div>
         )}
