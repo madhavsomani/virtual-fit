@@ -184,6 +184,8 @@ export default function MirrorPage() {
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [garmentAnimating, setGarmentAnimating] = useState(false);
   const [streamQuality, setStreamQuality] = useState<'excellent' | 'good' | 'poor'>('excellent');
+  const [uiVisible, setUiVisible] = useState(true);
+  const [lastActivityTime, setLastActivityTime] = useState(Date.now());
   const [tapCount, setTapCount] = useState(0);
   const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -310,6 +312,28 @@ export default function MirrorPage() {
       // Ignore storage errors
     }
   }, [garmentOpacity, garmentScale, garmentYOffset, garmentXOffset, garmentBrightness, garmentRotation, garmentHue]);
+  
+  // Auto-hide UI after 5s of inactivity
+  useEffect(() => {
+    const handleActivity = () => {
+      setLastActivityTime(Date.now());
+      setUiVisible(true);
+    };
+    const checkInactivity = setInterval(() => {
+      if (Date.now() - lastActivityTime > 5000 && cameraOn && !showHelp && !showGarmentGrid) {
+        setUiVisible(false);
+      }
+    }, 1000);
+    window.addEventListener('mousemove', handleActivity);
+    window.addEventListener('touchstart', handleActivity);
+    window.addEventListener('keydown', handleActivity);
+    return () => {
+      clearInterval(checkInactivity);
+      window.removeEventListener('mousemove', handleActivity);
+      window.removeEventListener('touchstart', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+    };
+  }, [lastActivityTime, cameraOn, showHelp, showGarmentGrid]);
   
   // Shake gesture detection for mobile reset
   useEffect(() => {
@@ -5533,7 +5557,11 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
       {/* Controls */}
       {cameraOn && showControls && (
-        <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap", justifyContent: "center" }}>
+        <div style={{ 
+          display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap", justifyContent: "center",
+          opacity: uiVisible ? 1 : 0.2,
+          transition: "opacity 0.3s ease",
+        }}>
           {/* Upload button */}
           <label style={{
             padding: "12px 24px", fontSize: 16, fontWeight: 700,
