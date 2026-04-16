@@ -157,6 +157,7 @@ export default function MirrorPage() {
   const lastClickTimeRef = useRef(0);
   const [showGarmentPreview, setShowGarmentPreview] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [hapticEnabled, setHapticEnabled] = useState(true);
   const [nightMode, setNightMode] = useState(false);
   const [showMilestone, setShowMilestone] = useState(false);
   const [garmentSearch, setGarmentSearch] = useState('');
@@ -544,10 +545,10 @@ export default function MirrorPage() {
   }, [autoPauseOnBlur, cameraOn, isPaused]);
   // Haptic feedback helper (mobile)
   const vibrate = useCallback((pattern: number | number[] = 10) => {
-    if ('vibrate' in navigator) {
+    if (hapticEnabled && 'vibrate' in navigator) {
       navigator.vibrate(pattern);
     }
-  }, []);
+  }, [hapticEnabled]);
   
   // Sound effect helper
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -3081,6 +3082,13 @@ export default function MirrorPage() {
         setTipIndex(prev => (prev + 1) % tips.length);
         setStatus(tips[tipIndex]);
         vibrate(10);
+      }
+      
+      // Alt+H for haptic feedback toggle
+      if ((e.key === 'h' || e.key === 'H') && e.altKey) {
+        e.preventDefault();
+        setHapticEnabled(prev => !prev);
+        setStatus(hapticEnabled ? '📳 Haptic feedback OFF' : '📳 Haptic feedback ON');
       }
       
       // Alt+C for copy current garment settings as text
