@@ -4649,6 +4649,21 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                   👕 {categoryFilter || 'All Garments'} ({GARMENTS.filter(g => categoryFilter === null || g.category === categoryFilter).length})
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button
+                  onClick={() => setFavoritesOnly(!favoritesOnly)}
+                  style={{
+                    background: favoritesOnly ? "rgba(239, 68, 68, 0.3)" : "none",
+                    border: favoritesOnly ? "1px solid #ef4444" : "1px solid transparent",
+                    color: favoritesOnly ? "#ef4444" : "#9ca3af",
+                    cursor: "pointer",
+                    fontSize: 12,
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                  }}
+                  title="Show favorites only"
+                >
+                  ❤️
+                </button>
                 <span style={{ color: "#9ca3af", fontSize: 10 }}>Tab to switch</span>
                 <button
                   onClick={() => { setShowGarmentGrid(false); setGarmentSearch(''); }}
@@ -4746,7 +4761,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               (garmentSearch === '' || 
                g.name.toLowerCase().includes(garmentSearch.toLowerCase()) ||
                (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
-              (categoryFilter === null || g.category === categoryFilter)
+              (categoryFilter === null || g.category === categoryFilter) &&
+              (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
             ).length === 0 && (
               <div style={{ gridColumn: "1 / -1", textAlign: "center", color: "#9ca3af", padding: 16 }}>
                 👔 No garments found
@@ -4756,7 +4772,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               (garmentSearch === '' || 
                g.name.toLowerCase().includes(garmentSearch.toLowerCase()) ||
                (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
-              (categoryFilter === null || g.category === categoryFilter)
+              (categoryFilter === null || g.category === categoryFilter) &&
+              (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
             ).map((g) => {
               const idx = GARMENTS.indexOf(g);
               return (
