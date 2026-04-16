@@ -183,6 +183,7 @@ export default function MirrorPage() {
   const [shakeEnabled] = useState(true); // Shake gesture enabled by default
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [garmentAnimating, setGarmentAnimating] = useState(false);
+  const [streamQuality, setStreamQuality] = useState<'excellent' | 'good' | 'poor'>('excellent');
   const [tapCount, setTapCount] = useState(0);
   const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -1121,6 +1122,9 @@ export default function MirrorPage() {
         const fpsNow = Date.now();
         if (fpsNow - fpsCounterRef.current.lastTime >= 1000) {
           setCurrentFps(fpsCounterRef.current.frames);
+          // Update stream quality based on FPS
+          const fps = fpsCounterRef.current.frames;
+          setStreamQuality(fps >= 25 ? 'excellent' : fps >= 15 ? 'good' : 'poor');
           fpsCounterRef.current.frames = 0;
           fpsCounterRef.current.lastTime = fpsNow;
         }
@@ -5152,6 +5156,23 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             gap: 6,
           }}>
             📴 Offline
+          </div>
+        )}
+        
+        {/* Stream quality indicator */}
+        {cameraOn && streamQuality !== 'excellent' && (
+          <div style={{
+            position: "absolute",
+            top: !isOnline ? 48 : 12, left: 12,
+            background: streamQuality === 'poor' ? "rgba(239, 68, 68, 0.9)" : "rgba(234, 179, 8, 0.9)",
+            padding: "4px 8px",
+            borderRadius: 4,
+            color: "#fff",
+            fontSize: 10,
+            fontWeight: 600,
+            zIndex: 199,
+          }}>
+            {streamQuality === 'poor' ? '⚠️ Low FPS' : '🟡 Moderate'}
           </div>
         )}
         
