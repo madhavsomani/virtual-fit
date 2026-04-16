@@ -4707,6 +4707,23 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 >
                   ❤️
                 </button>
+                {(garmentSearch || favoritesOnly || categoryFilter) && (
+                  <button
+                    onClick={() => { setGarmentSearch(''); setFavoritesOnly(false); setCategoryFilter(null); }}
+                    style={{
+                      background: "rgba(239, 68, 68, 0.2)",
+                      border: "1px solid #ef4444",
+                      color: "#ef4444",
+                      cursor: "pointer",
+                      fontSize: 10,
+                      padding: "2px 6px",
+                      borderRadius: 4,
+                    }}
+                    title="Clear all filters"
+                  >
+                    ✕ Clear
+                  </button>
+                )}
                 <span style={{ color: "#9ca3af", fontSize: 10 }}>Tab to switch</span>
                 <button
                   onClick={() => { setShowGarmentGrid(false); setGarmentSearch(''); }}
