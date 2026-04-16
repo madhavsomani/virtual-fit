@@ -4838,7 +4838,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                     (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
                     (categoryFilter === null || g.category === categoryFilter) &&
                     (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
-                  ).length}
+                  ).length} (R{Math.floor(gridHighlightIdx / 3) + 1}C{(gridHighlightIdx % 3) + 1})
                 </span>
                 <span style={{ color: "#9ca3af", fontSize: 10 }}>Tab to switch</span>
                 <button
