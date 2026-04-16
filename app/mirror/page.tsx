@@ -3521,6 +3521,10 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               <span>Reset all adjustments</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>1-5</kbd>
               <span>Quick select garment 1-5</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>Home</kbd>
+              <span>Jump to first garment</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>End</kbd>
+              <span>Jump to last garment</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>Esc</kbd>
               <span>Close help / exit fullscreen</span>
             </div>
