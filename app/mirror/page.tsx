@@ -2236,7 +2236,8 @@ export default function MirrorPage() {
           break;
         case 'arrowup': // Nudge up or navigate grid
           if (showGarmentGrid && !e.shiftKey) {
-            setGridHighlightIdx(prev => Math.max(0, prev - 3)); // 3 columns
+            const step = e.ctrlKey || e.metaKey ? 9 : 3; // Ctrl = 3 rows, normal = 1 row
+            setGridHighlightIdx(prev => Math.max(0, prev - step));
           } else if (e.shiftKey && !adjustmentsLocked) {
             saveAdjustmentState();
             setGarmentYOffset(prev => prev - 5);
@@ -2250,7 +2251,8 @@ export default function MirrorPage() {
               (categoryFilter === null || g.category === categoryFilter) &&
               (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
             ).length;
-            setGridHighlightIdx(prev => Math.min(prev + 3, filteredCountDown - 1)); // 3 columns
+            const stepDown = e.ctrlKey || e.metaKey ? 9 : 3; // Ctrl = 3 rows, normal = 1 row
+            setGridHighlightIdx(prev => Math.min(prev + stepDown, filteredCountDown - 1));
           } else if (e.shiftKey && !adjustmentsLocked) {
             saveAdjustmentState();
             setGarmentYOffset(prev => prev + 5);
