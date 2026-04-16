@@ -5464,7 +5464,23 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 <span>Shake: Reset position</span>
               </div>
             </div>
-            <div style={{ marginTop: 32, opacity: 0.7, fontSize: 14 }}>
+            <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "center" }}>
+              <button
+                onClick={(e) => { e.stopPropagation(); setTouchSensitivity('medium'); setHapticEnabled(true); setStatus('✅ Touch settings reset'); }}
+                style={{
+                  padding: "8px 16px",
+                  background: "#6366f1",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  fontSize: 12,
+                  cursor: "pointer",
+                }}
+              >
+                🔄 Reset Touch Settings
+              </button>
+            </div>
+            <div style={{ marginTop: 16, opacity: 0.7, fontSize: 14 }}>
               Tap anywhere to dismiss
             </div>
           </div>
