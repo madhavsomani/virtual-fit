@@ -178,6 +178,7 @@ export default function MirrorPage() {
   // lastTapTime removed - using tapCount/lastMultiTapTime for multi-tap detection
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showResizeInfo, setShowResizeInfo] = useState(false);
+  const [tipIndex, setTipIndex] = useState(0);
   const [tapCount, setTapCount] = useState(0);
   const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -2963,7 +2964,7 @@ export default function MirrorPage() {
       if ((e.key === 'e' || e.key === 'E') && e.altKey) {
         e.preventDefault();
         const settings = {
-          version: '2.5.0',
+          version: '2.6.0',
           exportedAt: new Date().toISOString(),
           garment: { scale: garmentScale, scaleY: garmentScaleY, xOffset: garmentXOffset, yOffset: garmentYOffset, rotation: garmentRotation, opacity: garmentOpacity, brightness: garmentBrightness, hue: garmentHue, flipped: garmentFlipped },
           ui: { uiTheme, compactMode, nightMode, batterySaver, soundEnabled, autoLighting, smoothMode },
@@ -2979,6 +2980,25 @@ export default function MirrorPage() {
         URL.revokeObjectURL(url);
         setStatus('📤 Settings exported!');
         vibrate(20);
+      }
+      
+      // Alt+T for tips/hints
+      if ((e.key === 't' || e.key === 'T') && e.altKey && !e.ctrlKey && !e.shiftKey) {
+        e.preventDefault();
+        const tips = [
+          '💡 Use W/A/S/D to move garment position',
+          '💡 Press F for fullscreen mode',
+          '💡 Use +/- to adjust scale',
+          '💡 Press M to toggle mirror mode',
+          '💡 Use < > to rotate garment',
+          '💡 Press G to open garment grid',
+          '💡 Double-tap on mobile to hide/show garment',
+          '💡 Triple-tap on mobile to switch camera',
+          '💡 Press ? for full keyboard shortcuts',
+        ];
+        setTipIndex(prev => (prev + 1) % tips.length);
+        setStatus(tips[tipIndex]);
+        vibrate(10);
       }
     };
     
