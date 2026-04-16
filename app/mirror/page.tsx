@@ -3778,6 +3778,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               <span>Focus search (in grid)</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>Q</kbd>
               <span>Quick-add to favorites (in grid)</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>X</kbd>
+              <span>Quick-remove from favorites (in grid)</span>
             </div>
             <p style={{ marginTop: 16, fontSize: 13, color: "#9ca3af" }}>
               👋 Swipe gestures also work with your hand!<br/>
