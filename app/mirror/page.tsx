@@ -3837,6 +3837,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               <span>Wrap to start/end (in grid)</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>M</kbd>
               <span>Jump to middle (in grid)</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>C</kbd>
+              <span>Cycle categories (in grid)</span>
             </div>
             <p style={{ marginTop: 16, fontSize: 13, color: "#9ca3af" }}>
               👋 Swipe gestures also work with your hand!<br/>
