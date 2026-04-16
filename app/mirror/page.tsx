@@ -2313,6 +2313,16 @@ export default function MirrorPage() {
             }
           }
           break;
+        case 'backspace': // Clear all filters in grid
+          if (showGarmentGrid && (garmentSearch || favoritesOnly || categoryFilter)) {
+            e.preventDefault();
+            setGarmentSearch('');
+            setFavoritesOnly(false);
+            setCategoryFilter(null);
+            setGridHighlightIdx(0);
+            setStatus('👕 Filters cleared');
+          }
+          break;
         case 'escape': // Exit fullscreen, close help, close garment grid, or reset all (with Shift)
           if (e.shiftKey && !adjustmentsLocked) {
             // Shift+Escape: Reset ALL adjustments
