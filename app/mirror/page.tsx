@@ -99,6 +99,7 @@ export default function MirrorPage() {
   const [sessionDuration, setSessionDuration] = useState(0);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
   const [gridHighlightIdx, setGridHighlightIdx] = useState(0);
+  const [recentlyFavorited, setRecentlyFavorited] = useState<number | null>(null);
   const [screenshotHistory, setScreenshotHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showSilhouette, setShowSilhouette] = useState(false);
@@ -2427,6 +2428,8 @@ export default function MirrorPage() {
             if (clampedSpaceIdx >= 0 && filteredForSpace[clampedSpaceIdx]) {
               const garmentIdx = GARMENTS.indexOf(filteredForSpace[clampedSpaceIdx]);
               toggleFavorite(garmentIdx);
+              setRecentlyFavorited(garmentIdx);
+              setTimeout(() => setRecentlyFavorited(null), 300);
               vibrate(15);
             }
           } else {
@@ -4932,6 +4935,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             ).map((g, filteredIdx) => {
               const idx = GARMENTS.indexOf(g);
               const isHighlighted = filteredIdx === gridHighlightIdx;
+              const isPulsing = idx === recentlyFavorited;
               return (
               <div
                 key={idx}
@@ -4964,11 +4968,12 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                   cursor: "pointer",
                   padding: 8,
                   borderRadius: 8,
-                  background: idx === selectedGarment ? "rgba(147, 51, 234, 0.5)" : isHighlighted ? "rgba(59, 130, 246, 0.3)" : "rgba(255,255,255,0.1)",
-                  border: idx === selectedGarment ? "2px solid #9333ea" : isHighlighted ? "2px solid #3b82f6" : "2px solid transparent",
+                  background: isPulsing ? "rgba(239, 68, 68, 0.4)" : idx === selectedGarment ? "rgba(147, 51, 234, 0.5)" : isHighlighted ? "rgba(59, 130, 246, 0.3)" : "rgba(255,255,255,0.1)",
+                  border: isPulsing ? "2px solid #ef4444" : idx === selectedGarment ? "2px solid #9333ea" : isHighlighted ? "2px solid #3b82f6" : "2px solid transparent",
                   textAlign: "center",
                   transition: "all 0.15s",
                   position: "relative",
+                  transform: isPulsing ? "scale(1.15)" : undefined,
                 }}
                 title={`${g.name} (right-click to ${favoriteGarments.includes(idx) ? 'unfavorite' : 'favorite'})`}
               >
