@@ -4693,6 +4693,16 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                g.name.toLowerCase().includes(garmentSearch.toLowerCase()) ||
                (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
               (categoryFilter === null || g.category === categoryFilter)
+            ).length === 0 && (
+              <div style={{ gridColumn: "1 / -1", textAlign: "center", color: "#9ca3af", padding: 16 }}>
+                👔 No garments found
+              </div>
+            )}
+            {GARMENTS.filter(g => 
+              (garmentSearch === '' || 
+               g.name.toLowerCase().includes(garmentSearch.toLowerCase()) ||
+               (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+              (categoryFilter === null || g.category === categoryFilter)
             ).map((g) => {
               const idx = GARMENTS.indexOf(g);
               return (
