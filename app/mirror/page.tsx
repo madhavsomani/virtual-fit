@@ -2277,15 +2277,24 @@ export default function MirrorPage() {
             setStatus('⏭️ Last garment');
           }
           break;
-        case 'pageup': // Skip 5 garments back
-          if (cameraOn) {
+        case 'pageup': // Skip 5 garments back or skip items in grid
+          if (showGarmentGrid) {
+            setGridHighlightIdx(prev => Math.max(0, prev - 6)); // Skip 2 rows
+          } else if (cameraOn) {
             const newIdx = Math.max(0, selectedGarment - 5);
             switchGarment(newIdx);
             setStatus(`⏪ Skip to ${newIdx + 1}`);
           }
           break;
-        case 'pagedown': // Skip 5 garments forward
-          if (cameraOn) {
+        case 'pagedown': // Skip 5 garments forward or skip items in grid
+          if (showGarmentGrid) {
+            const filteredCountPage = GARMENTS.filter(g => 
+              (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+              (categoryFilter === null || g.category === categoryFilter) &&
+              (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
+            ).length;
+            setGridHighlightIdx(prev => Math.min(filteredCountPage - 1, prev + 6)); // Skip 2 rows
+          } else if (cameraOn) {
             const newIdx = Math.min(GARMENTS.length - 1, selectedGarment + 5);
             switchGarment(newIdx);
             setStatus(`⏩ Skip to ${newIdx + 1}`);
