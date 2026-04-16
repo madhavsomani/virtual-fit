@@ -3524,6 +3524,23 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               >
                 Close (Esc)
               </button>
+              {isMobileDevice && (
+                <button
+                  onClick={() => { setShowHelp(false); setShowMobileTutorial(true); }}
+                  style={{
+                    flex: 1,
+                    padding: "10px",
+                    background: "#10b981",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 8,
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                >
+                  📱 Gestures
+                </button>
+              )}
             </div>
             {helpPage === 2 && (
               <div style={{ marginTop: 16, fontSize: 12, color: "#9ca3af", lineHeight: 1.8 }}>
