@@ -4976,14 +4976,19 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                   ).length} (R{Math.floor(gridHighlightIdx / 3) + 1}C{(gridHighlightIdx % 3) + 1})
                 </span>
                 {categoryFilter && (
-                  <span style={{ 
-                    color: "#60a5fa", 
-                    fontSize: 9, 
-                    background: "rgba(59, 130, 246, 0.2)",
-                    padding: "2px 4px",
-                    borderRadius: 3,
-                  }}>
-                    🏷️ {categoryFilter}
+                  <span 
+                    onClick={() => { setCategoryFilter(null); setGridHighlightIdx(0); setStatus('🏷️ All categories'); }}
+                    style={{ 
+                      color: "#60a5fa", 
+                      fontSize: 9, 
+                      background: "rgba(59, 130, 246, 0.2)",
+                      padding: "2px 4px",
+                      borderRadius: 3,
+                      cursor: "pointer",
+                    }}
+                    title="Click to clear category filter"
+                  >
+                    🏷️ {categoryFilter} ✕
                   </span>
                 )}
                 <span style={{ color: "#9ca3af", fontSize: 10 }}>Tab to switch</span>
