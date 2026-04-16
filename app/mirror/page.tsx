@@ -2232,6 +2232,18 @@ export default function MirrorPage() {
             setStatus(`↕️ Y: ${garmentYOffset + 5}px`);
           }
           break;
+        case 'home': // Jump to first garment
+          if (cameraOn) {
+            switchGarment(0);
+            setStatus('⏮️ First garment');
+          }
+          break;
+        case 'end': // Jump to last garment
+          if (cameraOn) {
+            switchGarment(GARMENTS.length - 1);
+            setStatus('⏭️ Last garment');
+          }
+          break;
         case 'escape': // Exit fullscreen, close help, or reset all (with Shift)
           if (e.shiftKey && !adjustmentsLocked) {
             // Shift+Escape: Reset ALL adjustments
