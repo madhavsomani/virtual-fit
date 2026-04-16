@@ -4001,9 +4001,11 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 fontSize: 12,
                 opacity: uiVisible ? 0.9 : 0.2,
                 transition: "opacity 0.3s",
+                textAlign: "center",
               }}
             >
-              {selectedGarment + 1} / {GARMENTS.length}
+              <div style={{ fontWeight: 600 }}>{GARMENTS[selectedGarment]?.name || 'Garment'}</div>
+              <div style={{ opacity: 0.7, fontSize: 10, marginTop: 2 }}>{selectedGarment + 1} / {GARMENTS.length}</div>
             </div>
           </>
         )}
