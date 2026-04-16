@@ -2467,17 +2467,35 @@ export default function MirrorPage() {
         case 'c': // Cycle through category filters in grid
           if (showGarmentGrid) {
             const allCategories = [...new Set(GARMENTS.map(g => g.category).filter(Boolean))] as string[];
-            if (categoryFilter === null) {
-              setCategoryFilter(allCategories[0] || null);
-              setStatus(`🏷️ Category: ${allCategories[0]}`);
-            } else {
-              const currentIdx = allCategories.indexOf(categoryFilter);
-              if (currentIdx < allCategories.length - 1) {
-                setCategoryFilter(allCategories[currentIdx + 1]);
-                setStatus(`🏷️ Category: ${allCategories[currentIdx + 1]}`);
+            if (e.shiftKey) {
+              // Shift+C: Cycle backwards
+              if (categoryFilter === null) {
+                setCategoryFilter(allCategories[allCategories.length - 1] || null);
+                setStatus(`🏷️ Category: ${allCategories[allCategories.length - 1]}`);
               } else {
-                setCategoryFilter(null);
-                setStatus(`🏷️ All categories`);
+                const currentIdx = allCategories.indexOf(categoryFilter);
+                if (currentIdx > 0) {
+                  setCategoryFilter(allCategories[currentIdx - 1]);
+                  setStatus(`🏷️ Category: ${allCategories[currentIdx - 1]}`);
+                } else {
+                  setCategoryFilter(null);
+                  setStatus(`🏷️ All categories`);
+                }
+              }
+            } else {
+              // C: Cycle forwards
+              if (categoryFilter === null) {
+                setCategoryFilter(allCategories[0] || null);
+                setStatus(`🏷️ Category: ${allCategories[0]}`);
+              } else {
+                const currentIdx = allCategories.indexOf(categoryFilter);
+                if (currentIdx < allCategories.length - 1) {
+                  setCategoryFilter(allCategories[currentIdx + 1]);
+                  setStatus(`🏷️ Category: ${allCategories[currentIdx + 1]}`);
+                } else {
+                  setCategoryFilter(null);
+                  setStatus(`🏷️ All categories`);
+                }
               }
             }
             setGridHighlightIdx(0);
