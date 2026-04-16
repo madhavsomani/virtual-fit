@@ -4685,7 +4685,11 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <span style={{ color: "#fff", fontSize: 12, fontWeight: 600 }}>
-                  👕 {categoryFilter || 'All Garments'} ({GARMENTS.filter(g => categoryFilter === null || g.category === categoryFilter).length})
+                  👕 {categoryFilter || 'All Garments'} ({GARMENTS.filter(g => 
+                    (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+                    (categoryFilter === null || g.category === categoryFilter) &&
+                    (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
+                  ).length}{(garmentSearch || favoritesOnly) ? ` of ${GARMENTS.length}` : ''})
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <button
