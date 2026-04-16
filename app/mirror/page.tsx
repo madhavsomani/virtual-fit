@@ -182,6 +182,7 @@ export default function MirrorPage() {
   const [garmentTryOns, setGarmentTryOns] = useState<Record<number, number>>({});
   const [shakeEnabled] = useState(true); // Shake gesture enabled by default
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [garmentAnimating, setGarmentAnimating] = useState(false);
   const [tapCount, setTapCount] = useState(0);
   const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -2211,6 +2212,8 @@ export default function MirrorPage() {
         case 'g': // Toggle garment visibility (before/after)
         case ' ': // Space also toggles garment
           e.preventDefault();
+          setGarmentAnimating(true);
+          setTimeout(() => setGarmentAnimating(false), 300);
           setShowGarment(prev => !prev);
           break;
         case 'b': // Before/after compare toggle
@@ -3089,6 +3092,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
     // Check for double-tap (toggle garment) with delay to allow triple
     setTimeout(() => {
       if (tapCount === 1) {
+        setGarmentAnimating(true);
+        setTimeout(() => setGarmentAnimating(false), 300);
         setShowGarment(prev => !prev);
         setStatus(showGarment ? '👗 Garment hidden' : '👗 Garment shown');
         vibrate(20);
@@ -3646,9 +3651,9 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             position: "absolute",
             top: 0, left: 0,
             width: "100%", height: "100%",
-            transform: `${isMirrored ? "scaleX(-1)" : "none"} ${garmentTransition ? "scale(1.02)" : "scale(1)"}`,
+            transform: `${isMirrored ? "scaleX(-1)" : "none"} ${garmentTransition ? "scale(1.02)" : "scale(1)"} ${garmentAnimating ? "scale(0.95)" : ""}`,
             transition: `transform 0.15s ease-out, opacity 0.2s ease-in-out`,
-            opacity: garmentFadeIn ? 1 : 0.3,
+            opacity: garmentFadeIn ? (garmentAnimating ? 0.5 : 1) : 0.3,
             pointerEvents: "auto",
             cursor: isDragging ? "grabbing" : "grab",
             mixBlendMode: blendMode,
