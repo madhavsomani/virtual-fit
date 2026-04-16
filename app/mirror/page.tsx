@@ -4994,6 +4994,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                   transition: "all 0.15s",
                   position: "relative",
                   transform: isPulsing ? "scale(1.15)" : undefined,
+                  boxShadow: idx === selectedGarment ? "0 0 12px rgba(147, 51, 234, 0.6)" : isHighlighted ? "0 0 8px rgba(59, 130, 246, 0.4)" : undefined,
                 }}
                 title={`${g.name} (right-click to ${favoriteGarments.includes(idx) ? 'unfavorite' : 'favorite'})`}
               >
