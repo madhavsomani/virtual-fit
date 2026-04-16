@@ -2365,6 +2365,13 @@ export default function MirrorPage() {
             }
           }
           break;
+        case '/': // Focus search input in grid
+          if (showGarmentGrid) {
+            e.preventDefault();
+            const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
+            if (searchInput) searchInput.focus();
+          }
+          break;
         case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': // Quick jump in grid
           if (showGarmentGrid) {
             const targetIdx = parseInt(e.key) - 1;
