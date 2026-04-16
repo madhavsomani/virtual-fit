@@ -4767,6 +4767,11 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                   setShowGarmentGrid(false);
                   setGarmentSearch('');
                 }}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  toggleFavorite(idx);
+                  vibrate(15);
+                }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'scale(1.1)';
                   e.currentTarget.style.zIndex = '10';
