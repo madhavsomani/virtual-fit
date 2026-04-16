@@ -4915,10 +4915,11 @@ export default function MirrorPage() {
               color: "#fff",
             }} onClick={e => e.stopPropagation()}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>👗</div>
-              <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>VirtualFit v2.5.0</div>
-              <div style={{ fontSize: 14, opacity: 0.8, marginBottom: 16 }}>200+ Features • Virtual Try-On</div>
+              <div style={{ fontSize: 24, fontWeight: 700, marginBottom: 8 }}>VirtualFit v2.6.0</div>
+              <div style={{ fontSize: 14, opacity: 0.8, marginBottom: 16 }}>228 Features • Virtual Try-On</div>
               <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 16 }}>
                 Built with Next.js, Three.js, MediaPipe<br/>
+                {GARMENTS.length} Garments • 70+ Keyboard Shortcuts<br/>
                 © 2026 VirtualFit Team
               </div>
               <div style={{ fontSize: 11, opacity: 0.5 }}>Press Alt+/ or click outside to close</div>
