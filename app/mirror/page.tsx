@@ -4870,10 +4870,27 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                     fontSize: 12,
                     padding: "2px 6px",
                     borderRadius: 4,
+                    position: "relative",
                   }}
                   title="Show favorites only"
                 >
-                  ❤️
+                  ❤️{favoriteGarments.length > 0 && (
+                    <span style={{ 
+                      position: "absolute", 
+                      top: -4, 
+                      right: -4, 
+                      background: "#ef4444", 
+                      color: "#fff", 
+                      fontSize: 8, 
+                      borderRadius: "50%", 
+                      minWidth: 14, 
+                      height: 14, 
+                      display: "flex", 
+                      alignItems: "center", 
+                      justifyContent: "center",
+                      fontWeight: "bold",
+                    }}>{favoriteGarments.length}</span>
+                  )}
                 </button>
                 {(garmentSearch || favoritesOnly || categoryFilter) && (
                   <button
