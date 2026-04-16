@@ -2948,6 +2948,28 @@ export default function MirrorPage() {
         setStatus(`🎲 Random: ${GARMENTS[randomIndex].name}`);
         vibrate(20);
       }
+      
+      // Alt+E for export settings as JSON
+      if ((e.key === 'e' || e.key === 'E') && e.altKey) {
+        e.preventDefault();
+        const settings = {
+          version: '2.5.0',
+          exportedAt: new Date().toISOString(),
+          garment: { scale: garmentScale, scaleY: garmentScaleY, xOffset: garmentXOffset, yOffset: garmentYOffset, rotation: garmentRotation, opacity: garmentOpacity, brightness: garmentBrightness, hue: garmentHue, flipped: garmentFlipped },
+          ui: { uiTheme, compactMode, nightMode, batterySaver, soundEnabled, autoLighting, smoothMode },
+          favorites: favoriteGarments,
+          presets: savedPresets,
+        };
+        const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `virtualfit-settings-${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        setStatus('📤 Settings exported!');
+        vibrate(20);
+      }
     };
     
     // Key indicator handler
