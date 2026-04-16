@@ -193,6 +193,8 @@ export default function MirrorPage() {
   const [gestureActive, setGestureActive] = useState(false);
   const [swipeStartX, setSwipeStartX] = useState<number | null>(null);
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
+  const [swipeStartY, setSwipeStartY] = useState<number | null>(null);
+  const [verticalAdjustMode, setVerticalAdjustMode] = useState<'brightness' | 'opacity' | null>(null);
   const [tapCount, setTapCount] = useState(0);
   const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -3142,6 +3144,10 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
     // Record swipe start for single-finger swipe
     if (e.touches.length === 1) {
       setSwipeStartX(e.touches[0].clientX);
+      setSwipeStartY(e.touches[0].clientY);
+      // Determine vertical adjust mode based on screen side
+      const screenWidth = window.innerWidth;
+      setVerticalAdjustMode(e.touches[0].clientX < screenWidth / 2 ? 'brightness' : 'opacity');
     }
     const timer = setTimeout(() => {
       setShowGarmentInfo(true);
@@ -3175,7 +3181,9 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
       }
     }
     setSwipeStartX(null);
+    setSwipeStartY(null);
     setSwipeDirection(null);
+    setVerticalAdjustMode(null);
     
     setPinchStartDistance(null);
     setPinchStartAngle(null);
@@ -3730,16 +3738,27 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             handlePinchMove(e.nativeEvent);
             // Track swipe direction for visual feedback
             if (swipeStartX !== null && e.touches.length === 1) {
-              const diff = e.touches[0].clientX - swipeStartX;
-              if (Math.abs(diff) > 30) {
-                setSwipeDirection(diff > 0 ? 'right' : 'left');
+              const diffX = e.touches[0].clientX - swipeStartX;
+              const diffY = swipeStartY !== null ? e.touches[0].clientY - swipeStartY : 0;
+              
+              // Vertical swipe for brightness/opacity adjustment
+              if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 20) {
+                setSwipeDirection(null);
+                const adjustment = -Math.round(diffY / 3);
+                if (verticalAdjustMode === 'brightness') {
+                  setGarmentBrightness(Math.max(0.3, Math.min(2, 1 + adjustment / 100)));
+                } else if (verticalAdjustMode === 'opacity') {
+                  setGarmentOpacity(Math.max(0.1, Math.min(1, 1 + adjustment / 100)));
+                }
+              } else if (Math.abs(diffX) > 30) {
+                setSwipeDirection(diffX > 0 ? 'right' : 'left');
               } else {
                 setSwipeDirection(null);
               }
             }
           }}
           onTouchEnd={(e) => { handleTouchEnd(e); handleMultiTap(); }}
-          onTouchCancel={() => { setSwipeStartX(null); setSwipeDirection(null); setPinchStartDistance(null); setPinchStartAngle(null); setGestureActive(false); }}
+          onTouchCancel={() => { setSwipeStartX(null); setSwipeStartY(null); setSwipeDirection(null); setVerticalAdjustMode(null); setPinchStartDistance(null); setPinchStartAngle(null); setGestureActive(false); }}
           style={{ 
             width: "100%", 
             transform: isMirrored ? "scaleX(-1)" : "none", 
