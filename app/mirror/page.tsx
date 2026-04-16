@@ -3988,6 +3988,23 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             >
               ▶
             </button>
+            <div
+              style={{
+                position: "absolute",
+                bottom: 60,
+                left: "50%",
+                transform: "translateX(-50%)",
+                background: "rgba(0,0,0,0.6)",
+                padding: "6px 12px",
+                borderRadius: 6,
+                color: "#fff",
+                fontSize: 12,
+                opacity: uiVisible ? 0.9 : 0.2,
+                transition: "opacity 0.3s",
+              }}
+            >
+              {selectedGarment + 1} / {GARMENTS.length}
+            </div>
           </>
         )}
 
