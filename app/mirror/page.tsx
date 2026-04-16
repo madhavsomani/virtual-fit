@@ -98,6 +98,7 @@ export default function MirrorPage() {
   const sessionStartRef = useRef<number | null>(null);
   const [sessionDuration, setSessionDuration] = useState(0);
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [gridHighlightIdx, setGridHighlightIdx] = useState(0);
   const [screenshotHistory, setScreenshotHistory] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showSilhouette, setShowSilhouette] = useState(false);
@@ -2183,7 +2184,9 @@ export default function MirrorPage() {
           break;
         case 'arrowright': // Next garment or nudge right
         case 'n':
-          if (e.altKey && cameraOn) {
+          if (showGarmentGrid && !e.shiftKey && !e.altKey) {
+            setGridHighlightIdx(prev => prev + 1);
+          } else if (e.altKey && cameraOn) {
             // Alt+N: Random garment
             const randomIdx = Math.floor(Math.random() * GARMENTS.length);
             switchGarment(randomIdx);
@@ -2207,7 +2210,9 @@ export default function MirrorPage() {
           break;
         case 'arrowleft': // Previous garment or nudge left
         case 'p':
-          if (e.shiftKey && !adjustmentsLocked) {
+          if (showGarmentGrid && !e.shiftKey) {
+            setGridHighlightIdx(prev => Math.max(0, prev - 1));
+          } else if (e.shiftKey && !adjustmentsLocked) {
             // Shift+Arrow: Nudge position
             setGarmentXOffset(prev => prev - 5);
             setStatus(`↔️ X: ${garmentXOffset - 5}px`);
@@ -2223,15 +2228,19 @@ export default function MirrorPage() {
             }
           }
           break;
-        case 'arrowup': // Nudge up
-          if (e.shiftKey && !adjustmentsLocked) {
+        case 'arrowup': // Nudge up or navigate grid
+          if (showGarmentGrid && !e.shiftKey) {
+            setGridHighlightIdx(prev => Math.max(0, prev - 3)); // 3 columns
+          } else if (e.shiftKey && !adjustmentsLocked) {
             saveAdjustmentState();
             setGarmentYOffset(prev => prev - 5);
             setStatus(`↕️ Y: ${garmentYOffset - 5}px`);
           }
           break;
-        case 'arrowdown': // Nudge down
-          if (e.shiftKey && !adjustmentsLocked) {
+        case 'arrowdown': // Nudge down or navigate grid
+          if (showGarmentGrid && !e.shiftKey) {
+            setGridHighlightIdx(prev => prev + 3); // 3 columns
+          } else if (e.shiftKey && !adjustmentsLocked) {
             saveAdjustmentState();
             setGarmentYOffset(prev => prev + 5);
             setStatus(`↕️ Y: ${garmentYOffset + 5}px`);
@@ -2275,19 +2284,22 @@ export default function MirrorPage() {
             setStatus(`🏷️ ${categories[nextIdx] || 'All'}`);
           }
           break;
-        case 'enter': // Select first visible garment in grid
+        case 'enter': // Select highlighted garment in grid
           if (cameraOn && showGarmentGrid) {
             const filteredGarments = GARMENTS.filter(g => 
               (garmentSearch === '' || 
                g.name.toLowerCase().includes(garmentSearch.toLowerCase()) ||
                (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
-              (categoryFilter === null || g.category === categoryFilter)
+              (categoryFilter === null || g.category === categoryFilter) &&
+              (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
             );
-            if (filteredGarments.length > 0) {
-              const firstIdx = GARMENTS.indexOf(filteredGarments[0]);
-              switchGarment(firstIdx);
+            const clampedIdx = Math.min(gridHighlightIdx, filteredGarments.length - 1);
+            if (filteredGarments.length > 0 && clampedIdx >= 0) {
+              const selectedIdx = GARMENTS.indexOf(filteredGarments[clampedIdx]);
+              switchGarment(selectedIdx);
               setShowGarmentGrid(false);
               setGarmentSearch('');
+              setGridHighlightIdx(0);
             }
           }
           break;
@@ -4785,8 +4797,9 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
               (categoryFilter === null || g.category === categoryFilter) &&
               (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
-            ).map((g) => {
+            ).map((g, filteredIdx) => {
               const idx = GARMENTS.indexOf(g);
+              const isHighlighted = filteredIdx === gridHighlightIdx;
               return (
               <div
                 key={idx}
@@ -4818,8 +4831,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                   cursor: "pointer",
                   padding: 8,
                   borderRadius: 8,
-                  background: idx === selectedGarment ? "rgba(147, 51, 234, 0.5)" : "rgba(255,255,255,0.1)",
-                  border: idx === selectedGarment ? "2px solid #9333ea" : "2px solid transparent",
+                  background: idx === selectedGarment ? "rgba(147, 51, 234, 0.5)" : isHighlighted ? "rgba(59, 130, 246, 0.3)" : "rgba(255,255,255,0.1)",
+                  border: idx === selectedGarment ? "2px solid #9333ea" : isHighlighted ? "2px solid #3b82f6" : "2px solid transparent",
                   textAlign: "center",
                   transition: "all 0.15s",
                   position: "relative",
