@@ -2464,6 +2464,25 @@ export default function MirrorPage() {
             setIsMirrored(prev => !prev);
           }
           break;
+        case 'c': // Cycle through category filters in grid
+          if (showGarmentGrid) {
+            const allCategories = [...new Set(GARMENTS.map(g => g.category).filter(Boolean))] as string[];
+            if (categoryFilter === null) {
+              setCategoryFilter(allCategories[0] || null);
+              setStatus(`🏷️ Category: ${allCategories[0]}`);
+            } else {
+              const currentIdx = allCategories.indexOf(categoryFilter);
+              if (currentIdx < allCategories.length - 1) {
+                setCategoryFilter(allCategories[currentIdx + 1]);
+                setStatus(`🏷️ Category: ${allCategories[currentIdx + 1]}`);
+              } else {
+                setCategoryFilter(null);
+                setStatus(`🏷️ All categories`);
+              }
+            }
+            setGridHighlightIdx(0);
+          }
+          break;
         case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': // Quick jump in grid
           if (showGarmentGrid) {
             const targetIdx = parseInt(e.key) - 1;
