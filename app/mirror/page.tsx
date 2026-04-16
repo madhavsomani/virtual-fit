@@ -4004,8 +4004,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 textAlign: "center",
               }}
             >
-              <div style={{ fontWeight: 600 }}>{GARMENTS[selectedGarment]?.name || 'Garment'}</div>
-              <div style={{ opacity: 0.7, fontSize: 10, marginTop: 2 }}>{selectedGarment + 1} / {GARMENTS.length}</div>
+              <div style={{ fontWeight: 600 }}>{GARMENTS[selectedGarment]?.name || 'Garment'}{favoriteGarments.includes(selectedGarment) && ' ❤️'}</div>
+              <div style={{ opacity: 0.7, fontSize: 10, marginTop: 2 }}>{selectedGarment + 1} / {GARMENTS.length}{favoriteGarments.length > 0 && ` • ${favoriteGarments.length} ❤️`}</div>
             </div>
           </>
         )}
