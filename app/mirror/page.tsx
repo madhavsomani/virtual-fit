@@ -232,6 +232,21 @@ export default function MirrorPage() {
     };
   }, []);
 
+  // Show garment name when navigating grid with keyboard
+  useEffect(() => {
+    if (showGarmentGrid) {
+      const filtered = GARMENTS.filter(g => 
+        (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+        (categoryFilter === null || g.category === categoryFilter) &&
+        (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
+      );
+      const clampedIdx = Math.min(gridHighlightIdx, filtered.length - 1);
+      if (clampedIdx >= 0 && filtered[clampedIdx]) {
+        setStatus(`👕 ${filtered[clampedIdx].name}`);
+      }
+    }
+  }, [gridHighlightIdx, showGarmentGrid, garmentSearch, categoryFilter, favoritesOnly, favoriteGarments]);
+
   // Load saved garments from localStorage on mount
   useEffect(() => {
     try {
