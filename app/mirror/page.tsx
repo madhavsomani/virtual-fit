@@ -191,6 +191,7 @@ export default function MirrorPage() {
   const [pinchStartAngle, setPinchStartAngle] = useState<number | null>(null);
   const [pinchStartRotation, setPinchStartRotation] = useState(0);
   const [gestureActive, setGestureActive] = useState(false);
+  const [swipeStartX, setSwipeStartX] = useState<number | null>(null);
   const [tapCount, setTapCount] = useState(0);
   const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -3136,7 +3137,11 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
   }, [tapCount, lastMultiTapTime, showGarment, vibrate]);
 
   // Long-press handlers for mobile garment info
-  const handleTouchStart = useCallback(() => {
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    // Record swipe start for single-finger swipe
+    if (e.touches.length === 1) {
+      setSwipeStartX(e.touches[0].clientX);
+    }
     const timer = setTimeout(() => {
       setShowGarmentInfo(true);
       setStatus('ℹ️ Garment info');
@@ -3145,15 +3150,35 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
     setLongPressTimer(timer);
   }, []);
   
-  const handleTouchEnd = useCallback(() => {
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
+    
+    // Detect horizontal swipe for garment switching
+    if (swipeStartX !== null && e.changedTouches.length === 1) {
+      const endX = e.changedTouches[0].clientX;
+      const diff = endX - swipeStartX;
+      if (Math.abs(diff) > 80) {
+        // Swipe detected
+        if (diff > 0) {
+          // Swipe right - previous garment
+          const newIdx = selectedGarment > 0 ? selectedGarment - 1 : GARMENTS.length - 1;
+          switchGarment(newIdx);
+        } else {
+          // Swipe left - next garment
+          const newIdx = selectedGarment < GARMENTS.length - 1 ? selectedGarment + 1 : 0;
+          switchGarment(newIdx);
+        }
+      }
+    }
+    setSwipeStartX(null);
+    
     setPinchStartDistance(null);
     setPinchStartAngle(null);
     setGestureActive(false);
-  }, [longPressTimer]);
+  }, [longPressTimer, swipeStartX, selectedGarment, switchGarment, GARMENTS.length]);
   
   // Pinch-to-zoom and two-finger rotation gesture
   const handlePinchMove = useCallback((e: TouchEvent) => {
@@ -3700,8 +3725,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           ref={videoRef}
           onTouchStart={handleTouchStart}
           onTouchMove={(e) => handlePinchMove(e.nativeEvent)}
-          onTouchEnd={() => { handleTouchEnd(); handleMultiTap(); }}
-          onTouchCancel={handleTouchEnd}
+          onTouchEnd={(e) => { handleTouchEnd(e); handleMultiTap(); }}
+          onTouchCancel={() => { setSwipeStartX(null); setPinchStartDistance(null); setPinchStartAngle(null); setGestureActive(false); }}
           style={{ 
             width: "100%", 
             transform: isMirrored ? "scaleX(-1)" : "none", 
