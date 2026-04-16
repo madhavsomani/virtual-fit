@@ -5337,6 +5337,30 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           </div>
         )}
         
+        {/* Vertical adjustment indicator */}
+        {verticalAdjustMode && cameraOn && !swipeDirection && (
+          <div style={{
+            position: "absolute",
+            [verticalAdjustMode === 'brightness' ? 'left' : 'right']: 16,
+            top: "50%",
+            transform: "translateY(-50%)",
+            background: verticalAdjustMode === 'brightness' ? "rgba(251, 191, 36, 0.9)" : "rgba(139, 92, 246, 0.9)",
+            padding: "8px 12px",
+            borderRadius: 8,
+            color: "#fff",
+            fontSize: 12,
+            fontWeight: 600,
+            zIndex: 200,
+            textAlign: "center",
+          }}>
+            {verticalAdjustMode === 'brightness' ? (
+              <>☀️ {Math.round(garmentBrightness * 100)}%</>
+            ) : (
+              <>👁️ {Math.round(garmentOpacity * 100)}%</>
+            )}
+          </div>
+        )}
+        
         {/* Active mode badges */}
         {cameraOn && (batterySaver || adjustmentsLocked || autoLighting || slideshowMode) && (
           <div style={{
