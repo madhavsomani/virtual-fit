@@ -4636,7 +4636,23 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               <span style={{ color: "#fff", fontSize: 12, fontWeight: 600 }}>
                 👕 {categoryFilter || 'All Garments'} ({GARMENTS.filter(g => categoryFilter === null || g.category === categoryFilter).length})
               </span>
-              <span style={{ color: "#9ca3af", fontSize: 10 }}>Tab to switch</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ color: "#9ca3af", fontSize: 10 }}>Tab to switch</span>
+                <button
+                  onClick={() => { setShowGarmentGrid(false); setGarmentSearch(''); }}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#9ca3af",
+                    cursor: "pointer",
+                    fontSize: 16,
+                    padding: "2px 6px",
+                  }}
+                  title="Close (Esc)"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
             <div style={{ position: "relative" }}>
               <input
