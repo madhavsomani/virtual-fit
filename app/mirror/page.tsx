@@ -188,6 +188,8 @@ export default function MirrorPage() {
   const [lastActivityTime, setLastActivityTime] = useState(Date.now());
   const [pinchStartDistance, setPinchStartDistance] = useState<number | null>(null);
   const [pinchStartScale, setPinchStartScale] = useState(100);
+  const [pinchStartAngle, setPinchStartAngle] = useState<number | null>(null);
+  const [pinchStartRotation, setPinchStartRotation] = useState(0);
   const [tapCount, setTapCount] = useState(0);
   const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -3148,25 +3150,37 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
       setLongPressTimer(null);
     }
     setPinchStartDistance(null);
+    setPinchStartAngle(null);
   }, [longPressTimer]);
   
-  // Pinch-to-zoom gesture for garment scale
+  // Pinch-to-zoom and two-finger rotation gesture
   const handlePinchMove = useCallback((e: TouchEvent) => {
     if (e.touches.length !== 2) return;
     const touch1 = e.touches[0];
     const touch2 = e.touches[1];
     const distance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+    const angle = Math.atan2(touch2.clientY - touch1.clientY, touch2.clientX - touch1.clientX) * (180 / Math.PI);
     
     if (pinchStartDistance === null) {
       setPinchStartDistance(distance);
       setPinchStartScale(garmentScale);
+      setPinchStartAngle(angle);
+      setPinchStartRotation(garmentRotation);
       return;
     }
     
+    // Scale adjustment
     const scaleFactor = distance / pinchStartDistance;
     const newScale = Math.round(Math.min(200, Math.max(30, pinchStartScale * scaleFactor)));
     setGarmentScale(newScale);
-  }, [pinchStartDistance, pinchStartScale, garmentScale]);
+    
+    // Rotation adjustment (if angle changed significantly)
+    if (pinchStartAngle !== null) {
+      const angleDiff = angle - pinchStartAngle;
+      const newRotation = Math.round(pinchStartRotation + angleDiff);
+      setGarmentRotation(Math.max(-180, Math.min(180, newRotation)));
+    }
+  }, [pinchStartDistance, pinchStartScale, garmentScale, pinchStartAngle, pinchStartRotation, garmentRotation]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
