@@ -4767,6 +4767,12 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                   setShowGarmentGrid(false);
                   setGarmentSearch('');
                 }}
+                onDoubleClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleFavorite(idx);
+                  vibrate(15);
+                }}
                 onContextMenu={(e) => {
                   e.preventDefault();
                   toggleFavorite(idx);
