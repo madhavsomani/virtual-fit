@@ -2433,6 +2433,22 @@ export default function MirrorPage() {
             setStatus('⏮️ Back to start');
           }
           break;
+        case 'w': // Wrap around in grid (end to start or start to end)
+          if (showGarmentGrid) {
+            const filteredForWrap = GARMENTS.filter(g => 
+              (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+              (categoryFilter === null || g.category === categoryFilter) &&
+              (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
+            ).length;
+            if (gridHighlightIdx === 0) {
+              setGridHighlightIdx(filteredForWrap - 1);
+              setStatus('↪️ Wrapped to end');
+            } else {
+              setGridHighlightIdx(0);
+              setStatus('↩️ Wrapped to start');
+            }
+          }
+          break;
         case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': // Quick jump in grid
           if (showGarmentGrid) {
             const targetIdx = parseInt(e.key) - 1;
