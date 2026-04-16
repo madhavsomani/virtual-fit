@@ -2326,9 +2326,14 @@ export default function MirrorPage() {
             if (filteredGarments.length > 0 && clampedIdx >= 0) {
               const selectedIdx = GARMENTS.indexOf(filteredGarments[clampedIdx]);
               switchGarment(selectedIdx);
-              setShowGarmentGrid(false);
-              setGarmentSearch('');
-              setGridHighlightIdx(0);
+              if (!e.shiftKey) {
+                // Only close grid if not holding Shift
+                setShowGarmentGrid(false);
+                setGarmentSearch('');
+                setGridHighlightIdx(0);
+              } else {
+                setStatus(`👕 Selected: ${filteredGarments[clampedIdx].name}`);
+              }
             }
           }
           break;
