@@ -3622,6 +3622,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               <span>Select highlighted (in grid)</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>F</kbd>
               <span>Filter favorites (in grid)</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>⌫</kbd>
+              <span>Clear all filters (in grid)</span>
             </div>
             <p style={{ marginTop: 16, fontSize: 13, color: "#9ca3af" }}>
               👋 Swipe gestures also work with your hand!<br/>
