@@ -4623,18 +4623,30 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Garment preview grid */}
         {showGarmentGrid && cameraOn && (
-          <div style={{
-            position: "absolute",
-            top: 50, left: "50%",
-            transform: "translateX(-50%)",
-            background: "rgba(0,0,0,0.9)",
-            padding: 12,
-            borderRadius: 12,
-            maxWidth: "80%",
-          }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <span style={{ color: "#fff", fontSize: 12, fontWeight: 600 }}>
-                👕 {categoryFilter || 'All Garments'} ({GARMENTS.filter(g => categoryFilter === null || g.category === categoryFilter).length})
+          <>
+            {/* Backdrop to close on click outside */}
+            <div
+              onClick={() => { setShowGarmentGrid(false); setGarmentSearch(''); }}
+              style={{
+                position: "fixed",
+                inset: 0,
+                background: "transparent",
+                zIndex: 998,
+              }}
+            />
+            <div style={{
+              position: "absolute",
+              top: 50, left: "50%",
+              transform: "translateX(-50%)",
+              background: "rgba(0,0,0,0.9)",
+              padding: 12,
+              borderRadius: 12,
+              maxWidth: "80%",
+              zIndex: 999,
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <span style={{ color: "#fff", fontSize: 12, fontWeight: 600 }}>
+                  👕 {categoryFilter || 'All Garments'} ({GARMENTS.filter(g => categoryFilter === null || g.category === categoryFilter).length})
               </span>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ color: "#9ca3af", fontSize: 10 }}>Tab to switch</span>
@@ -4771,7 +4783,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             );
             })}
             </div>
-          </div>
+            </div>
+          </>
         )}
 
         {/* Screenshot history overlay */}
