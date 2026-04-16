@@ -277,6 +277,8 @@ export default function MirrorPage() {
         if (prefs.nightMode !== undefined) setNightMode(prefs.nightMode);
         if (prefs.batterySaver !== undefined) setBatterySaver(prefs.batterySaver);
         if (prefs.soundEnabled !== undefined) setSoundEnabled(prefs.soundEnabled);
+        if (prefs.hapticEnabled !== undefined) setHapticEnabled(prefs.hapticEnabled);
+        if (prefs.touchSensitivity) setTouchSensitivity(prefs.touchSensitivity);
       }
       
       // Load config from URL params (for shareable links)
@@ -409,11 +411,13 @@ export default function MirrorPage() {
         nightMode,
         batterySaver,
         soundEnabled,
+        hapticEnabled,
+        touchSensitivity,
       }));
     } catch {
       // Ignore
     }
-  }, [uiTheme, compactMode, nightMode, batterySaver, soundEnabled, autoSaveSettings]);
+  }, [uiTheme, compactMode, nightMode, batterySaver, soundEnabled, hapticEnabled, touchSensitivity, autoSaveSettings]);
 
   // Toggle favorite status for a garment
   const toggleFavorite = useCallback((index: number) => {
