@@ -3934,6 +3934,62 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             Loading garment...
           </div>
         )}
+        
+        {/* Quick navigation arrows for desktop */}
+        {cameraOn && !isMobileDevice && (
+          <>
+            <button
+              onClick={() => {
+                const newIdx = selectedGarment > 0 ? selectedGarment - 1 : GARMENTS.length - 1;
+                switchGarment(newIdx);
+              }}
+              style={{
+                position: "absolute",
+                left: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "rgba(0,0,0,0.5)",
+                border: "none",
+                borderRadius: 8,
+                color: "#fff",
+                width: 40,
+                height: 60,
+                fontSize: 20,
+                cursor: "pointer",
+                opacity: uiVisible ? 0.8 : 0.2,
+                transition: "opacity 0.3s",
+              }}
+              title="Previous garment"
+            >
+              ◀
+            </button>
+            <button
+              onClick={() => {
+                const newIdx = selectedGarment < GARMENTS.length - 1 ? selectedGarment + 1 : 0;
+                switchGarment(newIdx);
+              }}
+              style={{
+                position: "absolute",
+                right: 12,
+                top: "50%",
+                transform: "translateY(-50%)",
+                background: "rgba(0,0,0,0.5)",
+                border: "none",
+                borderRadius: 8,
+                color: "#fff",
+                width: 40,
+                height: 60,
+                fontSize: 20,
+                cursor: "pointer",
+                opacity: uiVisible ? 0.8 : 0.2,
+                transition: "opacity 0.3s",
+              }}
+              title="Next garment"
+            >
+              ▶
+            </button>
+          </>
+        )}
 
         {/* Fit quality indicator */}
         {cameraOn && trackingConfidence > 0 && (
