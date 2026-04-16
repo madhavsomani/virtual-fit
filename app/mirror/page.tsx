@@ -190,6 +190,7 @@ export default function MirrorPage() {
   const [pinchStartScale, setPinchStartScale] = useState(100);
   const [pinchStartAngle, setPinchStartAngle] = useState<number | null>(null);
   const [pinchStartRotation, setPinchStartRotation] = useState(0);
+  const [gestureActive, setGestureActive] = useState(false);
   const [tapCount, setTapCount] = useState(0);
   const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -3151,6 +3152,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
     }
     setPinchStartDistance(null);
     setPinchStartAngle(null);
+    setGestureActive(false);
   }, [longPressTimer]);
   
   // Pinch-to-zoom and two-finger rotation gesture
@@ -3166,6 +3168,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
       setPinchStartScale(garmentScale);
       setPinchStartAngle(angle);
       setPinchStartRotation(garmentRotation);
+      setGestureActive(true);
       return;
     }
     
@@ -5233,6 +5236,27 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             zIndex: 199,
           }}>
             {streamQuality === 'poor' ? '⚠️ Low FPS' : '🟡 Moderate'}
+          </div>
+        )}
+        
+        {/* Gesture active indicator */}
+        {gestureActive && cameraOn && (
+          <div style={{
+            position: "absolute",
+            bottom: 100, left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(99, 102, 241, 0.9)",
+            padding: "8px 16px",
+            borderRadius: 8,
+            color: "#fff",
+            fontSize: 12,
+            fontWeight: 600,
+            zIndex: 200,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}>
+            🤏 Scale: {garmentScale}% | Rotate: {garmentRotation}°
           </div>
         )}
         
