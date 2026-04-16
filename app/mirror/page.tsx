@@ -3943,6 +3943,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 const newIdx = selectedGarment > 0 ? selectedGarment - 1 : GARMENTS.length - 1;
                 switchGarment(newIdx);
               }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(-50%)'}
               style={{
                 position: "absolute",
                 left: 12,
@@ -3957,7 +3959,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 fontSize: 20,
                 cursor: "pointer",
                 opacity: uiVisible ? 0.8 : 0.2,
-                transition: "opacity 0.3s",
+                transition: "opacity 0.3s, transform 0.2s",
               }}
               title="Previous garment (← or P)"
             >
@@ -3968,6 +3970,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 const newIdx = selectedGarment < GARMENTS.length - 1 ? selectedGarment + 1 : 0;
                 switchGarment(newIdx);
               }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'}
+              onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(-50%)'}
               style={{
                 position: "absolute",
                 right: 12,
@@ -3982,7 +3986,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 fontSize: 20,
                 cursor: "pointer",
                 opacity: uiVisible ? 0.8 : 0.2,
-                transition: "opacity 0.3s",
+                transition: "opacity 0.3s, transform 0.2s",
               }}
               title="Next garment (→ or N)"
             >
