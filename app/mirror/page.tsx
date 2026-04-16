@@ -181,6 +181,7 @@ export default function MirrorPage() {
   const [tipIndex, setTipIndex] = useState(0);
   const [garmentTryOns, setGarmentTryOns] = useState<Record<number, number>>({});
   const [shakeEnabled] = useState(true); // Shake gesture enabled by default
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
   const [tapCount, setTapCount] = useState(0);
   const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -3096,6 +3097,23 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
     }, 350);
   }, [tapCount, lastMultiTapTime, showGarment, vibrate]);
 
+  // Long-press handlers for mobile garment info
+  const handleTouchStart = useCallback(() => {
+    const timer = setTimeout(() => {
+      setShowGarmentInfo(true);
+      setStatus('ℹ️ Garment info');
+      if (navigator.vibrate) navigator.vibrate(30);
+    }, 600);
+    setLongPressTimer(timer);
+  }, []);
+  
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  }, [longPressTimer]);
+
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
     if (!videoRef.current?.srcObject) return;
@@ -3609,7 +3627,9 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
       >
         <video
           ref={videoRef}
-          onTouchEnd={handleMultiTap}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={() => { handleTouchEnd(); handleMultiTap(); }}
+          onTouchCancel={handleTouchEnd}
           style={{ 
             width: "100%", 
             transform: isMirrored ? "scaleX(-1)" : "none", 
