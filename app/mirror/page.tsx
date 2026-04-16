@@ -4790,6 +4790,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                   transition: "all 0.15s",
                   position: "relative",
                 }}
+                title={`${g.name} (right-click to ${favoriteGarments.includes(idx) ? 'unfavorite' : 'favorite'})`}
               >
                 {favoriteGarments.includes(idx) && (
                   <div style={{ position: "absolute", top: 2, right: 2, fontSize: 10 }}>❤️</div>
