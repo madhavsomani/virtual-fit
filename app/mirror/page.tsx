@@ -2628,6 +2628,7 @@ export default function MirrorPage() {
         case '+': // Toggle garment preview grid
         case '=': // Also = without shift
           if (!e.shiftKey) {
+            if (!showGarmentGrid) setGridHighlightIdx(0);
             setShowGarmentGrid(prev => !prev);
             setStatus(showGarmentGrid ? "👕 Grid hidden" : "👕 Garment grid");
             vibrate(15);
@@ -3709,6 +3710,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           const now = Date.now();
           if (now - lastTapTimeRef.current < 300 && cameraOn) {
             // Double tap detected
+            if (!showGarmentGrid) setGridHighlightIdx(0);
             setShowGarmentGrid(prev => !prev);
             vibrate(30);
             lastTapTimeRef.current = 0; // Reset to prevent triple-tap
@@ -4096,7 +4098,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 textAlign: "center",
                 cursor: "pointer",
               }}
-              onClick={() => setShowGarmentGrid(true)}
+              onClick={() => { setGridHighlightIdx(0); setShowGarmentGrid(true); }}
               title="Click to browse all garments"
             >
               <div style={{ fontWeight: 600 }}>{GARMENTS[selectedGarment]?.name || 'Garment'}{favoriteGarments.includes(selectedGarment) && ' ❤️'}</div>
@@ -5334,7 +5336,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
         {/* Garment thumbnail preview */}
         {showGarmentPreview && cameraOn && GARMENTS[selectedGarment] && (
           <div 
-            onClick={() => setShowGarmentGrid(true)}
+            onClick={() => { setGridHighlightIdx(0); setShowGarmentGrid(true); }}
             style={{
               position: "absolute",
               bottom: 12, left: 12,
