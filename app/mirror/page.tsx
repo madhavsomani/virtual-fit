@@ -3579,6 +3579,12 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               <span>Skip 5 garments</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>Esc</kbd>
               <span>Close help / exit fullscreen</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>G</kbd>
+              <span>Open garment grid</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>Tab</kbd>
+              <span>Cycle category (in grid)</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>Enter</kbd>
+              <span>Select first visible (in grid)</span>
             </div>
             <p style={{ marginTop: 16, fontSize: 13, color: "#9ca3af" }}>
               👋 Swipe gestures also work with your hand!<br/>
