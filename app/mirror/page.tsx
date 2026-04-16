@@ -4767,6 +4767,14 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                   setShowGarmentGrid(false);
                   setGarmentSearch('');
                 }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                  e.currentTarget.style.zIndex = '10';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.zIndex = '1';
+                }}
                 style={{
                   cursor: "pointer",
                   padding: 8,
@@ -4774,7 +4782,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                   background: idx === selectedGarment ? "rgba(147, 51, 234, 0.5)" : "rgba(255,255,255,0.1)",
                   border: idx === selectedGarment ? "2px solid #9333ea" : "2px solid transparent",
                   textAlign: "center",
-                  transition: "all 0.2s",
+                  transition: "all 0.15s",
+                  position: "relative",
                 }}
               >
                 <div style={{ fontSize: 24 }}>{g.emoji}</div>
