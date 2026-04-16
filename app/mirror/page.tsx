@@ -2256,14 +2256,23 @@ export default function MirrorPage() {
             setStatus(`↕️ Y: ${garmentYOffset + 5}px`);
           }
           break;
-        case 'home': // Jump to first garment
-          if (cameraOn) {
+        case 'home': // Jump to first garment or first item in grid
+          if (showGarmentGrid) {
+            setGridHighlightIdx(0);
+          } else if (cameraOn) {
             switchGarment(0);
             setStatus('⏮️ First garment');
           }
           break;
-        case 'end': // Jump to last garment
-          if (cameraOn) {
+        case 'end': // Jump to last garment or last item in grid
+          if (showGarmentGrid) {
+            const filteredCountEnd = GARMENTS.filter(g => 
+              (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+              (categoryFilter === null || g.category === categoryFilter) &&
+              (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
+            ).length;
+            setGridHighlightIdx(Math.max(0, filteredCountEnd - 1));
+          } else if (cameraOn) {
             switchGarment(GARMENTS.length - 1);
             setStatus('⏭️ Last garment');
           }
