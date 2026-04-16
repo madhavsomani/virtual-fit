@@ -4819,6 +4819,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               return (
               <div
                 key={idx}
+                ref={isHighlighted ? (el) => el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }) : undefined}
                 onClick={() => {
                   switchGarment(idx);
                   setShowGarmentGrid(false);
