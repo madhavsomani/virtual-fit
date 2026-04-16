@@ -195,6 +195,7 @@ export default function MirrorPage() {
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [swipeStartY, setSwipeStartY] = useState<number | null>(null);
   const [verticalAdjustMode, setVerticalAdjustMode] = useState<'brightness' | 'opacity' | null>(null);
+  const [showMobileTutorial, setShowMobileTutorial] = useState(false);
   const [tapCount, setTapCount] = useState(0);
   const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -321,6 +322,17 @@ export default function MirrorPage() {
       // Ignore storage errors
     }
   }, [garmentOpacity, garmentScale, garmentYOffset, garmentXOffset, garmentBrightness, garmentRotation, garmentHue]);
+  
+  // Show mobile tutorial on first visit
+  useEffect(() => {
+    if (isMobileDevice && cameraOn) {
+      const hasSeenTutorial = localStorage.getItem('virtualfit-mobile-tutorial-seen');
+      if (!hasSeenTutorial) {
+        setShowMobileTutorial(true);
+        localStorage.setItem('virtualfit-mobile-tutorial-seen', 'true');
+      }
+    }
+  }, [isMobileDevice, cameraOn]);
   
   // Auto-hide UI after 5s of inactivity
   useEffect(() => {
@@ -5358,6 +5370,61 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             ) : (
               <>👁️ {Math.round(garmentOpacity * 100)}%</>
             )}
+          </div>
+        )}
+        
+        {/* Mobile gesture tutorial overlay */}
+        {showMobileTutorial && cameraOn && (
+          <div 
+            onClick={() => setShowMobileTutorial(false)}
+            style={{
+              position: "absolute",
+              inset: 0,
+              background: "rgba(0,0,0,0.85)",
+              zIndex: 300,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 24,
+              color: "#fff",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: 28, marginBottom: 24 }}>👋 Mobile Gestures</div>
+            <div style={{ display: "grid", gap: 16, maxWidth: 300 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 24 }}>👈👉</span>
+                <span>Swipe left/right: Switch garments</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 24 }}>↕️</span>
+                <span>Swipe up/down: Brightness (left) / Opacity (right)</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 24 }}>🤏</span>
+                <span>Pinch: Scale garment</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 24 }}>🔄</span>
+                <span>Two-finger rotate: Rotate garment</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 24 }}>👆👆</span>
+                <span>Double-tap: Toggle garment visibility</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 24 }}>👆👆👆</span>
+                <span>Triple-tap: Switch camera</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <span style={{ fontSize: 24 }}>📱</span>
+                <span>Shake: Reset position</span>
+              </div>
+            </div>
+            <div style={{ marginTop: 32, opacity: 0.7, fontSize: 14 }}>
+              Tap anywhere to dismiss
+            </div>
           </div>
         )}
         
