@@ -175,9 +175,11 @@ export default function MirrorPage() {
   const [showAbout, setShowAbout] = useState(false);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
-  const [lastTapTime, setLastTapTime] = useState(0);
+  // lastTapTime removed - using tapCount/lastMultiTapTime for multi-tap detection
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [showResizeInfo, setShowResizeInfo] = useState(false);
+  const [tapCount, setTapCount] = useState(0);
+  const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -2998,16 +3000,35 @@ export default function MirrorPage() {
     };
   }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled, nightMode, privacyMode, selfieCountdown, uiTheme, compactMode, showPerformance]);
 
-  // Double-tap handler for mobile garment toggle
-  const handleDoubleTap = useCallback(() => {
+  // Multi-tap handler for mobile (double-tap = toggle garment, triple-tap = switch camera)
+  const handleMultiTap = useCallback(() => {
     const now = Date.now();
-    if (now - lastTapTime < 300) {
-      setShowGarment(prev => !prev);
-      setStatus(showGarment ? '👗 Garment hidden' : '👗 Garment shown');
-      vibrate(20);
+    if (now - lastMultiTapTime < 500) {
+      setTapCount(prev => prev + 1);
+    } else {
+      setTapCount(1);
     }
-    setLastTapTime(now);
-  }, [lastTapTime, showGarment, vibrate]);
+    setLastMultiTapTime(now);
+    
+    // Check for triple-tap (switch camera)
+    if (tapCount >= 2 && now - lastMultiTapTime < 500) {
+      setFacingMode(prev => prev === 'user' ? 'environment' : 'user');
+      setStatus('📷 Camera switched!');
+      vibrate([30, 20, 30]);
+      setTapCount(0);
+      return;
+    }
+    
+    // Check for double-tap (toggle garment) with delay to allow triple
+    setTimeout(() => {
+      if (tapCount === 1) {
+        setShowGarment(prev => !prev);
+        setStatus(showGarment ? '👗 Garment hidden' : '👗 Garment shown');
+        vibrate(20);
+      }
+      setTapCount(0);
+    }, 350);
+  }, [tapCount, lastMultiTapTime, showGarment, vibrate]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -3522,7 +3543,7 @@ export default function MirrorPage() {
       >
         <video
           ref={videoRef}
-          onTouchEnd={handleDoubleTap}
+          onTouchEnd={handleMultiTap}
           style={{ 
             width: "100%", 
             transform: isMirrored ? "scaleX(-1)" : "none", 
