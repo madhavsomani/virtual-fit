@@ -186,6 +186,8 @@ export default function MirrorPage() {
   const [streamQuality, setStreamQuality] = useState<'excellent' | 'good' | 'poor'>('excellent');
   const [uiVisible, setUiVisible] = useState(true);
   const [lastActivityTime, setLastActivityTime] = useState(Date.now());
+  const [pinchStartDistance, setPinchStartDistance] = useState<number | null>(null);
+  const [pinchStartScale, setPinchStartScale] = useState(100);
   const [tapCount, setTapCount] = useState(0);
   const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -3145,7 +3147,26 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
+    setPinchStartDistance(null);
   }, [longPressTimer]);
+  
+  // Pinch-to-zoom gesture for garment scale
+  const handlePinchMove = useCallback((e: TouchEvent) => {
+    if (e.touches.length !== 2) return;
+    const touch1 = e.touches[0];
+    const touch2 = e.touches[1];
+    const distance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY);
+    
+    if (pinchStartDistance === null) {
+      setPinchStartDistance(distance);
+      setPinchStartScale(garmentScale);
+      return;
+    }
+    
+    const scaleFactor = distance / pinchStartDistance;
+    const newScale = Math.round(Math.min(200, Math.max(30, pinchStartScale * scaleFactor)));
+    setGarmentScale(newScale);
+  }, [pinchStartDistance, pinchStartScale, garmentScale]);
 
   // Toggle torch/flashlight
   const toggleTorch = useCallback(async () => {
@@ -3661,6 +3682,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
         <video
           ref={videoRef}
           onTouchStart={handleTouchStart}
+          onTouchMove={(e) => handlePinchMove(e.nativeEvent)}
           onTouchEnd={() => { handleTouchEnd(); handleMultiTap(); }}
           onTouchCancel={handleTouchEnd}
           style={{ 
