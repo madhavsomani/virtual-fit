@@ -4635,24 +4635,47 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               </span>
               <span style={{ color: "#9ca3af", fontSize: 10 }}>Tab to switch</span>
             </div>
-            <input
-              type="text"
-              placeholder="Search garments..."
-              value={garmentSearch}
-              onChange={(e) => setGarmentSearch(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                marginBottom: 8,
-                border: "none",
-                borderRadius: 8,
-                background: "rgba(255,255,255,0.1)",
-                color: "#fff",
-                fontSize: 12,
-                outline: "none",
-              }}
-              autoFocus
-            />
+            <div style={{ position: "relative" }}>
+              <input
+                type="text"
+                placeholder="Search garments..."
+                value={garmentSearch}
+                onChange={(e) => setGarmentSearch(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  paddingRight: garmentSearch ? 32 : 12,
+                  marginBottom: 8,
+                  border: "none",
+                  borderRadius: 8,
+                  background: "rgba(255,255,255,0.1)",
+                  color: "#fff",
+                  fontSize: 12,
+                  outline: "none",
+                }}
+                autoFocus
+              />
+              {garmentSearch && (
+                <button
+                  onClick={() => setGarmentSearch('')}
+                  style={{
+                    position: "absolute",
+                    right: 8,
+                    top: 8,
+                    background: "none",
+                    border: "none",
+                    color: "#9ca3af",
+                    cursor: "pointer",
+                    fontSize: 14,
+                    padding: 0,
+                    lineHeight: 1,
+                  }}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
             {/* Category filter buttons */}
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
               <button
