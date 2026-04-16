@@ -2191,7 +2191,8 @@ export default function MirrorPage() {
               (categoryFilter === null || g.category === categoryFilter) &&
               (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
             ).length;
-            setGridHighlightIdx(prev => Math.min(prev + 1, filteredCount - 1));
+            const stepRight = e.ctrlKey || e.metaKey ? 3 : 1; // Ctrl = 3 items
+            setGridHighlightIdx(prev => Math.min(prev + stepRight, filteredCount - 1));
           } else if (e.altKey && cameraOn) {
             // Alt+N: Random garment
             const randomIdx = Math.floor(Math.random() * GARMENTS.length);
@@ -2217,7 +2218,8 @@ export default function MirrorPage() {
         case 'arrowleft': // Previous garment or nudge left
         case 'p':
           if (showGarmentGrid && !e.shiftKey) {
-            setGridHighlightIdx(prev => Math.max(0, prev - 1));
+            const stepLeft = e.ctrlKey || e.metaKey ? 3 : 1; // Ctrl = 3 items
+            setGridHighlightIdx(prev => Math.max(0, prev - stepLeft));
           } else if (e.shiftKey && !adjustmentsLocked) {
             // Shift+Arrow: Nudge position
             setGarmentXOffset(prev => prev - 5);
