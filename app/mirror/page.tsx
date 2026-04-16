@@ -177,6 +177,7 @@ export default function MirrorPage() {
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [lastTapTime, setLastTapTime] = useState(0);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [showResizeInfo, setShowResizeInfo] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -302,14 +303,21 @@ export default function MirrorPage() {
     }
   }, [garmentOpacity, garmentScale, garmentYOffset, garmentXOffset, garmentBrightness, garmentRotation, garmentHue]);
   
-  // Orientation tracking
+  // Orientation tracking with resize notification
   useEffect(() => {
+    let resizeTimeout: NodeJS.Timeout;
     const updateOrientation = () => {
       setOrientation(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
+      setShowResizeInfo(true);
+      clearTimeout(resizeTimeout);
+      resizeTimeout = setTimeout(() => setShowResizeInfo(false), 1500);
     };
-    updateOrientation();
+    setOrientation(window.innerWidth > window.innerHeight ? 'landscape' : 'portrait');
     window.addEventListener('resize', updateOrientation);
-    return () => window.removeEventListener('resize', updateOrientation);
+    return () => {
+      window.removeEventListener('resize', updateOrientation);
+      clearTimeout(resizeTimeout);
+    };
   }, []);
   
   // Auto-save UI preferences
@@ -4984,6 +4992,26 @@ export default function MirrorPage() {
           }}>
             <span>📏</span>
             <span>{viewportAspect === 'auto' ? 'Auto' : viewportAspect}</span>
+          </div>
+        )}
+        
+        {/* Resize info indicator */}
+        {showResizeInfo && cameraOn && (
+          <div style={{
+            position: "absolute",
+            top: 12, right: 12,
+            background: "rgba(0,0,0,0.85)",
+            padding: "8px 12px",
+            borderRadius: 8,
+            color: "#fff",
+            fontSize: 12,
+            zIndex: 200,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}>
+            📏 {typeof window !== 'undefined' ? `${window.innerWidth}×${window.innerHeight}` : '?'}
+            <span style={{ opacity: 0.7 }}>{orientation === 'portrait' ? '📱' : '📺'}</span>
           </div>
         )}
         
