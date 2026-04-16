@@ -2244,6 +2244,20 @@ export default function MirrorPage() {
             setStatus('⏭️ Last garment');
           }
           break;
+        case 'pageup': // Skip 5 garments back
+          if (cameraOn) {
+            const newIdx = Math.max(0, selectedGarment - 5);
+            switchGarment(newIdx);
+            setStatus(`⏪ Skip to ${newIdx + 1}`);
+          }
+          break;
+        case 'pagedown': // Skip 5 garments forward
+          if (cameraOn) {
+            const newIdx = Math.min(GARMENTS.length - 1, selectedGarment + 5);
+            switchGarment(newIdx);
+            setStatus(`⏩ Skip to ${newIdx + 1}`);
+          }
+          break;
         case 'escape': // Exit fullscreen, close help, or reset all (with Shift)
           if (e.shiftKey && !adjustmentsLocked) {
             // Shift+Escape: Reset ALL adjustments
