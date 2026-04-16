@@ -180,6 +180,7 @@ export default function MirrorPage() {
   const [showResizeInfo, setShowResizeInfo] = useState(false);
   const [tipIndex, setTipIndex] = useState(0);
   const [garmentTryOns, setGarmentTryOns] = useState<Record<number, number>>({});
+  const [shakeEnabled] = useState(true); // Shake gesture enabled by default
   const [tapCount, setTapCount] = useState(0);
   const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -306,6 +307,30 @@ export default function MirrorPage() {
       // Ignore storage errors
     }
   }, [garmentOpacity, garmentScale, garmentYOffset, garmentXOffset, garmentBrightness, garmentRotation, garmentHue]);
+  
+  // Shake gesture detection for mobile reset
+  useEffect(() => {
+    if (!shakeEnabled || typeof DeviceMotionEvent === 'undefined') return;
+    let lastShake = 0;
+    const handleShake = (e: DeviceMotionEvent) => {
+      const acc = e.accelerationIncludingGravity;
+      if (!acc || acc.x === null || acc.y === null || acc.z === null) return;
+      const force = Math.abs(acc.x) + Math.abs(acc.y) + Math.abs(acc.z);
+      if (force > 40 && Date.now() - lastShake > 1000) {
+        lastShake = Date.now();
+        // Reset garment adjustments
+        setGarmentScale(100);
+        setGarmentScaleY(100);
+        setGarmentXOffset(0);
+        setGarmentYOffset(0);
+        setGarmentRotation(0);
+        setStatus('📱 Shake reset!');
+        if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+      }
+    };
+    window.addEventListener('devicemotion', handleShake);
+    return () => window.removeEventListener('devicemotion', handleShake);
+  }, [shakeEnabled]);
   
   // Orientation tracking with resize notification
   useEffect(() => {
