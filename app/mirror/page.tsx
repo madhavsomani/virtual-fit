@@ -6360,6 +6360,17 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           >
             +
           </button>
+          <button
+            onClick={() => setShowMobileTutorial(true)}
+            style={{
+              width: 48, height: 48, fontSize: 20,
+              background: "#1e293b", color: "#fff", border: "1px solid #334155",
+              borderRadius: 12, cursor: "pointer",
+            }}
+            title="Gesture help"
+          >
+            👆
+          </button>
         </div>
       )}
 
