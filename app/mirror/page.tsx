@@ -4983,6 +4983,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             <div>🌐 Pixel Ratio: {typeof window !== 'undefined' ? window.devicePixelRatio : '?'}x</div>
             <div>👆 Touch: {typeof navigator !== 'undefined' && 'maxTouchPoints' in navigator ? navigator.maxTouchPoints > 0 ? 'Yes' : 'No' : '?'}</div>
             <div>📏 Orientation: {orientation === 'portrait' ? '📱 Portrait' : '📺 Landscape'}</div>
+            <div>🌍 Browser: {typeof navigator !== 'undefined' ? (navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Firefox') ? 'Firefox' : navigator.userAgent.includes('Safari') ? 'Safari' : 'Other') : '?'}</div>
+            <div>🖥️ Platform: {typeof navigator !== 'undefined' ? navigator.platform : '?'}</div>
             <div style={{ opacity: 0.7, marginTop: 8, fontSize: 10 }}>Alt+B to close</div>
           </div>
         )}
