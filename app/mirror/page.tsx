@@ -2059,8 +2059,13 @@ export default function MirrorPage() {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       
       switch (e.key.toLowerCase()) {
-        case 'f': // Fullscreen
-          toggleFullscreen();
+        case 'f': // Fullscreen or toggle favorites filter in grid
+          if (showGarmentGrid) {
+            setFavoritesOnly(!favoritesOnly);
+            setStatus(favoritesOnly ? '👕 All garments' : '❤️ Favorites only');
+          } else {
+            toggleFullscreen();
+          }
           break;
         case 's': // Screenshot
           if (cameraOn) captureScreenshot();
