@@ -158,6 +158,7 @@ export default function MirrorPage() {
   const [showGarmentPreview, setShowGarmentPreview] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [hapticEnabled, setHapticEnabled] = useState(true);
+  const [touchSensitivity, setTouchSensitivity] = useState<'low' | 'medium' | 'high'>('medium');
   const [nightMode, setNightMode] = useState(false);
   const [showMilestone, setShowMilestone] = useState(false);
   const [garmentSearch, setGarmentSearch] = useState('');
@@ -3091,6 +3092,15 @@ export default function MirrorPage() {
         setStatus(hapticEnabled ? '📳 Haptic feedback OFF' : '📳 Haptic feedback ON');
       }
       
+      // Alt+Shift+S for touch sensitivity cycle
+      if ((e.key === 's' || e.key === 'S') && e.altKey && e.shiftKey) {
+        e.preventDefault();
+        setTouchSensitivity(prev => prev === 'low' ? 'medium' : prev === 'medium' ? 'high' : 'low');
+        const nextSens = touchSensitivity === 'low' ? 'medium' : touchSensitivity === 'medium' ? 'high' : 'low';
+        setStatus(`👆 Touch sensitivity: ${nextSens.toUpperCase()}`);
+        vibrate(15);
+      }
+      
       // Alt+C for copy current garment settings as text
       if ((e.key === 'c' || e.key === 'C') && e.altKey) {
         e.preventDefault();
@@ -3187,7 +3197,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
     if (swipeStartX !== null && e.changedTouches.length === 1) {
       const endX = e.changedTouches[0].clientX;
       const diff = endX - swipeStartX;
-      if (Math.abs(diff) > 80) {
+      const swipeThreshold = touchSensitivity === 'high' ? 50 : touchSensitivity === 'low' ? 120 : 80;
+      if (Math.abs(diff) > swipeThreshold) {
         // Swipe detected
         if (diff > 0) {
           // Swipe right - previous garment
