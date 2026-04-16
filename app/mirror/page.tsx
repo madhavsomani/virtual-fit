@@ -2407,6 +2407,26 @@ export default function MirrorPage() {
             }
           }
           break;
+        case 'x': // Quick remove from favorites (remove-only, no toggle)
+          if (showGarmentGrid) {
+            const filteredForX = GARMENTS.filter(g => 
+              (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+              (categoryFilter === null || g.category === categoryFilter) &&
+              (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
+            );
+            const clampedXIdx = Math.min(gridHighlightIdx, filteredForX.length - 1);
+            if (clampedXIdx >= 0 && filteredForX[clampedXIdx]) {
+              const garmentIdx = GARMENTS.indexOf(filteredForX[clampedXIdx]);
+              if (favoriteGarments.includes(garmentIdx)) {
+                setFavoriteGarments(prev => prev.filter(i => i !== garmentIdx));
+                setStatus(`💔 Removed from favorites: ${filteredForX[clampedXIdx].name}`);
+                vibrate(15);
+              } else {
+                setStatus(`ℹ️ Not in favorites`);
+              }
+            }
+          }
+          break;
         case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': // Quick jump in grid
           if (showGarmentGrid) {
             const targetIdx = parseInt(e.key) - 1;
