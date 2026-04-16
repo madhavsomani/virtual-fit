@@ -3943,6 +3943,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 const newIdx = selectedGarment > 0 ? selectedGarment - 1 : GARMENTS.length - 1;
                 switchGarment(newIdx);
               }}
+              onDoubleClick={() => switchGarment(0)}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(-50%)'}
               style={{
@@ -3970,6 +3971,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 const newIdx = selectedGarment < GARMENTS.length - 1 ? selectedGarment + 1 : 0;
                 switchGarment(newIdx);
               }}
+              onDoubleClick={() => switchGarment(GARMENTS.length - 1)}
               onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)'}
               onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(-50%)'}
               style={{
