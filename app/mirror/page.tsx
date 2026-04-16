@@ -2185,7 +2185,12 @@ export default function MirrorPage() {
         case 'arrowright': // Next garment or nudge right
         case 'n':
           if (showGarmentGrid && !e.shiftKey && !e.altKey) {
-            setGridHighlightIdx(prev => prev + 1);
+            const filteredCount = GARMENTS.filter(g => 
+              (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+              (categoryFilter === null || g.category === categoryFilter) &&
+              (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
+            ).length;
+            setGridHighlightIdx(prev => Math.min(prev + 1, filteredCount - 1));
           } else if (e.altKey && cameraOn) {
             // Alt+N: Random garment
             const randomIdx = Math.floor(Math.random() * GARMENTS.length);
@@ -2239,7 +2244,12 @@ export default function MirrorPage() {
           break;
         case 'arrowdown': // Nudge down or navigate grid
           if (showGarmentGrid && !e.shiftKey) {
-            setGridHighlightIdx(prev => prev + 3); // 3 columns
+            const filteredCountDown = GARMENTS.filter(g => 
+              (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+              (categoryFilter === null || g.category === categoryFilter) &&
+              (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
+            ).length;
+            setGridHighlightIdx(prev => Math.min(prev + 3, filteredCountDown - 1)); // 3 columns
           } else if (e.shiftKey && !adjustmentsLocked) {
             saveAdjustmentState();
             setGarmentYOffset(prev => prev + 5);
