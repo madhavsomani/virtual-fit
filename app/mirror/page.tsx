@@ -5454,7 +5454,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
         )}
         
         {/* Active mode badges */}
-        {cameraOn && (batterySaver || adjustmentsLocked || autoLighting || slideshowMode) && (
+        {cameraOn && (batterySaver || adjustmentsLocked || autoLighting || slideshowMode || !hapticEnabled) && (
           <div style={{
             position: "absolute",
             top: showFps ? 44 : 12, right: 12,
@@ -5473,6 +5473,9 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             )}
             {slideshowMode && (
               <span style={{ background: "rgba(108, 92, 231, 0.8)", padding: "3px 8px", borderRadius: 4, color: "#fff", fontSize: 10, fontWeight: 600 }}>▶️ PLAY</span>
+            )}
+            {!hapticEnabled && (
+              <span style={{ background: "rgba(156, 163, 175, 0.8)", padding: "3px 8px", borderRadius: 4, color: "#fff", fontSize: 10, fontWeight: 600 }}>📳 OFF</span>
             )}
           </div>
         )}
