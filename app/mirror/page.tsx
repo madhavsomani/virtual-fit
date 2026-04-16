@@ -3000,6 +3000,23 @@ export default function MirrorPage() {
         setStatus(tips[tipIndex]);
         vibrate(10);
       }
+      
+      // Alt+C for copy current garment settings as text
+      if ((e.key === 'c' || e.key === 'C') && e.altKey) {
+        e.preventDefault();
+        const settings = `VirtualFit Settings:
+Garment: ${GARMENTS[selectedGarment].name}
+Scale: ${garmentScale}% x ${garmentScaleY}%
+Position: X=${garmentXOffset}, Y=${garmentYOffset}
+Rotation: ${garmentRotation}°
+Opacity: ${garmentOpacity}%
+Brightness: ${garmentBrightness}%
+Hue: ${garmentHue}°
+Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
+        navigator.clipboard.writeText(settings);
+        setStatus('📋 Settings copied as text!');
+        vibrate(20);
+      }
     };
     
     // Key indicator handler
