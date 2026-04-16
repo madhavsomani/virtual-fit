@@ -3959,7 +3959,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 opacity: uiVisible ? 0.8 : 0.2,
                 transition: "opacity 0.3s",
               }}
-              title="Previous garment"
+              title="Previous garment (← or P)"
             >
               ◀
             </button>
@@ -3984,7 +3984,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 opacity: uiVisible ? 0.8 : 0.2,
                 transition: "opacity 0.3s",
               }}
-              title="Next garment"
+              title="Next garment (→ or N)"
             >
               ▶
             </button>
