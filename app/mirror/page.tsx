@@ -2270,6 +2270,22 @@ export default function MirrorPage() {
             setStatus(`🏷️ ${categories[nextIdx] || 'All'}`);
           }
           break;
+        case 'enter': // Select first visible garment in grid
+          if (cameraOn && showGarmentGrid) {
+            const filteredGarments = GARMENTS.filter(g => 
+              (garmentSearch === '' || 
+               g.name.toLowerCase().includes(garmentSearch.toLowerCase()) ||
+               (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+              (categoryFilter === null || g.category === categoryFilter)
+            );
+            if (filteredGarments.length > 0) {
+              const firstIdx = GARMENTS.indexOf(filteredGarments[0]);
+              switchGarment(firstIdx);
+              setShowGarmentGrid(false);
+              setGarmentSearch('');
+            }
+          }
+          break;
         case 'escape': // Exit fullscreen, close help, or reset all (with Shift)
           if (e.shiftKey && !adjustmentsLocked) {
             // Shift+Escape: Reset ALL adjustments
