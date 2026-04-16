@@ -2286,7 +2286,7 @@ export default function MirrorPage() {
             }
           }
           break;
-        case 'escape': // Exit fullscreen, close help, or reset all (with Shift)
+        case 'escape': // Exit fullscreen, close help, close garment grid, or reset all (with Shift)
           if (e.shiftKey && !adjustmentsLocked) {
             // Shift+Escape: Reset ALL adjustments
             saveAdjustmentsForUndo();
@@ -2302,6 +2302,9 @@ export default function MirrorPage() {
             setAspectLocked(true);
             setStatus("🔄 All adjustments reset! Press Z to undo");
             vibrate(30);
+          } else if (showGarmentGrid) {
+            setShowGarmentGrid(false);
+            setGarmentSearch('');
           } else if (showHelp) {
             setShowHelp(false);
           } else if (isFullscreen) {
