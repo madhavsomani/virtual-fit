@@ -4613,6 +4613,12 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             borderRadius: 12,
             maxWidth: "80%",
           }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <span style={{ color: "#fff", fontSize: 12, fontWeight: 600 }}>
+                👕 {categoryFilter || 'All Garments'} ({GARMENTS.filter(g => categoryFilter === null || g.category === categoryFilter).length})
+              </span>
+              <span style={{ color: "#9ca3af", fontSize: 10 }}>Tab to switch</span>
+            </div>
             <input
               type="text"
               placeholder="Search garments..."
