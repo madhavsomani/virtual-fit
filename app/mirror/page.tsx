@@ -2355,6 +2355,25 @@ export default function MirrorPage() {
             }
           }
           break;
+        case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': // Quick jump in grid
+          if (showGarmentGrid) {
+            const targetIdx = parseInt(e.key) - 1;
+            const filteredForNum = GARMENTS.filter(g => 
+              (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+              (categoryFilter === null || g.category === categoryFilter) &&
+              (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
+            );
+            if (targetIdx < filteredForNum.length) {
+              setGridHighlightIdx(targetIdx);
+            }
+          } else if (cameraOn) {
+            const numIdx = parseInt(e.key) - 1;
+            if (numIdx < GARMENTS.length) {
+              switchGarment(numIdx);
+              setStatus(`👕 Garment ${e.key}`);
+            }
+          }
+          break;
         case 'escape': // Exit fullscreen, close help, close garment grid, or reset all (with Shift)
           if (e.shiftKey && !adjustmentsLocked) {
             // Shift+Escape: Reset ALL adjustments
