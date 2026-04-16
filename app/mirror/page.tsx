@@ -2258,6 +2258,18 @@ export default function MirrorPage() {
             setStatus(`⏩ Skip to ${newIdx + 1}`);
           }
           break;
+        case 'tab': // Cycle through categories
+          if (cameraOn && showGarmentGrid) {
+            e.preventDefault();
+            const categories = [null, ...new Set(GARMENTS.map(g => g.category).filter(Boolean))];
+            const currentIdx = categories.indexOf(categoryFilter);
+            const nextIdx = e.shiftKey 
+              ? (currentIdx - 1 + categories.length) % categories.length
+              : (currentIdx + 1) % categories.length;
+            setCategoryFilter(categories[nextIdx] as string | null);
+            setStatus(`🏷️ ${categories[nextIdx] || 'All'}`);
+          }
+          break;
         case 'escape': // Exit fullscreen, close help, or reset all (with Shift)
           if (e.shiftKey && !adjustmentsLocked) {
             // Shift+Escape: Reset ALL adjustments
