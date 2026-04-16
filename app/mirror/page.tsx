@@ -2387,6 +2387,26 @@ export default function MirrorPage() {
             if (searchInput) searchInput.focus();
           }
           break;
+        case 'q': // Quick add to favorites (add-only, no toggle)
+          if (showGarmentGrid) {
+            const filteredForQ = GARMENTS.filter(g => 
+              (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+              (categoryFilter === null || g.category === categoryFilter) &&
+              (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
+            );
+            const clampedQIdx = Math.min(gridHighlightIdx, filteredForQ.length - 1);
+            if (clampedQIdx >= 0 && filteredForQ[clampedQIdx]) {
+              const garmentIdx = GARMENTS.indexOf(filteredForQ[clampedQIdx]);
+              if (!favoriteGarments.includes(garmentIdx)) {
+                setFavoriteGarments(prev => [...prev, garmentIdx]);
+                setStatus(`❤️ Added to favorites: ${filteredForQ[clampedQIdx].name}`);
+                vibrate(15);
+              } else {
+                setStatus(`✔️ Already in favorites`);
+              }
+            }
+          }
+          break;
         case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': // Quick jump in grid
           if (showGarmentGrid) {
             const targetIdx = parseInt(e.key) - 1;
