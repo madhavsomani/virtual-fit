@@ -3719,6 +3719,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               <span>Toggle favorite (in grid)</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>⇧Enter</kbd>
               <span>Select without closing (in grid)</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>/</kbd>
+              <span>Focus search (in grid)</span>
             </div>
             <p style={{ marginTop: 16, fontSize: 13, color: "#9ca3af" }}>
               👋 Swipe gestures also work with your hand!<br/>
