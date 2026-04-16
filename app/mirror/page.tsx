@@ -4795,6 +4795,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               display: "grid",
               gridTemplateColumns: "repeat(3, 1fr)",
               gap: 8,
+              maxHeight: "60vh",
+              overflowY: "auto",
             }}>
             {GARMENTS.filter(g => 
               (garmentSearch === '' || 
