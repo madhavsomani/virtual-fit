@@ -2410,11 +2410,30 @@ export default function MirrorPage() {
           setIsMirrored(prev => !prev);
           break;
         case 'g': // Toggle garment visibility (before/after)
-        case ' ': // Space also toggles garment
           e.preventDefault();
           setGarmentAnimating(true);
           setTimeout(() => setGarmentAnimating(false), 300);
           setShowGarment(prev => !prev);
+          break;
+        case ' ': // Space toggles favorite in grid or garment visibility
+          e.preventDefault();
+          if (showGarmentGrid) {
+            const filteredForSpace = GARMENTS.filter(g => 
+              (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+              (categoryFilter === null || g.category === categoryFilter) &&
+              (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
+            );
+            const clampedSpaceIdx = Math.min(gridHighlightIdx, filteredForSpace.length - 1);
+            if (clampedSpaceIdx >= 0 && filteredForSpace[clampedSpaceIdx]) {
+              const garmentIdx = GARMENTS.indexOf(filteredForSpace[clampedSpaceIdx]);
+              toggleFavorite(garmentIdx);
+              vibrate(15);
+            }
+          } else {
+            setGarmentAnimating(true);
+            setTimeout(() => setGarmentAnimating(false), 300);
+            setShowGarment(prev => !prev);
+          }
           break;
         case 'b': // Before/after compare toggle
           setCompareMode(prev => !prev);
