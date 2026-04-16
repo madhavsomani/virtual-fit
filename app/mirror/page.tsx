@@ -192,6 +192,7 @@ export default function MirrorPage() {
   const [pinchStartRotation, setPinchStartRotation] = useState(0);
   const [gestureActive, setGestureActive] = useState(false);
   const [swipeStartX, setSwipeStartX] = useState<number | null>(null);
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null);
   const [tapCount, setTapCount] = useState(0);
   const [lastMultiTapTime, setLastMultiTapTime] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -3174,6 +3175,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
       }
     }
     setSwipeStartX(null);
+    setSwipeDirection(null);
     
     setPinchStartDistance(null);
     setPinchStartAngle(null);
@@ -3724,9 +3726,20 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
         <video
           ref={videoRef}
           onTouchStart={handleTouchStart}
-          onTouchMove={(e) => handlePinchMove(e.nativeEvent)}
+          onTouchMove={(e) => {
+            handlePinchMove(e.nativeEvent);
+            // Track swipe direction for visual feedback
+            if (swipeStartX !== null && e.touches.length === 1) {
+              const diff = e.touches[0].clientX - swipeStartX;
+              if (Math.abs(diff) > 30) {
+                setSwipeDirection(diff > 0 ? 'right' : 'left');
+              } else {
+                setSwipeDirection(null);
+              }
+            }
+          }}
           onTouchEnd={(e) => { handleTouchEnd(e); handleMultiTap(); }}
-          onTouchCancel={() => { setSwipeStartX(null); setPinchStartDistance(null); setPinchStartAngle(null); setGestureActive(false); }}
+          onTouchCancel={() => { setSwipeStartX(null); setSwipeDirection(null); setPinchStartDistance(null); setPinchStartAngle(null); setGestureActive(false); }}
           style={{ 
             width: "100%", 
             transform: isMirrored ? "scaleX(-1)" : "none", 
@@ -5282,6 +5295,26 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             gap: 8,
           }}>
             🤏 Scale: {garmentScale}% | Rotate: {garmentRotation}°
+          </div>
+        )}
+        
+        {/* Swipe direction indicator */}
+        {swipeDirection && cameraOn && (
+          <div style={{
+            position: "absolute",
+            top: "50%", 
+            [swipeDirection === 'left' ? 'right' : 'left']: 20,
+            transform: "translateY(-50%)",
+            background: "rgba(99, 102, 241, 0.9)",
+            padding: "12px 16px",
+            borderRadius: 12,
+            color: "#fff",
+            fontSize: 24,
+            fontWeight: 600,
+            zIndex: 200,
+            animation: "pulse 0.3s ease-in-out",
+          }}>
+            {swipeDirection === 'left' ? '◀️ Next' : '▶️ Prev'}
           </div>
         )}
         
