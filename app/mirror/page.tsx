@@ -4788,6 +4788,17 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               >
                 <div style={{ fontSize: 24 }}>{g.emoji}</div>
                 <div style={{ color: "#fff", fontSize: 10, marginTop: 4 }}>{g.name}</div>
+                {g.category && (
+                  <div style={{ 
+                    color: "#9ca3af", 
+                    fontSize: 8, 
+                    marginTop: 2,
+                    background: "rgba(255,255,255,0.1)",
+                    padding: "1px 4px",
+                    borderRadius: 3,
+                    display: "inline-block",
+                  }}>{g.category}</div>
+                )}
               </div>
             );
             })}
