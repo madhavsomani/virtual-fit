@@ -2449,6 +2449,21 @@ export default function MirrorPage() {
             }
           }
           break;
+        case 'm': // Jump to middle of grid (not mirror toggle when in grid)
+          if (showGarmentGrid) {
+            const filteredForMid = GARMENTS.filter(g => 
+              (garmentSearch === '' || g.name.toLowerCase().includes(garmentSearch.toLowerCase()) || (g.category && g.category.toLowerCase().includes(garmentSearch.toLowerCase()))) &&
+              (categoryFilter === null || g.category === categoryFilter) &&
+              (!favoritesOnly || favoriteGarments.includes(GARMENTS.indexOf(g)))
+            ).length;
+            const midIdx = Math.floor(filteredForMid / 2);
+            setGridHighlightIdx(midIdx);
+            setStatus(`⚖️ Middle: ${midIdx + 1}/${filteredForMid}`);
+          } else {
+            // Normal mirror toggle
+            setIsMirrored(prev => !prev);
+          }
+          break;
         case '1': case '2': case '3': case '4': case '5': case '6': case '7': case '8': case '9': // Quick jump in grid
           if (showGarmentGrid) {
             const targetIdx = parseInt(e.key) - 1;
@@ -2499,9 +2514,6 @@ export default function MirrorPage() {
           break;
         case 'd': // Toggle debug mode
           setDebugMode(prev => !prev);
-          break;
-        case 'm': // Toggle mirror mode
-          setIsMirrored(prev => !prev);
           break;
         case 'g': // Toggle garment visibility (before/after)
           e.preventDefault();
