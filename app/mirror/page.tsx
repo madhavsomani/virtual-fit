@@ -5212,6 +5212,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             <div>📏 Orientation: {orientation === 'portrait' ? '📱 Portrait' : '📺 Landscape'}</div>
             <div>🌍 Browser: {typeof navigator !== 'undefined' ? (navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Firefox') ? 'Firefox' : navigator.userAgent.includes('Safari') ? 'Safari' : 'Other') : '?'}</div>
             <div>🖥️ Platform: {typeof navigator !== 'undefined' ? navigator.platform : '?'}</div>
+            <div>👆 Sensitivity: {touchSensitivity.toUpperCase()}</div>
+            <div>📳 Haptic: {hapticEnabled ? 'ON' : 'OFF'}</div>
             <div style={{ opacity: 0.7, marginTop: 8, fontSize: 10 }}>Alt+B to close</div>
           </div>
         )}
