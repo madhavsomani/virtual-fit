@@ -3539,6 +3539,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               <span>Jump to first garment</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>End</kbd>
               <span>Jump to last garment</span>
+              <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>PgUp/PgDn</kbd>
+              <span>Skip 5 garments</span>
               <kbd style={{ background: "#374151", padding: "4px 8px", borderRadius: 4 }}>Esc</kbd>
               <span>Close help / exit fullscreen</span>
             </div>
