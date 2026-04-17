@@ -682,6 +682,7 @@ export default function MirrorPage() {
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const garmentMeshRef = useRef<THREE.Mesh | null>(null);
   const garmentTextureRef = useRef<THREE.Texture | null>(null);
+  const garment3DModelRef = useRef<THREE.Group | null>(null); // set when a GLB is loaded
   const defaultTextureRef = useRef<THREE.Texture | null>(null);
 
   // Pose refs
@@ -879,6 +880,26 @@ export default function MirrorPage() {
     mesh.rotation.z = sp.tilt + garmentRotation;
     
     mesh.visible = showGarment;
+
+    // Also position the 3D GLB model if loaded
+    const model3D = garment3DModelRef.current;
+    if (model3D) {
+      // For GLB models: position at shoulder center, scale to shoulder width
+      // Model is pre-normalized to ~2 units, so shoulderW/2 maps it to body
+      const s3d = (sp.w * 0.6 * garmentScale * sp.depth);
+      model3D.position.set(
+        sp.x + garmentXOffset * sp.w * 0.01,
+        sp.y + sp.h * 0.5 + garmentYOffset * sp.h * 0.01,
+        0
+      );
+      model3D.scale.set(
+        s3d * (garmentFlipped ? -1 : 1),
+        sp.h * 0.45 * (aspectLocked ? garmentScale : garmentScaleY) * sp.depth,
+        s3d * 0.5
+      );
+      model3D.rotation.z = sp.tilt + garmentRotation;
+      model3D.visible = showGarment;
+    }
 
     // Estimate garment size based on shoulder width ratio
     // Shoulder width as fraction of frame width (typical range 0.2-0.5)
@@ -1340,6 +1361,7 @@ export default function MirrorPage() {
         model.scale.setScalar(scale);
 
         sceneRef.current.add(model);
+        garment3DModelRef.current = model; // track 3D model for anchoring
 
         // Dummy mesh reference for compatibility with existing position/scale code
         const dummyGeo = new THREE.BoxGeometry(0.01, 0.01, 0.01);
