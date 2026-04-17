@@ -1649,7 +1649,7 @@ export default function MirrorPage() {
   }, [detectGesture]);
 
   // Load a saved garment from localStorage
-  const loadSavedGarment = useCallback((index: number) => {
+  const loadSavedGarment = useCallback(async (index: number) => {
     if (!sceneRef.current || !garmentMeshRef.current) return;
     
     const garment = savedGarments[index];
@@ -1657,6 +1657,57 @@ export default function MirrorPage() {
     
     setSelectedGarment(-1); // deselect preset gallery
     setStatus(`Loading ${garment.name}...`);
+
+    // Detect 3D garment (GLB data URI or URL)
+    const is3D = garment.name.includes('(3D)') || garment.dataUrl.startsWith('data:model/gltf-binary') || garment.dataUrl.endsWith('.glb');
+
+    if (is3D) {
+      // Load as GLB model
+      const gltfLoader = new GLTFLoader();
+      try {
+        const gltf = await gltfLoader.loadAsync(garment.dataUrl);
+        if (sceneRef.current && garmentMeshRef.current) {
+          sceneRef.current.remove(garmentMeshRef.current);
+          garmentMeshRef.current.geometry.dispose();
+          (garmentMeshRef.current.material as THREE.Material).dispose();
+          // Remove old 3D model if any
+          if (garment3DModelRef.current) {
+            sceneRef.current.remove(garment3DModelRef.current);
+            garment3DModelRef.current = null;
+          }
+
+          const model = gltf.scene;
+          model.traverse((child) => {
+            if ((child as THREE.Mesh).isMesh) {
+              (child as THREE.Mesh).castShadow = true;
+              if ((child as THREE.Mesh).material) {
+                ((child as THREE.Mesh).material as THREE.Material).side = THREE.DoubleSide;
+              }
+            }
+          });
+          const box = new THREE.Box3().setFromObject(model);
+          const size = box.getSize(new THREE.Vector3());
+          const maxDim = Math.max(size.x, size.y, size.z);
+          model.scale.setScalar(2.0 / maxDim);
+
+          sceneRef.current.add(model);
+          garment3DModelRef.current = model;
+
+          const dummyGeo = new THREE.BoxGeometry(0.01, 0.01, 0.01);
+          const dummyMat = new THREE.MeshBasicMaterial({ visible: false });
+          const dummyMesh = new THREE.Mesh(dummyGeo, dummyMat);
+          model.add(dummyMesh);
+          garmentMeshRef.current = dummyMesh;
+          setStatus(`✅ 3D model ${garment.name} loaded!`);
+        }
+      } catch (err) {
+        console.error('Failed to load 3D garment:', err);
+        setStatus(`Failed to load ${garment.name}`);
+      }
+      return;
+    }
+
+    // 2D texture path (original)
     
     const loader = new THREE.TextureLoader();
     loader.load(
