@@ -111,9 +111,52 @@ export default function RetailerPage() {
               padding: "24px 28px",
               marginBottom: 16,
             }}>
-              <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600 }}>📋 Embed Code</h3>
+              <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600 }}>📋 Easy Embed (1 line)</h3>
               <p style={{ color: "#71717a", fontSize: 13, marginBottom: 12 }}>
-                Add this to your product pages to enable virtual try-on:
+                Add this single script tag to your site. A “Try It On” button appears automatically:
+              </p>
+              <pre style={{
+                background: "#09090b",
+                border: "1px solid #27272a",
+                borderRadius: 8,
+                padding: 16,
+                fontSize: 12,
+                overflow: "auto",
+                color: "#a1a1aa",
+                lineHeight: 1.6,
+              }}>
+{`<script
+  src="${typeof window !== 'undefined' ? window.location.origin : 'https://wonderful-sky-0513a3610.7.azurestaticapps.net'}/embed.js"
+  data-retailer="${shopName}"
+  data-position="bottom-right"
+  data-color="#6C5CE7">
+<\/script>`}
+              </pre>
+              <button
+                onClick={() => {
+                  const code = `<script src="${window.location.origin}/embed.js" data-retailer="${shopName}" data-position="bottom-right" data-color="#6C5CE7"></` + 'script>';
+                  navigator.clipboard?.writeText(code);
+                }}
+                style={{
+                  marginTop: 8, padding: "8px 16px", fontSize: 13, fontWeight: 600,
+                  background: "#6C5CE7", color: "#fff", border: "none",
+                  borderRadius: 8, cursor: "pointer",
+                }}
+              >
+                📋 Copy to Clipboard
+              </button>
+            </div>
+
+            <div style={{
+              background: "#18181b",
+              border: "1px solid #27272a",
+              borderRadius: 16,
+              padding: "24px 28px",
+              marginBottom: 16,
+            }}>
+              <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600 }}>🖼️ iframe Embed (alternative)</h3>
+              <p style={{ color: "#71717a", fontSize: 13, marginBottom: 12 }}>
+                Or embed directly with an iframe:
               </p>
               <pre style={{
                 background: "#09090b",
@@ -125,7 +168,7 @@ export default function RetailerPage() {
                 color: "#a1a1aa",
               }}>
 {`<iframe
-  src="${typeof window !== 'undefined' ? window.location.origin : ''}/mirror?retailer=${encodeURIComponent(shopName)}"
+  src="${typeof window !== 'undefined' ? window.location.origin : ''}/mirror?embed=true&retailer=${encodeURIComponent(shopName)}"
   width="100%"
   height="600"
   frameborder="0"
