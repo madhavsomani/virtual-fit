@@ -1,6 +1,35 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 
 export default function Home() {
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) return;
+    
+    setLoading(true);
+    
+    // TODO: Wire to actual email service (Resend, ConvertKit, etc.)
+    // For now, save to localStorage and show success
+    try {
+      const existing = JSON.parse(localStorage.getItem("waitlist") || "[]");
+      existing.push({ email, timestamp: new Date().toISOString() });
+      localStorage.setItem("waitlist", JSON.stringify(existing));
+      
+      setSubmitted(true);
+      setEmail("");
+    } catch (err) {
+      console.error("Failed to save email:", err);
+    }
+    
+    setLoading(false);
+  };
+
   return (
     <main style={{
       minHeight: "100vh",
@@ -18,10 +47,68 @@ export default function Home() {
         <h1 style={{ fontSize: 42, fontWeight: 800, margin: "0 0 8px", letterSpacing: -1 }}>
           VirtualFit
         </h1>
-        <p style={{ fontSize: 18, color: "#a1a1aa", margin: "0 0 48px", lineHeight: 1.6 }}>
+        <p style={{ fontSize: 18, color: "#a1a1aa", margin: "0 0 32px", lineHeight: 1.6 }}>
           Try on clothes virtually using your camera.<br />
           Real-time body tracking. Instant fit preview.
         </p>
+
+        {/* Email Capture */}
+        <div style={{
+          background: "linear-gradient(135deg, rgba(108,92,231,0.15) 0%, rgba(108,92,231,0.05) 100%)",
+          border: "1px solid rgba(108,92,231,0.3)",
+          borderRadius: 16,
+          padding: 24,
+          marginBottom: 32,
+        }}>
+          {submitted ? (
+            <div style={{ color: "#6C5CE7", fontWeight: 600 }}>
+              ✓ You&apos;re on the list! We&apos;ll notify you when we launch.
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 14, color: "#a1a1aa", marginBottom: 12 }}>
+                🚀 Get notified when we launch publicly
+              </div>
+              <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  style={{
+                    flex: "1 1 200px",
+                    padding: "12px 16px",
+                    fontSize: 14,
+                    borderRadius: 8,
+                    border: "1px solid #27272a",
+                    background: "#18181b",
+                    color: "#e4e4e7",
+                    outline: "none",
+                    minWidth: 200,
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={loading}
+                  style={{
+                    padding: "12px 24px",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    borderRadius: 8,
+                    border: "none",
+                    background: "#6C5CE7",
+                    color: "#fff",
+                    cursor: loading ? "wait" : "pointer",
+                    opacity: loading ? 0.7 : 1,
+                  }}
+                >
+                  {loading ? "..." : "Notify Me"}
+                </button>
+              </form>
+            </>
+          )}
+        </div>
 
         <div style={{
           display: "grid",
@@ -47,7 +134,7 @@ export default function Home() {
             </div>
           </Link>
 
-          <Link href="/admin" style={{ textDecoration: "none" }}>
+          <Link href="/pricing" style={{ textDecoration: "none" }}>
             <div style={{
               background: "#18181b",
               border: "1px solid #27272a",
@@ -57,10 +144,10 @@ export default function Home() {
               cursor: "pointer",
               transition: "transform 0.15s",
             }}>
-              <div style={{ fontSize: 36, marginBottom: 8 }}>⚙️</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#e4e4e7" }}>Admin</div>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>💳</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#e4e4e7" }}>Pricing</div>
               <div style={{ fontSize: 12, color: "#71717a", marginTop: 4 }}>
-                Manage garments
+                View plans
               </div>
             </div>
           </Link>
