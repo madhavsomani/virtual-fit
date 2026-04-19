@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { analytics } from "../lib/analytics";
 
 const plans = [
   {
@@ -57,6 +58,10 @@ const plans = [
 export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null);
 
+  useEffect(() => {
+    analytics.pageView("/pricing");
+  }, []);
+
   const handleCheckout = async (plan: string) => {
     if (plan === "Free") {
       window.location.href = "/mirror";
@@ -64,31 +69,17 @@ export default function PricingPage() {
     }
     
     setLoading(plan);
+    analytics.checkoutStart(plan);
     
-    try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          plan: plan.toLowerCase(),
-          email: "", // Would collect from user in production
-        }),
-      });
-      
-      const data = await response.json();
-      
-      if (data.url) {
-        // Redirect to checkout (or success in test mode)
-        window.location.href = data.url;
-      } else {
-        throw new Error(data.error || "Checkout failed");
-      }
-    } catch (error) {
-      console.error("Checkout error:", error);
-      alert("Something went wrong. Please try again.");
-    } finally {
-      setLoading(null);
-    }
+    // Client-side mock checkout (static export, no API routes)
+    // In production, this would redirect to real Stripe Checkout
+    const mockSessionId = `cs_test_${Date.now()}_${plan.toLowerCase()}`;
+    const successUrl = `/checkout/success/?session_id=${mockSessionId}&plan=${plan.toLowerCase()}`;
+    
+    // Simulate brief loading delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    window.location.href = successUrl;
   };
 
   return (

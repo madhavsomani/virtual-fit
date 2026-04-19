@@ -1,12 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { analytics } from "./lib/analytics";
 
 export default function Home() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    analytics.pageView("/");
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +26,7 @@ export default function Home() {
       existing.push({ email, timestamp: new Date().toISOString() });
       localStorage.setItem("waitlist", JSON.stringify(existing));
       
+      analytics.waitlistSignup(email);
       setSubmitted(true);
       setEmail("");
     } catch (err) {
