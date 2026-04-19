@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+// GLTFLoader + 3D gen client — DISABLED until MESHY_API_KEY configured
+// import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { smoothScalar } from "./smoothing-utils";
-import { generateAndPoll, type Gen3DState } from "../lib/generate-3d-client";
+// import { generateAndPoll, type Gen3DState } from "../lib/generate-3d-client";
 import { detectLeftSwipeIntent, detectRightSwipeIntent, detectGestureCooldownWindow } from "./gesture-intent";
 
 type PoseResultLandmark = { x: number; y: number; z?: number; visibility?: number };
@@ -21,9 +22,10 @@ export default function MirrorPage() {
   const [cameraOn, setCameraOn] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [gen3DStatus, setGen3DStatus] = useState<string>('idle'); // idle|uploading|pending|processing|completed|failed
-  const [gen3DProgress, setGen3DProgress] = useState(0);
-  const [use3DGeneration, setUse3DGeneration] = useState(false); // toggle for 3D mesh generation
+  // 3D generation state — DISABLED until MESHY_API_KEY is configured
+  // const [gen3DStatus, setGen3DStatus] = useState<string>('idle');
+  // const [gen3DProgress, setGen3DProgress] = useState(0);
+  // const [use3DGeneration, setUse3DGeneration] = useState(false);
   const [selectedGarment, setSelectedGarment] = useState(0);
   const [savedGarments, setSavedGarments] = useState<Array<{name: string, dataUrl: string}>>([]);
   const [estimatedSize, setEstimatedSize] = useState<string | null>(null);
@@ -1309,6 +1311,7 @@ export default function MirrorPage() {
     }
   }, [createShirtMesh, savedGarments]);
 
+  /* 3D upload handler — DISABLED until MESHY_API_KEY is configured
   // Upload garment image → generate 3D mesh via Meshy/HF → load GLB into scene
   const handleUpload3D = useCallback(async (file: File) => {
     if (savedGarments.length >= 10) {
@@ -1393,6 +1396,7 @@ export default function MirrorPage() {
       setGen3DProgress(0);
     }
   }, [savedGarments]);
+  END 3D upload handler */
 
   // Switch to a garment from the gallery
   const switchGarment = useCallback((index: number) => {
@@ -1658,52 +1662,11 @@ export default function MirrorPage() {
     setSelectedGarment(-1); // deselect preset gallery
     setStatus(`Loading ${garment.name}...`);
 
-    // Detect 3D garment (GLB data URI or URL)
+    // Detect 3D garment (GLB data URI or URL) — skip if 3D not supported yet
     const is3D = garment.name.includes('(3D)') || garment.dataUrl.startsWith('data:model/gltf-binary') || garment.dataUrl.endsWith('.glb');
 
     if (is3D) {
-      // Load as GLB model
-      const gltfLoader = new GLTFLoader();
-      try {
-        const gltf = await gltfLoader.loadAsync(garment.dataUrl);
-        if (sceneRef.current && garmentMeshRef.current) {
-          sceneRef.current.remove(garmentMeshRef.current);
-          garmentMeshRef.current.geometry.dispose();
-          (garmentMeshRef.current.material as THREE.Material).dispose();
-          // Remove old 3D model if any
-          if (garment3DModelRef.current) {
-            sceneRef.current.remove(garment3DModelRef.current);
-            garment3DModelRef.current = null;
-          }
-
-          const model = gltf.scene;
-          model.traverse((child) => {
-            if ((child as THREE.Mesh).isMesh) {
-              (child as THREE.Mesh).castShadow = true;
-              if ((child as THREE.Mesh).material) {
-                ((child as THREE.Mesh).material as THREE.Material).side = THREE.DoubleSide;
-              }
-            }
-          });
-          const box = new THREE.Box3().setFromObject(model);
-          const size = box.getSize(new THREE.Vector3());
-          const maxDim = Math.max(size.x, size.y, size.z);
-          model.scale.setScalar(2.0 / maxDim);
-
-          sceneRef.current.add(model);
-          garment3DModelRef.current = model;
-
-          const dummyGeo = new THREE.BoxGeometry(0.01, 0.01, 0.01);
-          const dummyMat = new THREE.MeshBasicMaterial({ visible: false });
-          const dummyMesh = new THREE.Mesh(dummyGeo, dummyMat);
-          model.add(dummyMesh);
-          garmentMeshRef.current = dummyMesh;
-          setStatus(`✅ 3D model ${garment.name} loaded!`);
-        }
-      } catch (err) {
-        console.error('Failed to load 3D garment:', err);
-        setStatus(`Failed to load ${garment.name}`);
-      }
+      setStatus(`3D garments not yet supported. Delete and re-upload as 2D.`);
       return;
     }
 
@@ -6789,35 +6752,15 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               disabled={uploading}
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) { if (use3DGeneration) { handleUpload3D(f); } else { handleUpload(f); } }
+                if (f) { handleUpload(f); }
                 e.target.value = "";
               }}
             />
           </label>
 
-          {/* 3D Generation toggle */}
-          <button
-            onClick={() => setUse3DGeneration(!use3DGeneration)}
-            style={{
-              padding: "8px 16px", fontSize: 13, fontWeight: 600,
-              background: use3DGeneration ? "#00b894" : "#2d3436",
-              color: "#fff", borderRadius: 8, border: "1px solid #555",
-              cursor: "pointer", transition: "all 0.2s",
-            }}
-            title={use3DGeneration ? "3D mesh generation ON — uploads will generate a 3D model (30-60s)" : "2D texture mode — fast overlay"}
-          >
-            {use3DGeneration ? "🧊 3D Mode ON" : "🖼️ 2D Mode"}
-          </button>
-
-          {/* 3D generation progress */}
-          {gen3DStatus !== 'idle' && gen3DStatus !== 'completed' && gen3DStatus !== 'failed' && (
-            <div style={{ fontSize: 12, color: "#a29bfe", display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ animation: "spin 1s linear infinite", display: "inline-block" }}>🧊</span>
-              {gen3DStatus === 'uploading' && 'Uploading...'}
-              {gen3DStatus === 'pending' && 'Queued...'}
-              {gen3DStatus === 'processing' && `Generating 3D... ${gen3DProgress}%`}
-            </div>
-          )}
+          {/* 3D Generation toggle — HIDDEN until MESHY_API_KEY is configured
+          <button onClick={() => setUse3DGeneration(!use3DGeneration)} ... />
+          */}
 
           {/* Reset to default yellow shirt */}
           <button
