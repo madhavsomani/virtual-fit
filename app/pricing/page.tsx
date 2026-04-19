@@ -65,15 +65,30 @@ export default function PricingPage() {
     
     setLoading(plan);
     
-    // Stripe Checkout redirect (test mode placeholder)
-    // TODO: Wire real Stripe checkout session
-    // Price IDs would be: price_creator_xxx, price_retailer_xxx
-    
-    // For now, show coming soon alert
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan: plan.toLowerCase(),
+          email: "", // Would collect from user in production
+        }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.url) {
+        // Redirect to checkout (or success in test mode)
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || "Checkout failed");
+      }
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Something went wrong. Please try again.");
+    } finally {
       setLoading(null);
-      alert(`${plan} plan coming soon! Join the waitlist on the home page.`);
-    }, 1000);
+    }
   };
 
   return (
