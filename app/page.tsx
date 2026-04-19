@@ -6,8 +6,13 @@ import { analytics } from "./lib/analytics";
 
 export default function Home() {
   const [email, setEmail] = useState("");
+  const [revenue, setRevenue] = useState("");
+  const [wouldPay, setWouldPay] = useState("");
+  const [killerFeature, setKillerFeature] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showSurvey, setShowSurvey] = useState(false);
 
   useEffect(() => {
     analytics.pageView("/");
@@ -17,20 +22,47 @@ export default function Home() {
     e.preventDefault();
     if (!email) return;
     
+    // First submit: just email → show survey questions
+    if (!showSurvey) {
+      setShowSurvey(true);
+      return;
+    }
+
     setLoading(true);
+    setError("");
     
-    // TODO: Wire to actual email service (Resend, ConvertKit, etc.)
-    // For now, save to localStorage and show success
     try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          revenue,
+          wouldPay,
+          killerFeature,
+          source: 'homepage',
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to submit');
+      
+      // Also save locally as backup
       const existing = JSON.parse(localStorage.getItem("waitlist") || "[]");
-      existing.push({ email, timestamp: new Date().toISOString() });
+      existing.push({ email, revenue, wouldPay, killerFeature, timestamp: new Date().toISOString() });
       localStorage.setItem("waitlist", JSON.stringify(existing));
       
       analytics.waitlistSignup(email);
       setSubmitted(true);
       setEmail("");
     } catch (err) {
-      console.error("Failed to save email:", err);
+      console.error("Waitlist submit failed:", err);
+      // Fallback: save locally even if API fails
+      const existing = JSON.parse(localStorage.getItem("waitlist") || "[]");
+      existing.push({ email, revenue, wouldPay, killerFeature, timestamp: new Date().toISOString() });
+      localStorage.setItem("waitlist", JSON.stringify(existing));
+      analytics.waitlistSignup(email);
+      setSubmitted(true);
+      setEmail("");
     }
     
     setLoading(false);
@@ -68,12 +100,12 @@ export default function Home() {
         }}>
           {submitted ? (
             <div style={{ color: "#6C5CE7", fontWeight: 600 }}>
-              ✓ You&apos;re on the list! We&apos;ll notify you when we launch.
+              ✓ You&apos;re on the list! We&apos;ll reach out soon.
             </div>
-          ) : (
+          ) : !showSurvey ? (
             <>
               <div style={{ fontSize: 14, color: "#a1a1aa", marginBottom: 12 }}>
-                🚀 Get notified when we launch publicly
+                🚀 Join the waitlist — be first to embed virtual try-on in your store
               </div>
               <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
                 <input
@@ -96,7 +128,6 @@ export default function Home() {
                 />
                 <button
                   type="submit"
-                  disabled={loading}
                   style={{
                     padding: "12px 24px",
                     fontSize: 14,
@@ -105,14 +136,124 @@ export default function Home() {
                     border: "none",
                     background: "#6C5CE7",
                     color: "#fff",
+                    cursor: "pointer",
+                  }}
+                >
+                  Join Waitlist
+                </button>
+              </form>
+            </>
+          ) : (
+            <form onSubmit={handleSubmit} style={{ textAlign: "left" }}>
+              <div style={{ fontSize: 14, color: "#a1a1aa", marginBottom: 16, textAlign: "center" }}>
+                📊 Quick questions to help us build the right product for you
+              </div>
+              
+              <label style={{ display: "block", marginBottom: 16 }}>
+                <span style={{ fontSize: 13, color: "#a1a1aa", display: "block", marginBottom: 6 }}>
+                  What&apos;s your store&apos;s monthly revenue?
+                </span>
+                <select
+                  value={revenue}
+                  onChange={(e) => setRevenue(e.target.value)}
+                  style={{
+                    width: "100%", padding: "10px 12px", fontSize: 14,
+                    borderRadius: 8, border: "1px solid #27272a",
+                    background: "#18181b", color: "#e4e4e7",
+                  }}
+                >
+                  <option value="">Select...</option>
+                  <option value="pre-launch">Pre-launch / Side project</option>
+                  <option value="0-10k">$0 – $10K/mo</option>
+                  <option value="10k-50k">$10K – $50K/mo</option>
+                  <option value="50k-200k">$50K – $200K/mo</option>
+                  <option value="200k+">$200K+/mo</option>
+                </select>
+              </label>
+
+              <label style={{ display: "block", marginBottom: 16 }}>
+                <span style={{ fontSize: 13, color: "#a1a1aa", display: "block", marginBottom: 6 }}>
+                  Would you pay $49/mo for embeddable virtual try-on?
+                </span>
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {["Yes, definitely", "Maybe, need to test first", "No, too expensive", "No, not useful"].map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() => setWouldPay(opt)}
+                      style={{
+                        padding: "8px 14px", fontSize: 13, borderRadius: 8,
+                        border: wouldPay === opt ? "2px solid #6C5CE7" : "1px solid #27272a",
+                        background: wouldPay === opt ? "rgba(108,92,231,0.2)" : "#18181b",
+                        color: wouldPay === opt ? "#a29bfe" : "#a1a1aa",
+                        cursor: "pointer", transition: "all 0.15s",
+                      }}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </label>
+
+              <label style={{ display: "block", marginBottom: 20 }}>
+                <span style={{ fontSize: 13, color: "#a1a1aa", display: "block", marginBottom: 6 }}>
+                  What 1 feature would make this a no-brainer?
+                </span>
+                <input
+                  type="text"
+                  value={killerFeature}
+                  onChange={(e) => setKillerFeature(e.target.value)}
+                  placeholder="e.g. Works with my Shopify store"
+                  style={{
+                    width: "100%", padding: "10px 12px", fontSize: 14,
+                    borderRadius: 8, border: "1px solid #27272a",
+                    background: "#18181b", color: "#e4e4e7", outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </label>
+
+              {error && <p style={{ color: "#ef4444", fontSize: 13, marginBottom: 12 }}>{error}</p>}
+
+              <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  style={{
+                    padding: "12px 32px", fontSize: 15, fontWeight: 600,
+                    borderRadius: 8, border: "none",
+                    background: "#6C5CE7", color: "#fff",
                     cursor: loading ? "wait" : "pointer",
                     opacity: loading ? 0.7 : 1,
                   }}
                 >
-                  {loading ? "..." : "Notify Me"}
+                  {loading ? "Submitting..." : "✨ Join Waitlist"}
                 </button>
-              </form>
-            </>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Skip survey, submit email only
+                    setLoading(true);
+                    fetch('/api/waitlist', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email, source: 'homepage-skip' }),
+                    }).finally(() => {
+                      setSubmitted(true);
+                      setLoading(false);
+                    });
+                  }}
+                  style={{
+                    padding: "12px 20px", fontSize: 13,
+                    borderRadius: 8, border: "1px solid #27272a",
+                    background: "transparent", color: "#71717a",
+                    cursor: "pointer",
+                  }}
+                >
+                  Skip &rarr;
+                </button>
+              </div>
+            </form>
           )}
         </div>
 
