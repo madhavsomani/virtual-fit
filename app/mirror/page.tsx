@@ -12,7 +12,8 @@ type PoseResultLandmark = { x: number; y: number; z?: number; visibility?: numbe
 export default function MirrorPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const threeCanvasRef = useRef<HTMLCanvasElement>(null);
-  const [status, setStatus] = useState("Click Start to begin");
+  const [status, setStatus] = useState("Tap below to start trying on clothes");
+  const [showCameraPrompt, setShowCameraPrompt] = useState(false); // pre-permission screen
   const [fps, setFps] = useState(0);
   const [lowFpsWarning, setLowFpsWarning] = useState(false);
   const lowFpsCountRef = useRef(0);
@@ -1228,15 +1229,14 @@ export default function MirrorPage() {
       loop();
     } catch (err: unknown) {
       setIsLoading(false);
-      // Better error handling for camera permission issues
       const errorMsg = err instanceof Error ? err.message : "Unknown error";
       if (err instanceof DOMException) {
         if (err.name === "NotAllowedError") {
-          setStatus("⛔ Camera access denied. Please allow camera permission in your browser settings and refresh.");
+          setStatus("camera-denied");
         } else if (err.name === "NotFoundError") {
-          setStatus("📷 No camera found. Please connect a camera and refresh.");
+          setStatus("camera-not-found");
         } else if (err.name === "NotReadableError") {
-          setStatus("⚠️ Camera is in use by another app. Close other apps and try again.");
+          setStatus("camera-busy");
         } else {
           setStatus(`Error: ${errorMsg}`);
         }
@@ -4383,36 +4383,90 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           </div>
         )}
 
-        {/* Initial loading with progress bar */}
-        {isLoading && !cameraOn && (
+        {/* Error recovery screens */}
+        {status === 'camera-denied' && !cameraOn && (
           <div style={{
-            position: "absolute",
-            top: "50%", left: "50%",
-            transform: "translate(-50%, -50%)",
-            background: "rgba(0,0,0,0.85)",
-            color: "#fff",
-            padding: 24,
-            borderRadius: 16,
-            textAlign: "center",
-            minWidth: 200,
+            position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.9)", borderRadius: 12, padding: 24,
           }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>📷</div>
-            <div style={{ marginBottom: 12 }}>Starting camera...</div>
-            <div style={{
-              width: "100%",
-              height: 6,
-              background: "rgba(255,255,255,0.2)",
-              borderRadius: 3,
-              overflow: "hidden",
-            }}>
-              <div style={{
-                width: `${loadingProgress}%`,
-                height: "100%",
-                background: "linear-gradient(90deg, #6c5ce7, #a29bfe)",
-                transition: "width 0.3s ease",
-              }} />
+            <div style={{ fontSize: 48, marginBottom: 12 }}>⛔</div>
+            <h3 style={{ color: "#fff", fontSize: 18, fontWeight: 700, margin: "0 0 12px", textAlign: "center" }}>
+              Camera access blocked
+            </h3>
+            <p style={{ color: "#aaa", fontSize: 13, margin: "0 0 16px", textAlign: "center", maxWidth: 300, lineHeight: 1.6 }}>
+              {isMobileDevice
+                ? "Tap the lock icon 🔒 in your browser&apos;s address bar, then enable Camera and reload."
+                : "Click the camera icon in your browser&apos;s address bar, allow access, then click Retry."}
+            </p>
+            <div style={{ display: "flex", gap: 12 }}>
+              <button
+                onClick={() => { setShowCameraPrompt(false); setStatus("Tap below to start trying on clothes"); }}
+                style={{
+                  padding: "12px 24px", fontSize: 15, fontWeight: 600,
+                  background: "#6C5CE7", color: "#fff", border: "none",
+                  borderRadius: 10, cursor: "pointer",
+                }}
+              >
+                ↻ Retry
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                style={{
+                  padding: "12px 24px", fontSize: 15, fontWeight: 600,
+                  background: "transparent", color: "#aaa", border: "1px solid #555",
+                  borderRadius: 10, cursor: "pointer",
+                }}
+              >
+                Reload Page
+              </button>
             </div>
-            <div style={{ fontSize: 12, opacity: 0.7, marginTop: 8 }}>{loadingProgress}%</div>
+          </div>
+        )}
+        {status === 'camera-not-found' && !cameraOn && (
+          <div style={{
+            position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.9)", borderRadius: 12, padding: 24,
+          }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>📷</div>
+            <h3 style={{ color: "#fff", fontSize: 18, fontWeight: 700, margin: "0 0 12px" }}>No camera found</h3>
+            <p style={{ color: "#aaa", fontSize: 13, margin: "0 0 16px", textAlign: "center", maxWidth: 280, lineHeight: 1.6 }}>
+              Make sure your device has a camera and it&apos;s not disabled in system settings.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: "12px 24px", fontSize: 15, fontWeight: 600,
+                background: "#6C5CE7", color: "#fff", border: "none",
+                borderRadius: 10, cursor: "pointer",
+              }}
+            >
+              Reload & Retry
+            </button>
+          </div>
+        )}
+        {status === 'camera-busy' && !cameraOn && (
+          <div style={{
+            position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.9)", borderRadius: 12, padding: 24,
+          }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>⚠️</div>
+            <h3 style={{ color: "#fff", fontSize: 18, fontWeight: 700, margin: "0 0 12px" }}>Camera in use</h3>
+            <p style={{ color: "#aaa", fontSize: 13, margin: "0 0 16px", textAlign: "center", maxWidth: 280, lineHeight: 1.6 }}>
+              Close other apps using your camera (FaceTime, Zoom, etc.) then try again.
+            </p>
+            <button
+              onClick={() => { setShowCameraPrompt(false); setStatus("Tap below to start trying on clothes"); }}
+              style={{
+                padding: "12px 24px", fontSize: 15, fontWeight: 600,
+                background: "#6C5CE7", color: "#fff", border: "none",
+                borderRadius: 10, cursor: "pointer",
+              }}
+            >
+              ↻ Try Again
+            </button>
           </div>
         )}
 
@@ -6529,39 +6583,116 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           />
         )}
 
-        {/* Start button overlay */}
-        {!cameraOn && (
+        {/* Start button overlay — with pre-permission prompt */}
+        {!cameraOn && !showCameraPrompt && (
           <div style={{
             position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-            background: "rgba(0,0,0,0.7)", borderRadius: 12,
+            background: "linear-gradient(135deg, rgba(17,17,34,0.95), rgba(40,20,80,0.95))", borderRadius: 12,
+            padding: 24,
           }}>
+            <div style={{ fontSize: 64, marginBottom: 16 }}>👗</div>
+            <h2 style={{ color: "#fff", fontSize: 22, fontWeight: 700, margin: "0 0 8px", textAlign: "center" }}>
+              Virtual Try-On
+            </h2>
+            <p style={{ color: "#aaa", fontSize: 14, margin: "0 0 24px", textAlign: "center", maxWidth: 280, lineHeight: 1.5 }}>
+              See how clothes look on you in real-time using your camera
+            </p>
             <button
-              onClick={startCamera}
+              onClick={() => setShowCameraPrompt(true)}
               disabled={isLoading}
               style={{
-                padding: "16px 40px", fontSize: 20, fontWeight: 700,
-                background: isLoading ? "#4a4a6a" : "#6C5CE7", color: "#fff", border: "none",
-                borderRadius: 12, cursor: isLoading ? "wait" : "pointer",
-                display: "flex", alignItems: "center", gap: 8,
+                padding: "16px 40px", fontSize: 18, fontWeight: 700,
+                background: "linear-gradient(135deg, #6C5CE7, #a29bfe)", color: "#fff", border: "none",
+                borderRadius: 12, cursor: "pointer",
+                boxShadow: "0 4px 20px rgba(108,92,231,0.4)",
+                transition: "transform 0.2s",
               }}
             >
-              {isLoading ? (
-                <>
-                  <span style={{ 
-                    display: "inline-block", 
-                    width: 20, height: 20, 
-                    border: "3px solid #fff", 
-                    borderTopColor: "transparent", 
-                    borderRadius: "50%",
-                    animation: "spin 1s linear infinite",
-                  }} />
-                  Loading...
-                </>
-              ) : (
-                "🎥 Start Camera"
-              )}
+              ✨ Try It On
             </button>
+            <p style={{ color: "#666", fontSize: 11, margin: "16px 0 0", textAlign: "center" }}>
+              No photos are stored • Works offline
+            </p>
+          </div>
+        )}
+
+        {/* Pre-permission screen — explain WHY before browser dialog */}
+        {!cameraOn && showCameraPrompt && !isLoading && (
+          <div style={{
+            position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.9)", borderRadius: 12,
+            padding: 24,
+          }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>📷</div>
+            <h3 style={{ color: "#fff", fontSize: 18, fontWeight: 700, margin: "0 0 12px", textAlign: "center" }}>
+              Camera access needed
+            </h3>
+            <p style={{ color: "#aaa", fontSize: 14, margin: "0 0 8px", textAlign: "center", maxWidth: 300, lineHeight: 1.5 }}>
+              Your camera feed stays on your device — nothing is uploaded or recorded.
+            </p>
+            <p style={{ color: "#888", fontSize: 12, margin: "0 0 24px", textAlign: "center", maxWidth: 300 }}>
+              We use it to track your body position so clothes overlay accurately.
+            </p>
+            <button
+              onClick={() => startCamera()}
+              style={{
+                padding: "14px 36px", fontSize: 17, fontWeight: 700,
+                background: "#6C5CE7", color: "#fff", border: "none",
+                borderRadius: 12, cursor: "pointer",
+                marginBottom: 12,
+              }}
+            >
+              Allow Camera & Start
+            </button>
+            <button
+              onClick={() => setShowCameraPrompt(false)}
+              style={{
+                padding: "8px 24px", fontSize: 13, fontWeight: 500,
+                background: "transparent", color: "#888", border: "1px solid #444",
+                borderRadius: 8, cursor: "pointer",
+              }}
+            >
+              ← Back
+            </button>
+          </div>
+        )}
+
+        {/* Loading state with human-readable progress */}
+        {!cameraOn && isLoading && (
+          <div style={{
+            position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            background: "rgba(0,0,0,0.9)", borderRadius: 12,
+            padding: 24,
+          }}>
+            <div style={{
+              width: 48, height: 48, marginBottom: 16,
+              border: "4px solid rgba(108,92,231,0.3)",
+              borderTopColor: "#6C5CE7",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+            }} />
+            <p style={{ color: "#fff", fontSize: 16, fontWeight: 600, margin: "0 0 8px" }}>
+              {loadingProgress < 30 ? "Connecting to camera..." :
+               loadingProgress < 60 ? "Camera ready, loading AI..." :
+               loadingProgress < 90 ? "Almost there..." :
+               "Starting!"}
+            </p>
+            <div style={{
+              width: 200, height: 4, background: "rgba(255,255,255,0.1)",
+              borderRadius: 2, overflow: "hidden", marginTop: 8,
+            }}>
+              <div style={{
+                width: `${loadingProgress}%`, height: "100%",
+                background: "linear-gradient(90deg, #6c5ce7, #a29bfe)",
+                transition: "width 0.5s ease",
+              }} />
+            </div>
+            <p style={{ color: "#666", fontSize: 11, marginTop: 12 }}>
+              {loadingProgress < 60 ? "First load may take a few seconds" : ""}
+            </p>
           </div>
         )}
       </div>
