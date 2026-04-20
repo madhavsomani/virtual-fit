@@ -372,6 +372,11 @@ export default function Home() {
           </div>
           <div style={{ fontSize: 13, color: "#71717a", lineHeight: 1.6 }}>
             0 paying customers yet. Help us hit our first $100 MRR!<br />
+            <a href="/build-in-public" 
+               style={{ color: "#6C5CE7", textDecoration: "none" }}>
+              Follow our journey →
+            </a>
+            {" · "}
             <a href="https://github.com/madhavsomani/virtual-fit" 
                style={{ color: "#6C5CE7", textDecoration: "none" }}
                target="_blank" rel="noopener noreferrer">
