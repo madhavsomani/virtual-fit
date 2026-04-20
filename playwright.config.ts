@@ -19,12 +19,11 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
   ],
-  // Run local dev server before tests if not in CI
-  webServer: process.env.CI
-    ? undefined
-    : {
-        command: "npm run dev",
-        url: "http://localhost:3000",
-        reuseExistingServer: !process.env.CI,
-      },
+  // Serve the built static export
+  webServer: {
+    command: process.env.CI ? "npx serve out -l 3000" : "npm run dev",
+    url: "http://localhost:3000",
+    reuseExistingServer: !process.env.CI,
+    timeout: 120 * 1000,
+  },
 });
