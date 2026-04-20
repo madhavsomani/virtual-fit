@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://wonderful-sky-0513a3610.7.azurestaticapps.net/sitemap.xml
