@@ -7,7 +7,12 @@ type EventName =
   | "checkout_start"
   | "checkout_complete"
   | "mirror_open"
-  | "garment_select";
+  | "garment_select"
+  | "widget_opened"
+  | "widget_closed"
+  | "garment_changed"
+  | "add_to_cart"
+  | "retailer_signup";
 
 interface AnalyticsEvent {
   timestamp: string;
@@ -64,6 +69,11 @@ export const analytics = {
   checkoutComplete: (plan: string, sessionId: string) => trackEvent("checkout_complete", { plan, sessionId }),
   mirrorOpen: () => trackEvent("mirror_open"),
   garmentSelect: (garmentId: string) => trackEvent("garment_select", { garmentId }),
+  widgetOpened: (shopId: string) => trackEvent("widget_opened", { shopId }),
+  widgetClosed: (shopId: string) => trackEvent("widget_closed", { shopId }),
+  garmentChanged: (garmentId: string, shopId?: string) => trackEvent("garment_changed", { garmentId, shopId: shopId || '' }),
+  addToCart: (productId: string) => trackEvent("add_to_cart", { productId }),
+  retailerSignup: (shopId: string) => trackEvent("retailer_signup", { shopId }),
   
   // Get all tracked events (for debugging/export)
   getAll: () => getEvents(),
