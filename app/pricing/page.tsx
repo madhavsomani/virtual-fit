@@ -71,8 +71,21 @@ export default function PricingPage() {
     setLoading(plan);
     analytics.checkoutStart(plan);
     
-    // Client-side mock checkout (static export, no API routes)
-    // In production, this would redirect to real Stripe Checkout
+    // Check for Stripe Payment Links (env vars)
+    const creatorLink = process.env.NEXT_PUBLIC_STRIPE_CREATOR_LINK;
+    const retailerLink = process.env.NEXT_PUBLIC_STRIPE_RETAILER_LINK;
+    
+    if (plan === "Creator" && creatorLink) {
+      window.location.href = creatorLink;
+      return;
+    }
+    if (plan === "Retailer" && retailerLink) {
+      window.location.href = retailerLink;
+      return;
+    }
+    
+    // Fallback: Client-side mock checkout (static export, no API routes)
+    // In production, set NEXT_PUBLIC_STRIPE_*_LINK env vars
     const mockSessionId = `cs_test_${Date.now()}_${plan.toLowerCase()}`;
     const successUrl = `/checkout/success/?session_id=${mockSessionId}&plan=${plan.toLowerCase()}`;
     
