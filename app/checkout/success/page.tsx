@@ -2,12 +2,35 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { analytics } from "../../lib/analytics";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const plan = searchParams.get("plan");
+  const [isRealPayment, setIsRealPayment] = useState(false);
+
+  useEffect(() => {
+    // Track checkout completion
+    analytics.checkoutComplete(plan || "unknown", sessionId || "none");
+    
+    // Detect if this is a real Stripe session (not our mock)
+    // Real Stripe sessions start with cs_test_ or cs_live_
+    if (sessionId && (sessionId.startsWith("cs_test_") || sessionId.startsWith("cs_live_"))) {
+      setIsRealPayment(true);
+      
+      // Store subscription locally
+      const subscriptions = JSON.parse(localStorage.getItem("subscriptions") || "[]");
+      subscriptions.push({
+        sessionId,
+        plan: plan || "unknown",
+        createdAt: new Date().toISOString(),
+        isLive: sessionId.startsWith("cs_live_"),
+      });
+      localStorage.setItem("subscriptions", JSON.stringify(subscriptions));
+    }
+  }, [sessionId, plan]);
 
   const planNames: Record<string, string> = {
     creator: "Creator",
@@ -89,18 +112,48 @@ function SuccessContent() {
             <code style={{ color: "#6C5CE7", wordBreak: "break-all" }}>
               {sessionId}
             </code>
-            <div
-              style={{
-                marginTop: 8,
-                padding: "4px 8px",
-                background: "#fef3c7",
-                color: "#92400e",
-                borderRadius: 4,
-                display: "inline-block",
-              }}
-            >
-              TEST MODE - No charge made
-            </div>
+            {!isRealPayment && (
+              <div
+                style={{
+                  marginTop: 8,
+                  padding: "4px 8px",
+                  background: "#fef3c7",
+                  color: "#92400e",
+                  borderRadius: 4,
+                  display: "inline-block",
+                }}
+              >
+                TEST MODE - No charge made
+              </div>
+            )}
+            {isRealPayment && sessionId.startsWith("cs_test_") && (
+              <div
+                style={{
+                  marginTop: 8,
+                  padding: "4px 8px",
+                  background: "#dbeafe",
+                  color: "#1e40af",
+                  borderRadius: 4,
+                  display: "inline-block",
+                }}
+              >
+                Stripe Test Mode - Real checkout flow
+              </div>
+            )}
+            {isRealPayment && sessionId.startsWith("cs_live_") && (
+              <div
+                style={{
+                  marginTop: 8,
+                  padding: "4px 8px",
+                  background: "#dcfce7",
+                  color: "#166534",
+                  borderRadius: 4,
+                  display: "inline-block",
+                }}
+              >
+                ✅ Payment confirmed
+              </div>
+            )}
           </div>
         )}
 
