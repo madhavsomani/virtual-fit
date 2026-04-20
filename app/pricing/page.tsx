@@ -342,6 +342,20 @@ export default function PricingPage() {
           </div>
         </div>
 
+        {/* Promo Code Link */}
+        <div style={{ textAlign: "center", marginTop: 32 }}>
+          <Link
+            href="/redeem"
+            style={{
+              color: "#6C5CE7",
+              fontSize: 14,
+              textDecoration: "none",
+            }}
+          >
+            Have a promo code? Redeem it here →
+          </Link>
+        </div>
+
         {/* Footer */}
         <p
           style={{
