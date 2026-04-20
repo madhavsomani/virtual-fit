@@ -302,12 +302,29 @@ function Mirror3DContent() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          gap: 8,
         }}
       >
         <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>
           🪞 Mirror 3D Test
         </h1>
-        <Link href="/" style={{ textDecoration: "none" }}>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Link href="/generate-3d" style={{ textDecoration: "none" }}>
+            <button
+              style={{
+                padding: "6px 12px",
+                background: "#10B981",
+                border: "none",
+                borderRadius: 6,
+                color: "#fff",
+                cursor: "pointer",
+                fontSize: 13,
+              }}
+            >
+              + Upload
+            </button>
+          </Link>
+          <Link href="/" style={{ textDecoration: "none" }}>
           <button
             style={{
               padding: "6px 12px",
@@ -322,6 +339,7 @@ function Mirror3DContent() {
             ← Home
           </button>
         </Link>
+        </div>
       </div>
 
       {/* Camera + 3D Overlay */}
