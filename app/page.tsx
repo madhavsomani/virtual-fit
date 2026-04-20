@@ -13,9 +13,16 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showSurvey, setShowSurvey] = useState(false);
+  const [waitlistCount, setWaitlistCount] = useState(0);
 
   useEffect(() => {
     analytics.pageView("/");
+    // Load waitlist count for social proof badge
+    const waitlistData = localStorage.getItem("waitlist");
+    if (waitlistData) {
+      const waitlist = JSON.parse(waitlistData);
+      setWaitlistCount(waitlist.length);
+    }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -82,6 +89,26 @@ export default function Home() {
     }}>
       <div style={{ textAlign: "center", maxWidth: 600 }}>
         <div style={{ fontSize: 72, marginBottom: 16 }}>👕</div>
+        
+        {/* Social proof badge - only show if waitlist > 5 */}
+        {waitlistCount > 5 && (
+          <div style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "6px 14px",
+            background: "rgba(108,92,231,0.15)",
+            border: "1px solid rgba(108,92,231,0.3)",
+            borderRadius: 20,
+            marginBottom: 16,
+            fontSize: 13,
+            color: "#a29bfe",
+          }}>
+            <span style={{ color: "#6C5CE7" }}>✨</span>
+            {waitlistCount} people on the waitlist
+          </div>
+        )}
+        
         <h1 style={{ fontSize: 42, fontWeight: 800, margin: "0 0 8px", letterSpacing: -1 }}>
           VirtualFit
         </h1>
