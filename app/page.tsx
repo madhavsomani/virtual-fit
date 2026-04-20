@@ -331,6 +331,28 @@ export default function Home() {
           ))}
         </div>
 
+        {/* Social Proof / Built in Public */}
+        <div style={{
+          marginTop: 48,
+          padding: 20,
+          background: "#18181b",
+          border: "1px solid #27272a",
+          borderRadius: 12,
+          textAlign: "center",
+        }}>
+          <div style={{ fontSize: 14, color: "#a1a1aa", marginBottom: 8 }}>
+            🏗️ <strong style={{ color: "#e4e4e7" }}>Built in public</strong>
+          </div>
+          <div style={{ fontSize: 13, color: "#71717a", lineHeight: 1.6 }}>
+            0 paying customers yet. Help us hit our first $100 MRR!<br />
+            <a href="https://github.com/madhavsomani/virtual-fit" 
+               style={{ color: "#6C5CE7", textDecoration: "none" }}
+               target="_blank" rel="noopener noreferrer">
+              Star us on GitHub ⭐
+            </a>
+          </div>
+        </div>
+
         <p style={{ marginTop: 48, fontSize: 12, color: "#3f3f46" }}>
           Built by Madhav Somani · Powered by MediaPipe + Three.js
         </p>
