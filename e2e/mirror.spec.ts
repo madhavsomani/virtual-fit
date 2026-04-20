@@ -38,10 +38,10 @@ test.describe("Mirror Page", () => {
     await page.goto("/pricing");
 
     await expect(page.locator("text=Simple, transparent pricing")).toBeVisible();
-    // Check for plan names - use more specific locators
-    await expect(page.locator("h2:has-text('Free')").or(page.locator("div:has-text('Free')").first())).toBeVisible();
-    await expect(page.locator("text=Creator")).toBeVisible();
-    await expect(page.locator("text=Retailer")).toBeVisible();
+    // Check for plan names via h2 elements
+    await expect(page.getByRole("heading", { name: "Free" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Creator" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Retailer" })).toBeVisible();
   });
 
   test("checkout flow works in test mode", async ({ page }) => {
