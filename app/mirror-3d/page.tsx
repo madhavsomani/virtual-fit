@@ -115,6 +115,31 @@ function Mirror3DContent() {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleTouchStart, handleTouchEnd, handleKeyDown]);
+  
+  // Shake detection for mobile (device motion)
+  const lastShakeRef = useRef<number>(0);
+  const shakeThreshold = 15;
+  
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.DeviceMotionEvent) return;
+    
+    const handleMotion = (e: DeviceMotionEvent) => {
+      if (allModels.length < 2) return;
+      const acc = e.accelerationIncludingGravity;
+      if (!acc?.x || !acc?.y || !acc?.z) return;
+      
+      const magnitude = Math.sqrt(acc.x ** 2 + acc.y ** 2 + acc.z ** 2);
+      const now = Date.now();
+      
+      if (magnitude > shakeThreshold && now - lastShakeRef.current > 500) {
+        lastShakeRef.current = now;
+        setModelIndex((i) => (i + 1) % allModels.length);
+      }
+    };
+    
+    window.addEventListener("devicemotion", handleMotion);
+    return () => window.removeEventListener("devicemotion", handleMotion);
+  }, [allModels.length]);
 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
@@ -435,7 +460,7 @@ function Mirror3DContent() {
               {/* Swipe hint */}
               {allModels.length > 1 && (
                 <span style={{ color: "#71717a", fontSize: 11, marginLeft: 8 }}>
-                  Swipe or ←→ keys
+                  Swipe, shake, or ←→ keys
                 </span>
               )}
             </div>
