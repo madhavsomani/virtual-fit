@@ -3,67 +3,210 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Demo Store — VirtualFit Embed Example</title>
+  <title>Thread & Co. — Premium Essentials</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧵</text></svg>">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; background: #fafafa; color: #111; }
-    header { background: #fff; border-bottom: 1px solid #eee; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-    header h1 { font-size: 20px; font-weight: 700; }
-    .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; padding: 32px 24px; max-width: 1200px; margin: 0 auto; }
-    .product-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .product-card img { width: 100%; height: 300px; object-fit: cover; background: #f0f0f0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #fafafa; color: #1a1a1a; }
+    a { color: inherit; text-decoration: none; }
+
+    /* Announcement bar */
+    .announce { background: #1a1a1a; color: #fff; text-align: center; padding: 10px 16px; font-size: 13px; font-weight: 500; letter-spacing: 0.3px; }
+    .announce a { color: #a29bfe; text-decoration: underline; }
+
+    /* Header */
+    header { background: #fff; border-bottom: 1px solid #e5e5e5; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+    .logo { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .logo span { color: #6C5CE7; }
+    nav { display: flex; gap: 24px; font-size: 14px; font-weight: 500; color: #555; }
+    nav a:hover { color: #1a1a1a; }
+    .cart-btn { position: relative; font-size: 20px; cursor: pointer; }
+    .cart-count { position: absolute; top: -6px; right: -8px; background: #6C5CE7; color: #fff; font-size: 10px; font-weight: 700; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+
+    /* Hero */
+    .hero { background: linear-gradient(135deg, #f8f7ff 0%, #ede9fe 100%); padding: 60px 24px; text-align: center; }
+    .hero h1 { font-size: 42px; font-weight: 800; letter-spacing: -1px; margin: 0 0 12px; line-height: 1.1; }
+    .hero p { font-size: 16px; color: #666; max-width: 480px; margin: 0 auto 24px; line-height: 1.5; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(108,92,231,0.1); border: 1px solid rgba(108,92,231,0.2); color: #6C5CE7; padding: 8px 16px; border-radius: 50px; font-size: 13px; font-weight: 600; }
+
+    /* Products */
+    .section-title { text-align: center; font-size: 24px; font-weight: 700; margin: 48px 0 8px; }
+    .section-sub { text-align: center; font-size: 14px; color: #888; margin-bottom: 32px; }
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; padding: 0 24px 48px; max-width: 1100px; margin: 0 auto; }
+    .product-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .product-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    .product-card img { width: 100%; height: 340px; object-fit: cover; display: block; }
     .product-card .info { padding: 16px; }
-    .product-card h3 { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
-    .product-card .price { font-size: 18px; font-weight: 700; color: #6C5CE7; }
-    .product-card .desc { font-size: 13px; color: #666; margin-top: 8px; }
-    .banner { background: linear-gradient(135deg, #6C5CE7, #a29bfe); color: #fff; text-align: center; padding: 12px; font-size: 14px; font-weight: 600; }
-    .badge { display: inline-block; background: #6C5CE7; color: #fff; font-size: 11px; padding: 3px 8px; border-radius: 4px; margin-top: 8px; }
+    .product-card h3 { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+    .product-card .price { font-size: 17px; font-weight: 700; }
+    .product-card .price .old { color: #aaa; text-decoration: line-through; font-size: 14px; font-weight: 400; margin-left: 6px; }
+    .product-card .meta { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+    .product-card .colors { display: flex; gap: 4px; }
+    .product-card .color-dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid #ddd; }
+    .try-on-badge { display: inline-flex; align-items: center; gap: 4px; background: #f3f0ff; color: #6C5CE7; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 4px; margin-top: 10px; }
+
+    /* Features */
+    .features { display: flex; justify-content: center; gap: 48px; padding: 40px 24px; background: #fff; border-top: 1px solid #eee; flex-wrap: wrap; }
+    .feature { text-align: center; max-width: 200px; }
+    .feature .icon { font-size: 28px; margin-bottom: 8px; }
+    .feature h4 { font-size: 14px; font-weight: 600; margin: 0 0 4px; }
+    .feature p { font-size: 12px; color: #888; line-height: 1.4; }
+
+    /* Footer */
+    footer { background: #1a1a1a; color: #999; padding: 40px 24px; text-align: center; }
+    footer .links { display: flex; justify-content: center; gap: 24px; margin-bottom: 16px; font-size: 13px; flex-wrap: wrap; }
+    footer .links a:hover { color: #fff; }
+    .powered-by { display: inline-flex; align-items: center; gap: 6px; background: rgba(108,92,231,0.15); border: 1px solid rgba(108,92,231,0.2); padding: 6px 14px; border-radius: 6px; font-size: 12px; color: #a29bfe; margin-top: 16px; }
+    .powered-by:hover { background: rgba(108,92,231,0.25); }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 28px; }
+      nav { display: none; }
+      .features { gap: 24px; }
+    }
   </style>
 </head>
 <body>
-  <div class="banner">✨ Virtual Try-On enabled — click the "Try It On" button in the corner!</div>
-  <header>
-    <h1>🛍️ Demo Fashion Store</h1>
-    <span style="color: #666; font-size: 13px;">Powered by VirtualFit</span>
-  </header>
 
-  <div class="product-grid">
-    <div class="product-card">
-      <div style="width:100%;height:300px;background:linear-gradient(135deg,#ff6b6b,#ee5a5a);display:flex;align-items:center;justify-content:center;font-size:80px;">👕</div>
-      <div class="info">
-        <h3>Classic Fit T-Shirt</h3>
-        <div class="price">$29.99</div>
-        <div class="desc">100% organic cotton, relaxed fit</div>
-        <div class="badge">👕 Try On Available</div>
+<div class="announce">
+  ✨ New: Try clothes on virtually before you buy — <a href="#" onclick="VirtualFit.open(); return false;">Try it now</a>
+</div>
+
+<header>
+  <div class="logo">thread<span>&</span>co.</div>
+  <nav>
+    <a href="#">New Arrivals</a>
+    <a href="#">Women</a>
+    <a href="#">Men</a>
+    <a href="#">Sale</a>
+  </nav>
+  <div class="cart-btn">🛒<span class="cart-count">2</span></div>
+</header>
+
+<div class="hero">
+  <div class="hero-badge">👕 Virtual Try-On Available</div>
+  <h1>Wear It Before<br>You Buy It</h1>
+  <p>See how our clothes look on you in real-time with AI-powered virtual try-on. No guessing — just confidence.</p>
+</div>
+
+<h2 class="section-title">New Arrivals</h2>
+<p class="section-sub">Try any item on virtually — click the 👕 button in the corner</p>
+
+<div class="product-grid">
+  <div class="product-card">
+    <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=680&fit=crop" alt="White T-Shirt" loading="lazy">
+    <div class="info">
+      <h3>Essential Crew Tee</h3>
+      <div class="price">$34</div>
+      <div class="meta">
+        <div class="colors">
+          <div class="color-dot" style="background:#fff"></div>
+          <div class="color-dot" style="background:#1a1a1a"></div>
+          <div class="color-dot" style="background:#4a6741"></div>
+        </div>
+        <span style="font-size:12px;color:#888">XS–XXL</span>
       </div>
-    </div>
-    <div class="product-card">
-      <div style="width:100%;height:300px;background:linear-gradient(135deg,#4ecdc4,#44a39d);display:flex;align-items:center;justify-content:center;font-size:80px;">🧥</div>
-      <div class="info">
-        <h3>Lightweight Jacket</h3>
-        <div class="price">$89.99</div>
-        <div class="desc">Water-resistant, zip-up</div>
-        <div class="badge">👕 Try On Available</div>
-      </div>
-    </div>
-    <div class="product-card">
-      <div style="width:100%;height:300px;background:linear-gradient(135deg,#a29bfe,#6c5ce7);display:flex;align-items:center;justify-content:center;font-size:80px;">👗</div>
-      <div class="info">
-        <h3>Summer Dress</h3>
-        <div class="price">$49.99</div>
-        <div class="desc">Flowy A-line, floral print</div>
-        <div class="badge">👕 Try On Available</div>
-      </div>
+      <div class="try-on-badge">👕 Try On Available</div>
     </div>
   </div>
 
-  <!-- VirtualFit Embed — this is all a retailer needs to add -->
-  <script
-    src="/embed.js"
-    data-retailer="Demo Fashion Store"
-    data-position="bottom-right"
-    data-color="#6C5CE7"
-    data-button-text="👕 Try It On">
-  </script>
+  <div class="product-card">
+    <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&h=680&fit=crop" alt="Denim Jacket" loading="lazy">
+    <div class="info">
+      <h3>Classic Denim Jacket</h3>
+      <div class="price">$89 <span class="old">$120</span></div>
+      <div class="meta">
+        <div class="colors">
+          <div class="color-dot" style="background:#5b82a6"></div>
+          <div class="color-dot" style="background:#1a1a1a"></div>
+        </div>
+        <span style="font-size:12px;color:#888">S–XL</span>
+      </div>
+      <div class="try-on-badge">👕 Try On Available</div>
+    </div>
+  </div>
+
+  <div class="product-card">
+    <img src="https://images.unsplash.com/photo-1434389677669-e08b4cda3a0a?w=500&h=680&fit=crop" alt="Flannel Shirt" loading="lazy">
+    <div class="info">
+      <h3>Brushed Flannel Shirt</h3>
+      <div class="price">$58</div>
+      <div class="meta">
+        <div class="colors">
+          <div class="color-dot" style="background:#8b4513"></div>
+          <div class="color-dot" style="background:#2f4f4f"></div>
+          <div class="color-dot" style="background:#800020"></div>
+        </div>
+        <span style="font-size:12px;color:#888">S–XXL</span>
+      </div>
+      <div class="try-on-badge">👕 Try On Available</div>
+    </div>
+  </div>
+
+  <div class="product-card">
+    <img src="https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=500&h=680&fit=crop" alt="Hoodie" loading="lazy">
+    <div class="info">
+      <h3>Heavyweight Pullover Hoodie</h3>
+      <div class="price">$72</div>
+      <div class="meta">
+        <div class="colors">
+          <div class="color-dot" style="background:#333"></div>
+          <div class="color-dot" style="background:#808080"></div>
+          <div class="color-dot" style="background:#f5f5dc"></div>
+        </div>
+        <span style="font-size:12px;color:#888">M–XXL</span>
+      </div>
+      <div class="try-on-badge">👕 Try On Available</div>
+    </div>
+  </div>
+</div>
+
+<div class="features">
+  <div class="feature">
+    <div class="icon">📸</div>
+    <h4>Virtual Try-On</h4>
+    <p>See clothes on your body using just your camera — no app needed</p>
+  </div>
+  <div class="feature">
+    <div class="icon">📏</div>
+    <h4>AI Size Guide</h4>
+    <p>Get size recommendations based on your body measurements</p>
+  </div>
+  <div class="feature">
+    <div class="icon">🚚</div>
+    <h4>Free Shipping</h4>
+    <p>Free shipping on all orders over $75</p>
+  </div>
+  <div class="feature">
+    <div class="icon">↩️</div>
+    <h4>Easy Returns</h4>
+    <p>30-day returns, no questions asked</p>
+  </div>
+</div>
+
+<footer>
+  <div class="links">
+    <a href="#">About</a>
+    <a href="#">Contact</a>
+    <a href="#">Shipping</a>
+    <a href="#">Returns</a>
+    <a href="#">Privacy</a>
+  </div>
+  <p style="font-size:12px;margin-bottom:8px">© 2026 Thread & Co. All rights reserved.</p>
+  <a href="/pricing/" class="powered-by">
+    👕 Virtual Try-On powered by <strong style="color:#fff">VirtualFit</strong>
+  </a>
+</footer>
+
+<!-- VirtualFit Embed — ONE script tag is all a retailer needs -->
+<script
+  src="/embed.js"
+  data-shop-id="thread-and-co-demo"
+  data-retailer="Thread & Co."
+  data-position="bottom-right"
+  data-color="#6C5CE7"
+  data-button-text="👕 Try It On">
+</script>
+
 </body>
 </html>
