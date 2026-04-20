@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
 interface ThreeOverlayProps {
   width: number;
@@ -19,6 +19,7 @@ export function ThreeOverlay({
   glbUrl,
   shoulderCenter,
   shoulderWidth = 100,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   torsoHeight = 150,
 }: ThreeOverlayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
