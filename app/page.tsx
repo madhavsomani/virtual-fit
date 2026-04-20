@@ -308,6 +308,23 @@ export default function Home() {
             </div>
           </Link>
 
+          <Link href="/generate-3d" style={{ textDecoration: "none" }}>
+            <div style={{
+              background: "#10B981",
+              borderRadius: 16,
+              padding: "28px 20px",
+              textAlign: "center",
+              cursor: "pointer",
+              transition: "transform 0.15s, opacity 0.15s",
+            }}>
+              <div style={{ fontSize: 36, marginBottom: 8 }}>🎨</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>Generate 3D</div>
+              <div style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", marginTop: 4 }}>
+                Upload garment image
+              </div>
+            </div>
+          </Link>
+
           <Link href="/pricing" style={{ textDecoration: "none" }}>
             <div style={{
               background: "#18181b",
