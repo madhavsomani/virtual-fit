@@ -4,6 +4,11 @@ export const metadata: Metadata = {
   title: "VirtualFit - Virtual Try-On",
   description: "Try on clothes virtually with AI-powered 3D body tracking",
   manifest: "/manifest.json",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
