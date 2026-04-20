@@ -30,6 +30,7 @@
     "three": "^0.183.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "@types/node": "25.6.0",
     "@types/react": "19.2.14",
     "eslint": "9.12.0",
