@@ -161,7 +161,8 @@
     iframeEl.src = buildIframeUrl();
     iframeEl.allow = 'camera *; microphone';
     iframeEl.loading = 'lazy';
-    iframeEl.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-camera');
+    // Note: sandbox removed — it blocks camera access on iOS Safari embeds
+    // iframeEl.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-camera');
     panel.appendChild(iframeEl);
 
     document.body.appendChild(panel);
