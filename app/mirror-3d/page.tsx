@@ -17,6 +17,22 @@ const SAMPLE_MODELS = [
   },
 ];
 
+// Load saved garments from gallery
+function loadSavedGarments(): Array<{ name: string; url: string }> {
+  if (typeof window === "undefined") return [];
+  try {
+    const saved = localStorage.getItem("virtualfit_gallery");
+    if (!saved) return [];
+    const items = JSON.parse(saved);
+    return items.map((item: { name: string; modelUrl: string }) => ({
+      name: item.name,
+      url: item.modelUrl,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 function Mirror3DContent() {
   const searchParams = useSearchParams();
   const customModelUrl = searchParams.get("model");
@@ -25,13 +41,80 @@ function Mirror3DContent() {
   const overlayRef = useRef<HTMLDivElement>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentModel, setCurrentModel] = useState(
-    customModelUrl 
-      ? { name: "Custom", url: customModelUrl }
-      : SAMPLE_MODELS[0]
-  );
+  
+  // Build model list: custom + saved + samples
+  const [allModels, setAllModels] = useState<Array<{ name: string; url: string }>>([]);
+  const [modelIndex, setModelIndex] = useState(0);
+  
+  useEffect(() => {
+    const savedGarments = loadSavedGarments();
+    const models: Array<{ name: string; url: string }> = [];
+    
+    if (customModelUrl) {
+      models.push({ name: "Custom", url: customModelUrl });
+    }
+    models.push(...savedGarments);
+    models.push(...SAMPLE_MODELS);
+    
+    setAllModels(models);
+  }, [customModelUrl]);
+  
+  const currentModel = allModels[modelIndex] || SAMPLE_MODELS[0];
+  
   const [modelPosition, setModelPosition] = useState({ x: 50, y: 50 });
   const [modelScale, setModelScale] = useState(1);
+  
+  // Swipe gesture state
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  
+  // Handle swipe to cycle models
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+  }, []);
+  
+  const handleTouchEnd = useCallback((e: TouchEvent) => {
+    if (!touchStartRef.current || allModels.length < 2) return;
+    
+    const touch = e.changedTouches[0];
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaTime = Date.now() - touchStartRef.current.time;
+    const velocity = Math.abs(deltaX) / deltaTime;
+    
+    // Swipe threshold: 50px distance or 0.3 velocity
+    if (Math.abs(deltaX) > 50 || velocity > 0.3) {
+      if (deltaX < 0) {
+        // Swipe left - next model
+        setModelIndex((i) => (i + 1) % allModels.length);
+      } else {
+        // Swipe right - previous model
+        setModelIndex((i) => (i - 1 + allModels.length) % allModels.length);
+      }
+    }
+    
+    touchStartRef.current = null;
+  }, [allModels.length]);
+  
+  // Keyboard navigation
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (allModels.length < 2) return;
+    if (e.key === "ArrowLeft") {
+      setModelIndex((i) => (i - 1 + allModels.length) % allModels.length);
+    } else if (e.key === "ArrowRight") {
+      setModelIndex((i) => (i + 1) % allModels.length);
+    }
+  }, [allModels.length]);
+  
+  useEffect(() => {
+    window.addEventListener("touchstart", handleTouchStart);
+    window.addEventListener("touchend", handleTouchEnd);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchend", handleTouchEnd);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleTouchStart, handleTouchEnd, handleKeyDown]);
 
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
@@ -299,42 +382,62 @@ function Mirror3DContent() {
           {/* Model selector */}
           <div style={{ marginBottom: 16 }}>
             <label style={{ fontSize: 12, color: "#71717a", marginBottom: 4, display: "block" }}>
-              Model
+              Model ({modelIndex + 1}/{allModels.length})
             </label>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {customModelUrl && (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              {/* Prev/Next buttons */}
+              {allModels.length > 1 && (
                 <button
-                  onClick={() => setCurrentModel({ name: "Custom", url: customModelUrl })}
+                  onClick={() => setModelIndex((i) => (i - 1 + allModels.length) % allModels.length)}
                   style={{
-                    padding: "8px 16px",
-                    background: currentModel.name === "Custom" ? "#10B981" : "#27272a",
+                    padding: "8px 12px",
+                    background: "#27272a",
                     border: "none",
                     borderRadius: 6,
                     color: "#fff",
                     cursor: "pointer",
-                    fontSize: 13,
+                    fontSize: 16,
                   }}
                 >
-                  ✨ Custom
+                  ◀
                 </button>
               )}
-              {SAMPLE_MODELS.map((model) => (
+              
+              {/* Current model name */}
+              <span style={{
+                padding: "8px 16px",
+                background: currentModel.name === "Custom" ? "#10B981" : "#6C5CE7",
+                borderRadius: 6,
+                color: "#fff",
+                fontSize: 13,
+                fontWeight: 600,
+              }}>
+                {currentModel.name}
+              </span>
+              
+              {allModels.length > 1 && (
                 <button
-                  key={model.name}
-                  onClick={() => setCurrentModel(model)}
+                  onClick={() => setModelIndex((i) => (i + 1) % allModels.length)}
                   style={{
-                    padding: "8px 16px",
-                    background: currentModel.name === model.name ? "#6C5CE7" : "#27272a",
+                    padding: "8px 12px",
+                    background: "#27272a",
                     border: "none",
                     borderRadius: 6,
                     color: "#fff",
                     cursor: "pointer",
-                    fontSize: 13,
+                    fontSize: 16,
                   }}
                 >
-                  {model.name}
+                  ▶
                 </button>
-              ))}
+              )}
+              
+              {/* Swipe hint */}
+              {allModels.length > 1 && (
+                <span style={{ color: "#71717a", fontSize: 11, marginLeft: 8 }}>
+                  Swipe or ←→ keys
+                </span>
+              )}
             </div>
           </div>
 
