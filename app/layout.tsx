@@ -36,7 +36,38 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body style={{ fontFamily: "Inter, system-ui, sans-serif", margin: 0 }}>{children}</body>
+      <head>
+        <style>{`
+          /* Skip link for accessibility */
+          .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #6C5CE7;
+            color: white;
+            padding: 8px 16px;
+            z-index: 9999;
+            font-weight: 600;
+            text-decoration: none;
+          }
+          .skip-link:focus {
+            top: 0;
+          }
+          /* Focus styles for keyboard navigation */
+          :focus-visible {
+            outline: 2px solid #6C5CE7;
+            outline-offset: 2px;
+          }
+          /* Remove outline for mouse users */
+          :focus:not(:focus-visible) {
+            outline: none;
+          }
+        `}</style>
+      </head>
+      <body style={{ fontFamily: "Inter, system-ui, sans-serif", margin: 0 }}>
+        <a href="#main-content" className="skip-link">Skip to main content</a>
+        <main id="main-content">{children}</main>
+      </body>
     </html>
   );
 }
