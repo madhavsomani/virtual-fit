@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 
@@ -16,12 +17,19 @@ const SAMPLE_MODELS = [
   },
 ];
 
-export default function Mirror3DPage() {
+function Mirror3DContent() {
+  const searchParams = useSearchParams();
+  const customModelUrl = searchParams.get("model");
+  
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentModel, setCurrentModel] = useState(SAMPLE_MODELS[0]);
+  const [currentModel, setCurrentModel] = useState(
+    customModelUrl 
+      ? { name: "Custom", url: customModelUrl }
+      : SAMPLE_MODELS[0]
+  );
   const [modelPosition, setModelPosition] = useState({ x: 50, y: 50 });
   const [modelScale, setModelScale] = useState(1);
 
@@ -293,7 +301,23 @@ export default function Mirror3DPage() {
             <label style={{ fontSize: 12, color: "#71717a", marginBottom: 4, display: "block" }}>
               Model
             </label>
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {customModelUrl && (
+                <button
+                  onClick={() => setCurrentModel({ name: "Custom", url: customModelUrl })}
+                  style={{
+                    padding: "8px 16px",
+                    background: currentModel.name === "Custom" ? "#10B981" : "#27272a",
+                    border: "none",
+                    borderRadius: 6,
+                    color: "#fff",
+                    cursor: "pointer",
+                    fontSize: 13,
+                  }}
+                >
+                  ✨ Custom
+                </button>
+              )}
               {SAMPLE_MODELS.map((model) => (
                 <button
                   key={model.name}
@@ -366,5 +390,28 @@ export default function Mirror3DPage() {
         </div>
       )}
     </main>
+  );
+}
+
+export default function Mirror3DPage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          style={{
+            minHeight: "100vh",
+            background: "#0c0c0e",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#71717a",
+          }}
+        >
+          Loading...
+        </div>
+      }
+    >
+      <Mirror3DContent />
+    </Suspense>
   );
 }
