@@ -164,15 +164,26 @@ export default function AdminPage() {
               Upload garment images → AI processes → ready for try-on
             </p>
           </div>
-          <a
-            href="/mirror"
-            style={{
-              padding: "10px 20px", background: "#6C5CE7", color: "#fff",
-              borderRadius: 8, textDecoration: "none", fontWeight: 600, fontSize: 14,
-            }}
-          >
-            🪞 Open Mirror
-          </a>
+          <div style={{ display: "flex", gap: 8 }}>
+            <a
+              href="/admin/stats/?key=admin"
+              style={{
+                padding: "10px 20px", background: "#333", color: "#fff",
+                borderRadius: 8, textDecoration: "none", fontWeight: 600, fontSize: 14,
+              }}
+            >
+              📊 Stats
+            </a>
+            <a
+              href="/mirror"
+              style={{
+                padding: "10px 20px", background: "#6C5CE7", color: "#fff",
+                borderRadius: 8, textDecoration: "none", fontWeight: 600, fontSize: 14,
+              }}
+            >
+              🪞 Open Mirror
+            </a>
+          </div>
         </div>
 
         {/* Upload Zone */}
