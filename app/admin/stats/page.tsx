@@ -83,6 +83,7 @@ export default function StatsPage() {
   const checkoutStarts = events.filter(e => e.event === "checkout_start").length;
   const checkoutCompletes = events.filter(e => e.event === "checkout_complete").length;
   const mirrorOpens = events.filter(e => e.event === "mirror_open").length;
+  const codeRedemptions = events.filter(e => e.event === "code_redeemed").length;
 
   // Group by page
   const pageViewsByPage: Record<string, number> = {};
@@ -127,6 +128,7 @@ export default function StatsPage() {
           {[
             { label: "Page Views", value: pageViews, color: "#6C5CE7" },
             { label: "Waitlist Signups", value: waitlistSignups, color: "#00b894" },
+            { label: "Code Redemptions", value: codeRedemptions, color: "#fdcb6e" },
             { label: "Checkout Starts", value: checkoutStarts, color: "#fdcb6e" },
             { label: "Checkout Complete", value: checkoutCompletes, color: "#00cec9" },
             { label: "Mirror Opens", value: mirrorOpens, color: "#e17055" },
