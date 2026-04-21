@@ -83,6 +83,18 @@ export default function RetailerSignupPage() {
     }}>
       <div style={{ maxWidth: 560, width: "100%", marginTop: 40 }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
+          {/* Social proof banner */}
+          <div style={{ 
+            background: "rgba(108,92,231,0.1)", 
+            border: "1px solid rgba(108,92,231,0.3)",
+            borderRadius: 8,
+            padding: "8px 16px",
+            marginBottom: 16,
+            fontSize: 13,
+            color: "#a29bfe"
+          }}>
+            🚀 Join 12+ brands testing VirtualFit — be first in your category
+          </div>
           <div style={{ fontSize: 48 }}>🏪</div>
           <h1 style={{ fontSize: 28, fontWeight: 700, margin: "8px 0 4px" }}>Add Virtual Try-On to Your Store</h1>
           <p style={{ color: "#71717a", fontSize: 14 }}>
@@ -166,6 +178,24 @@ export default function RetailerSignupPage() {
                     {p}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            {/* What you get */}
+            <div style={{ 
+              background: "#09090b", 
+              border: "1px solid #27272a",
+              borderRadius: 10,
+              padding: "16px 20px",
+              marginBottom: 20,
+            }}>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10, color: "#a1a1aa" }}>
+                ✨ What you get:
+              </div>
+              <div style={{ fontSize: 13, color: "#71717a", lineHeight: 1.8 }}>
+                ✅ Embeddable widget — works on any site<br/>
+                ✅ Reduce returns by 20-40%<br/>
+                ✅ First 6 months FREE for design partners
               </div>
             </div>
 
