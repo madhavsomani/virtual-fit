@@ -7088,7 +7088,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               }} />
             )}
             <span style={{ position: "relative", zIndex: 1 }}>
-              {uploading ? `⏳ ${uploadProgress}% — AI is creating a 3D model from your photo` : "📸 Upload Clothing Photo"}
+              {uploading ? `⏳ ${uploadProgress}% — AI is creating a 3D model from your photo` : "👕 Upload Clothing → 3D Mesh"}
             </span>
             <input
               type="file"
@@ -7924,6 +7924,11 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           50% { opacity: 0.7; }
         }
       `}</style>
+
+      {/* Attribution */}
+      <p style={{ textAlign: 'center', color: '#3f3f46', fontSize: 10, marginTop: 16 }}>
+        3D by Hunyuan3D-2 (Tencent) · Pose by MediaPipe · VirtualFit
+      </p>
     </div>
   );
 }
