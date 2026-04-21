@@ -1450,9 +1450,121 @@ function MirrorContent() {
     }
   }, [createShirtMesh, savedGarments]);
 
-  /* 3D upload handler — DISABLED until MESHY_API_KEY is configured
-  // Upload garment image → generate 3D mesh via Meshy/HF → load GLB into scene
+  // 3D upload: send image to Worker proxy → get GLB → load into scene
   const handleUpload3D = useCallback(async (file: File) => {
+    const WORKER_URL = process.env.NEXT_PUBLIC_TRIPOSR_URL;
+    if (!WORKER_URL) {
+      setStatus('❌ 3D service not configured (NEXT_PUBLIC_TRIPOSR_URL). Using 2D mode.');
+      handleUpload(file);
+      return;
+    }
+    if (savedGarments.length >= 10) {
+      setStatus('⚠️ Upload limit reached.');
+      return;
+    }
+    setUploading(true);
+    setUploadProgress(10);
+    setStatus('🧊 Generating 3D mesh… ~10-30s');
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      setUploadProgress(20);
+
+      const resp = await fetch(WORKER_URL, { method: 'POST', body: fd });
+      setUploadProgress(60);
+
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => resp.statusText);
+        throw new Error(`3D service error ${resp.status}: ${errText.slice(0, 200)}`);
+      }
+
+      const glbBlob = await resp.blob();
+      setUploadProgress(80);
+
+      // Persist to localStorage for /mirror?garment=local
+      try {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const b64 = (reader.result as string).split(',')[1];
+          localStorage.setItem('virtualfit-glb-data', b64);
+          localStorage.setItem('virtualfit-glb-provider', resp.headers.get('X-Provider') || '3D');
+          localStorage.setItem('virtualfit-glb-ts', new Date().toISOString());
+        };
+        reader.readAsDataURL(glbBlob);
+      } catch {}
+
+      // Load GLB directly into the current scene
+      const glbUrl = URL.createObjectURL(glbBlob);
+      setStatus('🧊 Loading 3D model into scene…');
+      setUploadProgress(90);
+
+      const loader = new GLTFLoader();
+      const gltf = await loader.loadAsync(glbUrl);
+
+      if (sceneRef.current && garmentMeshRef.current) {
+        // Remove old garment
+        sceneRef.current.remove(garmentMeshRef.current);
+        garmentMeshRef.current.geometry.dispose();
+        (garmentMeshRef.current.material as THREE.Material).dispose();
+        if (garment3DModelRef.current) {
+          sceneRef.current.remove(garment3DModelRef.current);
+          garment3DModelRef.current = null;
+        }
+
+        const model = gltf.scene;
+        model.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            (child as THREE.Mesh).castShadow = true;
+            if ((child as THREE.Mesh).material) {
+              ((child as THREE.Mesh).material as THREE.Material).side = THREE.DoubleSide;
+            }
+          }
+        });
+
+        // Normalize
+        const box = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+        model.position.sub(center);
+        const maxDim = Math.max(size.x, size.y, size.z);
+        if (maxDim > 0) model.scale.setScalar(2.0 / maxDim);
+
+        sceneRef.current.add(model);
+        garment3DModelRef.current = model;
+
+        // Dummy mesh for existing position/scale code compatibility
+        const dummyGeo = new THREE.BoxGeometry(0.01, 0.01, 0.01);
+        const dummyMat = new THREE.MeshBasicMaterial({ visible: false });
+        const dummyMesh = new THREE.Mesh(dummyGeo, dummyMat);
+        model.add(dummyMesh);
+        garmentMeshRef.current = dummyMesh;
+      }
+
+      setGarment3DStatus('loaded');
+      setGarment3DProvider(resp.headers.get('X-Provider') || 'hunyuan3d-2');
+      setUploadProgress(100);
+      setStatus(`✅ 3D garment loaded! Move around to see it track.`);
+
+      // Save to gallery
+      const garmentName = file.name.replace(/\.[^/.]+$/, '') + ' (3D)';
+      const newGarment = { name: garmentName, dataUrl: 'local:' + Date.now() };
+      const updatedSaved = [...savedGarments, newGarment];
+      setSavedGarments(updatedSaved);
+      try { localStorage.setItem('virtualfit-saved-garments', JSON.stringify(updatedSaved)); } catch {}
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      console.error('3D upload failed:', msg);
+      setStatus(`❌ 3D failed: ${msg}. Falling back to 2D.`);
+      setGarment3DStatus('error');
+      // Fallback to 2D
+      handleUpload(file);
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
+    }
+  }, [handleUpload, savedGarments, createShirtMesh]);
+
+  /* OLD 3D upload handler — replaced by handleUpload3D above
     if (savedGarments.length >= 10) {
       setStatus("⚠️ Upload limit reached (10 garments). Delete some to add more.");
       return;
@@ -6940,7 +7052,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               disabled={uploading}
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) { handleUpload(f); }
+                if (f) { handleUpload3D(f); }
                 e.target.value = "";
               }}
             />
