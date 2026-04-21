@@ -37,6 +37,8 @@ module.exports = async function (context, req) {
       source: body.source || 'website',
       userAgent: req.headers['user-agent'] || '',
       isTest: isTest,
+      referer: req.headers['referer'] || req.headers['referrer'] || '',
+      utm: body.utm || '',
     };
 
     // Log entry — differentiate test vs real
