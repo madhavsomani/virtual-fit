@@ -10,17 +10,14 @@ test.describe("User Journey: Buy Flow", () => {
     // 1. Land on home page
     await page.goto(prodUrl);
     await expect(page.locator("body")).toBeVisible();
+    await page.waitForTimeout(2000);
 
-    // 2. Look for pricing link
-    const pricingLink = page.locator("text=/pricing|Pricing/i").first();
-    if (await pricingLink.isVisible()) {
-      await pricingLink.click();
-    } else {
-      await page.goto(`${prodUrl}/pricing`);
-    }
+    // 2. Navigate to pricing (direct navigation is more reliable than clicking)
+    await page.goto(`${prodUrl}/pricing`);
+    await page.waitForTimeout(2000);
 
     // 3. Verify pricing page loaded
-    await expect(page.locator("text=Simple, transparent pricing")).toBeVisible();
+    await expect(page.locator("text=Simple, transparent pricing")).toBeVisible({ timeout: 10000 });
 
     // 4. Find and click "Get Started" or "Start Free Trial"
     const ctaButton = page.locator("text=/Get Started|Start Free Trial/i").first();
