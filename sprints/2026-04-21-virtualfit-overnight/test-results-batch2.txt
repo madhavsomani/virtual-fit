@@ -1,0 +1,25 @@
+
+> virtual-tryon-v2@0.1.0 test:e2e
+> npx playwright test
+
+
+Running 17 tests using 4 workers
+
+[1A[2K[1/17] [chromium] › e2e/landing.spec.ts:66:7 › Mirror Page Landing › upload button exists
+[1A[2K[2/17] [chromium] › e2e/landing.spec.ts:9:7 › Mirror Page Landing › no console errors on load
+[1A[2K[3/17] [chromium] › e2e/landing.spec.ts:28:7 › Mirror Page Landing › no critical JS exceptions
+[1A[2K[4/17] [chromium] › e2e/landing.spec.ts:52:7 › Mirror Page Landing › all key elements visible
+[1A[2K[5/17] [chromium] › e2e/landing.spec.ts:86:7 › Mobile Viewport › mirror loads on mobile viewport (390x844)
+[1A[2K[6/17] [chromium] › e2e/landing.spec.ts:96:7 › Mobile Viewport › controls are reachable on mobile
+[1A[2K[7/17] [chromium] › e2e/landing.spec.ts:114:7 › Generate 3D Page › page loads with upload area
+[1A[2K[8/17] [chromium] › e2e/landing.spec.ts:130:7 › Generate 3D Page › shows demo mode notice when no API key
+[1A[2K[9/17] [chromium] › e2e/mirror.spec.ts:12:7 › Mirror Page › mirror page loads correctly
+[1A[2K[10/17] [chromium] › e2e/mirror.spec.ts:27:7 › Mirror Page › garment selector is visible
+[1A[2K[11/17] [chromium] › e2e/mirror.spec.ts:37:7 › Mirror Page › pricing page loads
+[1A[2K[12/17] [chromium] › e2e/mirror.spec.ts:47:7 › Mirror Page › checkout flow works in test mode
+[1A[2K[13/17] [chromium] › e2e/mirror.spec.ts:66:7 › Mirror Page › home page email capture form exists
+[1A[2K[14/17] [chromium] › e2e/mirror.spec.ts:74:7 › Mirror Page › email capture submits successfully
+[1A[2K[15/17] [chromium] › e2e/mirror.spec.ts:90:7 › Camera Simulation › mirror page handles camera denial gracefully
+[1A[2K[16/17] [chromium] › e2e/visual.spec.ts:8:7 › Visual Regression › mirror page desktop baseline (1440x900)
+[1A[2K[17/17] [chromium] › e2e/visual.spec.ts:20:7 › Visual Regression › mirror page mobile baseline (390x844)
+[1A[2K  17 passed (19.6s)
