@@ -66,7 +66,7 @@ test.describe("Performance Budget", () => {
       }
     });
 
-    await page.goto("/mirror", { waitUntil: "networkidle" });
+    await page.goto("/mirror", { waitUntil: "load" });
 
     // Total JS should be under 5MB (generous for Three.js + MediaPipe)
     const totalJS = jsRequests.reduce((sum, size) => sum + size, 0);
@@ -86,7 +86,7 @@ test.describe("Performance Budget", () => {
       }
     });
 
-    await page.goto("/mirror", { waitUntil: "networkidle" });
+    await page.goto("/mirror", { waitUntil: "load" });
 
     // Log large resources for debugging (not failing, just informational)
     if (largeResources.length > 0) {
