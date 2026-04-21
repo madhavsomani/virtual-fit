@@ -130,8 +130,11 @@ export default function Home() {
             </div>
           ) : !showSurvey ? (
             <>
-              <div style={{ fontSize: 14, color: "#a1a1aa", marginBottom: 12 }}>
+              <div style={{ fontSize: 14, color: "#a1a1aa", marginBottom: 8 }}>
                 🚀 Join the waitlist — be first to embed virtual try-on in your store
+              </div>
+              <div style={{ fontSize: 12, color: "#71717a", marginBottom: 12 }}>
+                🎁 Founding member pricing: $19-$49/mo (competitors charge $49-$199)
               </div>
               <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
                 <input
@@ -168,6 +171,34 @@ export default function Home() {
                   Join Waitlist
                 </button>
               </form>
+              
+              {/* FAQ Accordion */}
+              <div style={{ marginTop: 24, textAlign: "left", maxWidth: 400, margin: "24px auto 0" }}>
+                <details style={{ marginBottom: 8, borderBottom: "1px solid #27272a", paddingBottom: 8 }}>
+                  <summary style={{ fontSize: 13, color: "#a1a1aa", cursor: "pointer" }}>
+                    📅 When does it launch?
+                  </summary>
+                  <p style={{ fontSize: 12, color: "#71717a", margin: "8px 0 0 16px" }}>
+                    Public beta: Q2 2026. Founding members get early access + lifetime discount.
+                  </p>
+                </details>
+                <details style={{ marginBottom: 8, borderBottom: "1px solid #27272a", paddingBottom: 8 }}>
+                  <summary style={{ fontSize: 13, color: "#a1a1aa", cursor: "pointer" }}>
+                    💰 How much will it cost?
+                  </summary>
+                  <p style={{ fontSize: 12, color: "#71717a", margin: "8px 0 0 16px" }}>
+                    $19-$49/mo depending on usage. Design partners: first 6 months free.
+                  </p>
+                </details>
+                <details style={{ marginBottom: 8 }}>
+                  <summary style={{ fontSize: 13, color: "#a1a1aa", cursor: "pointer" }}>
+                    🔒 Will my data be private?
+                  </summary>
+                  <p style={{ fontSize: 12, color: "#71717a", margin: "8px 0 0 16px" }}>
+                    Yes. Camera processing happens in-browser. We never see customer photos.
+                  </p>
+                </details>
+              </div>
             </>
           ) : (
             <form onSubmit={handleSubmit} style={{ textAlign: "left" }}>
