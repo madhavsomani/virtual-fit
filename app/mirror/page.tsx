@@ -43,6 +43,11 @@ function MirrorContent() {
   const totalFramesRef = useRef(0);
   const [cameraOn, setCameraOn] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [prefer3D, setPrefer3D] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem('mirror.preferredMode') !== '2d';
+  });
+  const cancel3DCountRef = useRef(0);
   const [uploadProgress, setUploadProgress] = useState(0);
   // 3D generation state — DISABLED until MESHY_API_KEY is configured
   // const [gen3DStatus, setGen3DStatus] = useState<string>('idle');
@@ -7082,7 +7087,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               disabled={uploading}
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) { handleUpload3D(f); }
+                if (f) { if (prefer3D) { handleUpload3D(f); } else { handleUpload(f); } }
                 e.target.value = "";
               }}
             />
@@ -7099,6 +7104,12 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 setUploading(false);
                 setUploadProgress(0);
                 setStatus('Cancelled. Upload again to retry.');
+                cancel3DCountRef.current++;
+                if (cancel3DCountRef.current >= 2) {
+                  setPrefer3D(false);
+                  localStorage.setItem('mirror.preferredMode', '2d');
+                  setStatus('Switched to fast 2D mode. Toggle back with the 3D/2D button.');
+                }
               }}
               style={{
                 padding: "10px 18px", fontSize: 13, fontWeight: 600,
@@ -7107,6 +7118,25 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               }}
             >
               ✕ Cancel
+            </button>
+          )}
+
+          {/* 3D/2D mode toggle */}
+          {!uploading && (
+            <button
+              onClick={() => {
+                const next = !prefer3D;
+                setPrefer3D(next);
+                localStorage.setItem('mirror.preferredMode', next ? '3d' : '2d');
+                setStatus(next ? '🧊 3D mode — uploads generate a 3D mesh (~10s)' : '🖼️ Fast 2D mode — instant overlay');
+              }}
+              style={{
+                padding: "8px 14px", fontSize: 12, fontWeight: 600,
+                background: prefer3D ? "#10b981" : "#27272a",
+                color: "#fff", border: "none", borderRadius: 8, cursor: "pointer",
+              }}
+            >
+              {prefer3D ? "🧊 3D" : "🖼️ 2D"}
             </button>
           )}
 
