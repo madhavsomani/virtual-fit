@@ -4230,12 +4230,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           position: "relative", 
           width: "100%", 
           maxWidth: 640,
-          // Always set an aspectRatio so the flex item has intrinsic dimensions —
-          // 'auto' previously meant `undefined`, collapsing the container to 0px wide
-          // when the parent is flex-row (desktop landscape layout).
-          aspectRatio: viewportAspect === 'auto' ? '3/4' : viewportAspect.replace(':', '/'),
-          // Provide a hard minimum height so even degenerate flex contexts don't squash it.
-          minHeight: 360,
+          aspectRatio: viewportAspect === 'auto' ? undefined : viewportAspect.replace(':', '/'),
           overflow: "hidden",
           transform: `scale(${zoomLevel})`,
           transformOrigin: "center center",
