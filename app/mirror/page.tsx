@@ -1463,15 +1463,22 @@ function MirrorContent() {
       return;
     }
     setUploading(true);
-    setUploadProgress(10);
-    setStatus('🧊 Generating 3D mesh… ~10-30s');
+    setUploadProgress(5);
+    setStatus('🧊 Generating 3D mesh… ~10s');
     try {
       const fd = new FormData();
       fd.append('image', file);
-      setUploadProgress(20);
+
+      // Animate progress 5→90% over 12s while waiting for the fetch
+      let progress = 5;
+      const progressTimer = setInterval(() => {
+        progress = Math.min(90, progress + (90 - progress) * 0.08);
+        setUploadProgress(Math.round(progress));
+      }, 300);
 
       const resp = await fetch(WORKER_URL, { method: 'POST', body: fd });
-      setUploadProgress(60);
+      clearInterval(progressTimer);
+      setUploadProgress(92);
 
       if (!resp.ok) {
         const errText = await resp.text().catch(() => resp.statusText);
@@ -7045,7 +7052,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               }} />
             )}
             <span style={{ position: "relative", zIndex: 1 }}>
-              {uploading ? `⏳ ${uploadProgress}% Processing...` : "📸 Upload Clothing Photo"}
+              {uploading ? `⏳ ${uploadProgress}% — AI is creating a 3D model from your photo` : "📸 Upload Clothing Photo"}
             </span>
             <input
               type="file"
