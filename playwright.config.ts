@@ -13,6 +13,13 @@ export default defineConfig({
     // Mock camera for testing
     permissions: ["camera"],
   },
+  // Visual regression settings
+  expect: {
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.05,
+      threshold: 0.2,
+    },
+  },
   projects: [
     {
       name: "chromium",
