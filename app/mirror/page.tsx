@@ -2233,9 +2233,12 @@ function MirrorContent() {
   // Detect landscape orientation and mobile device
   useEffect(() => {
     const checkOrientation = () => {
-      setIsLandscape(window.innerWidth > window.innerHeight);
-      // Detect mobile via touch or user agent
+      // Only treat as 'landscape' (side-by-side row layout) on small touch devices in landscape.
+      // On desktop the row layout was overflowing because the camera column has fixed maxWidth
+      // while siblings have no width constraints — every desktop user saw broken alignment.
       const isMobile = 'ontouchstart' in window || window.innerWidth < 768;
+      const wide = window.innerWidth > window.innerHeight;
+      setIsLandscape(isMobile && wide);
       setIsMobileDevice(isMobile);
       // Show rotate hint on mobile in portrait while camera is on
       if (isMobile && window.innerWidth < window.innerHeight && cameraOn) {
