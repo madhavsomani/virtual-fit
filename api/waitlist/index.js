@@ -1,6 +1,5 @@
-const fs = require('fs');
-const path = require('path');
-
+// Azure SWA Function: Waitlist signup handler
+// Data is logged to Application Insights and sent via FormSubmit email
 module.exports = async function (context, req) {
   // CORS preflight
   if (req.method === 'OPTIONS') {
@@ -37,9 +36,9 @@ module.exports = async function (context, req) {
       userAgent: req.headers['user-agent'] || '',
     };
 
-    // Log to file (Azure SWA Functions have /tmp)
-    const logPath = '/tmp/virtualfit-waitlist.jsonl';
-    fs.appendFileSync(logPath, JSON.stringify(entry) + '\n');
+    // Log entry (Azure SWA functions are stateless - no /tmp persistence)
+    // Data is logged to Application Insights via context.log and sent via email
+    context.log.info(`WAITLIST_ENTRY: ${JSON.stringify(entry)}`);
 
     // Send email notification via fetch to a simple email service
     // Using a free service like formsubmit.co or just logging for now
