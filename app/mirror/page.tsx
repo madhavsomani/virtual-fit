@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { smoothScalar } from "./smoothing-utils";
+import { track } from "../lib/telemetry";
 import { detectLeftSwipeIntent, detectRightSwipeIntent, detectGestureCooldownWindow } from "./gesture-intent";
 
 type PoseResultLandmark = { x: number; y: number; z?: number; visibility?: number };
@@ -1470,6 +1471,8 @@ function MirrorContent() {
       return;
     }
     lastUploadFileRef.current = file;
+    const t0 = Date.now();
+    track('upload_started', { mode: '3d', fileSize: file.size, fileType: file.type });
     setUploading(true);
     setUploadProgress(5);
     setStatus('🧊 Generating 3D mesh… ~10s');
@@ -1562,6 +1565,7 @@ function MirrorContent() {
       setGarment3DProvider(resp.headers.get('X-Provider') || 'hunyuan3d-2');
       setUploadProgress(100);
       setStatus(`✨ 3D mesh ready! Move around to see it follow you.`);
+      track('upload_succeeded', { mode: '3d', durationMs: Date.now() - t0, provider: resp.headers.get('X-Provider') || '' });
 
       // Save to gallery
       const garmentName = file.name.replace(/\.[^/.]+$/, '') + ' (3D)';
@@ -1572,6 +1576,7 @@ function MirrorContent() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       console.error('3D upload failed:', msg);
+      track('upload_failed', { mode: '3d', reason: msg.slice(0, 100), durationMs: Date.now() - t0 });
       setStatus(`❌ 3D failed: ${msg}. Falling back to 2D.`);
       setGarment3DStatus('error');
       // Fallback to 2D
@@ -7105,6 +7110,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 setUploadProgress(0);
                 setStatus('Cancelled. Upload again to retry.');
                 cancel3DCountRef.current++;
+                track('upload_cancelled', { cancelCount: cancel3DCountRef.current });
                 if (cancel3DCountRef.current >= 2) {
                   setPrefer3D(false);
                   localStorage.setItem('mirror.preferredMode', '2d');
