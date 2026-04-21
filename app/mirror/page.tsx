@@ -288,6 +288,11 @@ function MirrorContent() {
 
   // Load saved garments from localStorage on mount
   useEffect(() => {
+    track('mirror_loaded', {
+      viewport: `${window.innerWidth}x${window.innerHeight}`,
+      mobile: /Mobi|Android/i.test(navigator.userAgent),
+      garmentParam: garmentGlbUrl ? 'glb' : garmentTextureUrl ? 'texture' : 'none',
+    });
     try {
       const saved = localStorage.getItem("virtualfit-saved-garments");
       if (saved) {

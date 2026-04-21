@@ -113,8 +113,7 @@ export default function Home() {
           VirtualFit
         </h1>
         <p style={{ fontSize: 18, color: "#a1a1aa", margin: "0 0 32px", lineHeight: 1.6 }}>
-          Try on clothes virtually using your camera.<br />
-          Real-time body tracking. Instant fit preview.
+          Upload any clothing photo. See it on you in 3D, instantly.
         </p>
 
         {/* Email Capture */}
