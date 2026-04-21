@@ -74,6 +74,34 @@ module.exports = async function (context, req) {
     };
 
     context.log.info(`Waitlist signup: ${entry.email} | Revenue: ${entry.revenue} | Would pay: ${entry.wouldPay}`);
+
+    // Milestone webhook (ping Madhav at 5, 10, 25, 50, 100 signups)
+    const webhookUrl = process.env.MILESTONE_WEBHOOK_URL;
+    if (webhookUrl) {
+      try {
+        const lines = fs.readFileSync(logPath, 'utf-8').split('\n').filter(Boolean);
+        const count = lines.filter(l => {
+          try { return JSON.parse(l).source !== 'telemetry'; } catch { return false; }
+        }).length;
+        const milestones = [5, 10, 25, 50, 100, 250, 500, 1000];
+        const milestone = milestones.includes(count) ? count : null;
+        if (milestone) {
+          await fetch(webhookUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: `\ud83c\udf89 VirtualFit milestone: ${milestone} waitlist signups! Latest: ${entry.email}`,
+              count,
+              email: entry.email,
+              milestone,
+            }),
+          });
+          context.log.info(`Milestone webhook fired: ${milestone} signups`);
+        }
+      } catch (whErr) {
+        context.log.warn('Milestone webhook failed:', whErr.message);
+      }
+    }
   } catch (err) {
     context.log.error('Waitlist error:', err);
     context.res = {
