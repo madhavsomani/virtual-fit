@@ -4,14 +4,18 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 
 // HuggingFace Inference API for TripoSR
-// Note: Requires NEXT_PUBLIC_HF_TOKEN env var
-const HF_API_URL = "https://api-inference.huggingface.co/models/stabilityai/TripoSR";
+// Now calls our multi-provider /api/generate-3d instead
+const API_URL = "/api/generate-3d";
 
 interface GenerationState {
   status: "idle" | "uploading" | "processing" | "done" | "error";
   progress: number;
   error?: string;
   resultUrl?: string;
+  textureUrl?: string;
+  provider?: string;
+  isMock?: boolean;
+  mockMessage?: string;
 }
 
 export default function Generate3DPage() {
@@ -34,46 +38,82 @@ export default function Generate3DPage() {
     setState({ status: "uploading", progress: 10 });
 
     try {
-      // Check for HF token
-      const token = process.env.NEXT_PUBLIC_HF_TOKEN;
-      if (!token) {
-        setState({
-          status: "error",
-          progress: 0,
-          error: "3D generation is not configured. NEXT_PUBLIC_HF_TOKEN required. The 2D try-on at /mirror works without this.",
-        });
-        return;
-      }
+      // Convert file to base64 for the API
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const imageBase64 = await base64Promise;
 
-      // Real API call
-      setState({ status: "processing", progress: 30 });
-      
-      const formData = new FormData();
-      formData.append("file", file);
+      setState({ status: "processing", progress: 20 });
 
-      const response = await fetch(HF_API_URL, {
+      // Call our multi-provider API
+      const res = await fetch(API_URL, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageBase64 }),
       });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(err.error || `API error: ${res.status}`);
       }
 
-      setState({ status: "processing", progress: 70 });
+      const data = await res.json();
 
-      // Get GLB blob
-      const blob = await response.blob();
-      const resultUrl = URL.createObjectURL(blob);
+      // If Meshy (async) — poll for completion
+      if (data.status === "pending" && data.pollUrl) {
+        setState({ status: "processing", progress: 30, provider: data.provider });
+        const maxPolls = 60; // 5 min at 5s intervals
+        for (let i = 0; i < maxPolls; i++) {
+          await new Promise((r) => setTimeout(r, 5000));
+          const pollRes = await fetch(data.pollUrl);
+          const pollData = await pollRes.json();
+          
+          setState({
+            status: "processing",
+            progress: 30 + (pollData.progress || 0) * 0.6,
+            provider: data.provider,
+          });
 
-      setState({
-        status: "done",
-        progress: 100,
-        resultUrl,
-      });
+          if (pollData.status === "completed" && pollData.glbUrl) {
+            setState({
+              status: "done",
+              progress: 100,
+              resultUrl: pollData.glbUrl,
+              provider: data.provider,
+              isMock: false,
+            });
+            return;
+          }
+          if (pollData.status === "failed") {
+            throw new Error(pollData.error || "Generation failed");
+          }
+        }
+        throw new Error("Generation timed out after 5 minutes");
+      }
+
+      // Immediate result (HF, Replicate, or Mock)
+      if (data.isMock) {
+        setState({
+          status: "done",
+          progress: 100,
+          textureUrl: data.textureUrl,
+          provider: "mock",
+          isMock: true,
+          mockMessage: data.message,
+        });
+      } else {
+        setState({
+          status: "done",
+          progress: 100,
+          resultUrl: data.glbUrl,
+          provider: data.provider,
+          isMock: false,
+        });
+      }
     } catch (err) {
       setState({
         status: "error",
@@ -137,21 +177,22 @@ export default function Generate3DPage() {
           </Link>
         </div>
 
-        {/* API not configured warning */}
+        {/* API not configured — softer warning since mock fallback works */}
         {!process.env.NEXT_PUBLIC_HF_TOKEN && (
           <div
             style={{
-              background: "#fecaca",
-              color: "#991b1b",
-              padding: 16,
+              background: "#fef3c7",
+              color: "#92400e",
+              padding: 12,
               borderRadius: 8,
               marginBottom: 24,
               fontSize: 13,
-              border: "1px solid #f87171",
+              border: "1px solid #f59e0b",
             }}
           >
-            <strong>🛑 3D Generation Unavailable:</strong> The AI model API key is not configured.
-            Uploads will fail. Use <a href="/mirror" style={{ color: "#6C5CE7", fontWeight: 600 }}>/mirror</a> for 2D virtual try-on (works now).
+            <strong>⚠️ No 3D API key found.</strong> Uploads will use a flat image overlay.
+            For real 3D meshes, add MESHY_API_KEY in Azure settings.
+            <a href="/mirror" style={{ color: "#6C5CE7", fontWeight: 600, marginLeft: 4 }}>2D try-on works now →</a>
           </div>
         )}
 
@@ -231,7 +272,7 @@ export default function Generate3DPage() {
             <p style={{ color: "#a1a1aa", fontSize: 14 }}>
               {state.status === "uploading"
                 ? "Uploading image..."
-                : "Generating 3D model... This may take 30-60 seconds."}
+                : `Generating 3D model via ${state.provider || 'AI'}... This may take 30-60 seconds.`}
             </p>
           </div>
         )}
@@ -262,15 +303,25 @@ export default function Generate3DPage() {
               ✓
             </div>
             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
-              3D Model Ready!
+              {state.isMock ? "🖼️ Image Ready (Flat Overlay)" : "🧊 3D Model Ready!"}
             </h2>
-            <p style={{ color: "#71717a", fontSize: 14, marginBottom: 24 }}>
-              Your garment has been converted to 3D
+            <p style={{ color: "#71717a", fontSize: 14, marginBottom: 8 }}>
+              {state.isMock
+                ? "No 3D API configured — using your image as a flat overlay"
+                : `Generated via ${state.provider || 'AI'}`}
             </p>
+            {state.isMock && state.mockMessage && (
+              <p style={{ color: "#f59e0b", fontSize: 12, marginBottom: 16 }}>
+                {state.mockMessage}
+              </p>
+            )}
 
             <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
               <Link
-                href={`/mirror-3d?model=${encodeURIComponent(state.resultUrl || "")}`}
+                href={state.isMock
+                  ? `/mirror?garmentTexture=${encodeURIComponent(state.textureUrl || "")}`
+                  : `/mirror?garment=${encodeURIComponent(state.resultUrl || "")}`
+                }
                 style={{ textDecoration: "none" }}
               >
                 <button
