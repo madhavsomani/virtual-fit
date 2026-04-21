@@ -1179,7 +1179,7 @@ function MirrorContent() {
       setCameraOn(true);
       setLoadingProgress(100);
       setIsLoading(false);
-      setStatus("✅ Tracking active — move around!");
+      setStatus("Ready — try uploading a garment!");
       
       // Show keyboard hints briefly for desktop users
       if (!isMobileDevice) {
@@ -4846,8 +4846,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               background: trackingConfidence >= 70 ? "#22c55e" : trackingConfidence >= 40 ? "#eab308" : "#ef4444",
               boxShadow: `0 0 6px ${trackingConfidence >= 70 ? "#22c55e" : trackingConfidence >= 40 ? "#eab308" : "#ef4444"}`,
             }} />
-            <span style={{ color: "#fff", fontSize: 11 }}>
-              {trackingConfidence >= 70 ? "✨ Great fit" : trackingConfidence >= 40 ? "👍 Good" : "👀 Move closer"}
+            <span style={{ color: "#fff", fontSize: 10 }}>
+              {trackingConfidence < 40 ? "Move closer" : ""}
             </span>
           </div>
         )}
