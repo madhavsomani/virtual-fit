@@ -1,16 +1,28 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import * as THREE from "three";
-// GLTFLoader + 3D gen client — DISABLED until MESHY_API_KEY configured
-// import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { smoothScalar } from "./smoothing-utils";
-// import { generateAndPoll, type Gen3DState } from "../lib/generate-3d-client";
 import { detectLeftSwipeIntent, detectRightSwipeIntent, detectGestureCooldownWindow } from "./gesture-intent";
 
 type PoseResultLandmark = { x: number; y: number; z?: number; visibility?: number };
 
 export default function MirrorPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#0c0c0e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>Loading...</div>}>
+      <MirrorContent />
+    </Suspense>
+  );
+}
+
+function MirrorContent() {
+  const searchParams = useSearchParams();
+  const garmentGlbUrl = searchParams.get('garment');
+  const garmentTextureUrl = searchParams.get('garmentTexture');
+  const [garment3DStatus, setGarment3DStatus] = useState<'none' | 'loading' | 'loaded' | 'error'>('none');
+  const [garment3DProvider, setGarment3DProvider] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const threeCanvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState("Tap below to start trying on clothes");
@@ -1247,6 +1259,99 @@ export default function MirrorPage() {
       }
     }
   }, [initThree, updateGarmentFromLandmarks, facingMode]);
+
+  // Load GLB from URL param (?garment=<url>) when camera is active
+  useEffect(() => {
+    if (!garmentGlbUrl || !cameraOn || !sceneRef.current) return;
+    
+    setGarment3DStatus('loading');
+    setStatus('🧊 Loading 3D garment...');
+    
+    const loader = new GLTFLoader();
+    loader.load(
+      garmentGlbUrl,
+      (gltf) => {
+        if (!sceneRef.current) return;
+        
+        // Remove existing 3D model if any
+        if (garment3DModelRef.current) {
+          sceneRef.current.remove(garment3DModelRef.current);
+          garment3DModelRef.current = null;
+        }
+        // Hide default 2D garment mesh
+        if (garmentMeshRef.current) {
+          garmentMeshRef.current.visible = false;
+        }
+
+        const model = gltf.scene;
+        model.traverse((child) => {
+          if ((child as THREE.Mesh).isMesh) {
+            (child as THREE.Mesh).castShadow = true;
+            if ((child as THREE.Mesh).material) {
+              ((child as THREE.Mesh).material as THREE.Material).side = THREE.DoubleSide;
+            }
+          }
+        });
+
+        // Normalize model to ~2 units
+        const box = new THREE.Box3().setFromObject(model);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+        model.position.sub(center); // center it
+        const maxDim = Math.max(size.x, size.y, size.z);
+        if (maxDim > 0) model.scale.setScalar(2.0 / maxDim);
+
+        sceneRef.current.add(model);
+        garment3DModelRef.current = model;
+        setGarment3DStatus('loaded');
+        setGarment3DProvider(new URLSearchParams(window.location.search).get('provider') || '3D');
+        setStatus('✅ 3D garment loaded! Move around to see it track your body.');
+      },
+      undefined,
+      (err) => {
+        console.error('GLB load failed:', err);
+        setGarment3DStatus('error');
+        setStatus(`❌ Failed to load 3D model: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
+    );
+  }, [garmentGlbUrl, cameraOn]);
+
+  // Load garment texture from URL param (?garmentTexture=<url>) for mock/flat overlay
+  useEffect(() => {
+    if (!garmentTextureUrl || !cameraOn || !sceneRef.current || !garmentMeshRef.current) return;
+    
+    setGarment3DStatus('loading');
+    setStatus('🖼️ Loading garment image...');
+    
+    const loader = new THREE.TextureLoader();
+    loader.load(
+      garmentTextureUrl,
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        if (garmentMeshRef.current && sceneRef.current) {
+          const oldMesh = garmentMeshRef.current;
+          const newMesh = createShirtMesh(texture);
+          newMesh.visible = oldMesh.visible;
+          newMesh.position.copy(oldMesh.position);
+          newMesh.scale.copy(oldMesh.scale);
+          newMesh.rotation.copy(oldMesh.rotation);
+          sceneRef.current.remove(oldMesh);
+          oldMesh.geometry.dispose();
+          (oldMesh.material as THREE.Material).dispose();
+          sceneRef.current.add(newMesh);
+          garmentMeshRef.current = newMesh;
+        }
+        setGarment3DStatus('loaded');
+        setGarment3DProvider('mock (flat overlay)');
+        setStatus('✅ Garment loaded as flat overlay. Add MESHY_API_KEY for real 3D.');
+      },
+      undefined,
+      () => {
+        setGarment3DStatus('error');
+        setStatus('❌ Failed to load garment image');
+      }
+    );
+  }, [garmentTextureUrl, cameraOn, createShirtMesh]);
 
   // Upload garment image → rembg → texture on 3D mesh
   const handleUpload = useCallback(async (file: File) => {
@@ -6659,6 +6764,24 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           </div>
         )}
       </div>
+
+      {/* 3D garment status banner */}
+      {garment3DStatus !== 'none' && (
+        <div style={{
+          marginTop: 8, padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
+          background: garment3DStatus === 'loaded' ? 'rgba(16,185,129,0.15)'
+            : garment3DStatus === 'error' ? 'rgba(239,68,68,0.15)'
+            : 'rgba(108,92,231,0.15)',
+          color: garment3DStatus === 'loaded' ? '#10b981'
+            : garment3DStatus === 'error' ? '#ef4444'
+            : '#a29bfe',
+          border: `1px solid ${garment3DStatus === 'loaded' ? 'rgba(16,185,129,0.3)' : garment3DStatus === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(108,92,231,0.3)'}`,
+        }}>
+          {garment3DStatus === 'loading' && '🔄 Loading 3D garment...'}
+          {garment3DStatus === 'loaded' && `🟢 3D garment active (${garment3DProvider || 'loaded'})`}
+          {garment3DStatus === 'error' && '🔴 3D garment failed to load'}
+        </div>
+      )}
 
       {/* Status */}
       <p style={{ color: "#aaa", fontSize: 16, marginTop: 12, fontFamily: "monospace" }}>
