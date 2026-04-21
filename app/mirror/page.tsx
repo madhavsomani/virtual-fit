@@ -4230,10 +4230,6 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           position: "relative", 
           width: "100%", 
           maxWidth: 640,
-          // Force a flex-basis so this item actually claims width inside flex-row parent.
-          // Without it, `width:100%` of a 0-basis flex item is still 0.
-          flex: "0 0 min(640px, 90vw)",
-          minWidth: 320,
           // Always set an aspectRatio so the flex item has intrinsic dimensions —
           // 'auto' previously meant `undefined`, collapsing the container to 0px wide
           // when the parent is flex-row (desktop landscape layout).
