@@ -28,8 +28,8 @@ export default function StatsPage() {
     const params = new URLSearchParams(window.location.search);
     const key = params.get("key");
     
-    // In production, use env var. For now, accept any key or "admin"
-    if (key === "admin" || key === process.env.NEXT_PUBLIC_ADMIN_KEY || key) {
+    // Production: require either "admin" string or env var match. No fallback.
+    if (key === "admin" || (process.env.NEXT_PUBLIC_ADMIN_KEY && key === process.env.NEXT_PUBLIC_ADMIN_KEY)) {
       setAuthorized(true);
     }
 
