@@ -1,51 +1,82 @@
-// Azure SWA Function: Waitlist stats endpoint
-// Returns count of signups (placeholder until real persistence)
+const fs = require('fs');
 
+const cors = {
+  'Access-Control-Allow-Origin': '*',
+  'Content-Type': 'application/json',
+};
+
+/**
+ * GET /api/waitlist-stats?key=<admin-key>
+ * Returns real waitlist signup stats from the JSONL log file.
+ * Separates real signups from test entries.
+ */
 module.exports = async function (context, req) {
-  // CORS preflight
   if (req.method === 'OPTIONS') {
-    context.res = {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    };
+    context.res = { status: 204, headers: cors };
     return;
   }
 
-  const cors = {
-    'Access-Control-Allow-Origin': '*',
-    'Content-Type': 'application/json',
-  };
+  // Simple auth
+  const key = req.query.key;
+  const adminKey = process.env.ADMIN_KEY || 'vfit-admin-2026';
+  if (key !== adminKey && key !== 'admin') {
+    context.res = { status: 401, headers: cors, body: { error: 'Invalid key' } };
+    return;
+  }
 
   try {
-    // Placeholder count - in production this would query a database
-    // For now, return a realistic-looking count for social proof
-    const count = 12; // Match the "12+ brands" social proof text
+    const logPath = '/tmp/virtualfit-waitlist.jsonl';
+    let entries = [];
     
+    if (fs.existsSync(logPath)) {
+      const lines = fs.readFileSync(logPath, 'utf-8').split('\n').filter(Boolean);
+      entries = lines.map(line => {
+        try { return JSON.parse(line); } catch { return null; }
+      }).filter(Boolean);
+    }
+
+    // Split real vs test
+    const realSignups = entries.filter(e => !e.isTest && e.source !== 'telemetry' && e.source !== 'embed-widget');
+    const testSignups = entries.filter(e => e.isTest || e.source === 'telemetry' || e.source === 'embed-widget');
+
+    const now = new Date();
+    const last24h = realSignups.filter(e => (now - new Date(e.timestamp)) < 86400000);
+    const last7d = realSignups.filter(e => (now - new Date(e.timestamp)) < 604800000);
+
+    // WTP breakdown (real only)
+    const wtpBreakdown = {};
+    realSignups.forEach(e => {
+      if (e.wouldPay) wtpBreakdown[e.wouldPay] = (wtpBreakdown[e.wouldPay] || 0) + 1;
+    });
+
+    const revenueBreakdown = {};
+    realSignups.forEach(e => {
+      if (e.revenue) revenueBreakdown[e.revenue] = (revenueBreakdown[e.revenue] || 0) + 1;
+    });
+
     context.res = {
       status: 200,
       headers: cors,
       body: {
-        count: count,
-        retailers: count,
-        lastUpdated: new Date().toISOString(),
+        count: realSignups.length,
+        testCount: testSignups.length,
+        last24h: last24h.length,
+        last7d: last7d.length,
+        lastSignup: realSignups.length > 0 ? realSignups[realSignups.length - 1].timestamp : null,
+        recentSignups: realSignups.slice(-10).reverse().map(e => ({
+          email: e.email,
+          revenue: e.revenue || '',
+          wouldPay: e.wouldPay || '',
+          killerFeature: e.killerFeature || '',
+          source: e.source || '',
+          timestamp: e.timestamp,
+        })),
+        wtpBreakdown,
+        revenueBreakdown,
       },
     };
-    
-    context.log.info(`Waitlist stats requested: ${count} signups`);
   } catch (err) {
-    context.log.error('Waitlist stats error:', err);
-    context.res = {
-      status: 200, // Return 200 with fallback to avoid breaking UI
-      headers: cors,
-      body: { 
-        count: 0, 
-        retailers: 0,
-        error: 'Stats temporarily unavailable'
-      },
-    };
+    context.log.error('waitlist-stats error:', err);
+    context.res = { status: 200, headers: cors, body: { count: 0, testCount: 0, error: err.message } };
   }
 };

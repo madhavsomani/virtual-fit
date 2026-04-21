@@ -26,6 +26,8 @@ module.exports = async function (context, req) {
       return;
     }
 
+    const isTest = body.isTest === true || body.source === 'e2e-test' || body.source === 'telemetry';
+
     const entry = {
       email: body.email,
       revenue: body.revenue || '',
@@ -34,11 +36,12 @@ module.exports = async function (context, req) {
       timestamp: new Date().toISOString(),
       source: body.source || 'website',
       userAgent: req.headers['user-agent'] || '',
+      isTest: isTest,
     };
 
-    // Log entry (Azure SWA functions are stateless - no /tmp persistence)
-    // Data is logged to Application Insights via context.log and sent via email
-    context.log.info(`WAITLIST_ENTRY: ${JSON.stringify(entry)}`);
+    // Log entry — differentiate test vs real
+    const logTag = isTest ? 'WAITLIST_TEST_ENTRY' : 'WAITLIST_ENTRY';
+    context.log.info(`${logTag}: ${JSON.stringify(entry)}`);
 
     // Send email notification via fetch to a simple email service
     // Using a free service like formsubmit.co or just logging for now
@@ -75,13 +78,13 @@ module.exports = async function (context, req) {
 
     context.log.info(`Waitlist signup: ${entry.email} | Revenue: ${entry.revenue} | Would pay: ${entry.wouldPay}`);
 
-    // Milestone webhook (ping Madhav at 5, 10, 25, 50, 100 signups)
+    // Milestone webhook — only count real signups, skip test entries
     const webhookUrl = process.env.MILESTONE_WEBHOOK_URL;
-    if (webhookUrl) {
+    if (webhookUrl && !isTest) {
       try {
         const lines = fs.readFileSync(logPath, 'utf-8').split('\n').filter(Boolean);
         const count = lines.filter(l => {
-          try { return JSON.parse(l).source !== 'telemetry'; } catch { return false; }
+          try { const e = JSON.parse(l); return !e.isTest && e.source !== 'telemetry'; } catch { return false; }
         }).length;
         const milestones = [5, 10, 25, 50, 100, 250, 500, 1000];
         const milestone = milestones.includes(count) ? count : null;
