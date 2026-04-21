@@ -165,7 +165,10 @@ function MirrorContent() {
   const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const lastTouchDistanceRef = useRef<number | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(true); // Show on first launch
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('virtualfit-onboarding-seen') !== 'true';
+  }); // Show on first launch only — no flash for repeat visitors
   const [favoriteGarments, setFavoriteGarments] = useState<number[]>([]);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const lastTapTimeRef = useRef(0);
@@ -3962,8 +3965,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
         </div>
       )}
 
-      {/* Rotate device hint for mobile portrait */}
-      {showRotateHint && isMobileDevice && !isLandscape && cameraOn && (
+      {/* Rotate device hint for mobile portrait — suppress while onboarding modal is up to avoid stacking */}
+      {showRotateHint && isMobileDevice && !isLandscape && cameraOn && !showOnboarding && (
         <div 
           onClick={() => setShowRotateHint(false)}
           style={{
