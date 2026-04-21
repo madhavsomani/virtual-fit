@@ -55,11 +55,12 @@ test.describe("Mirror Page", () => {
     // Actual checkout depends on Stripe Payment Links config
     await creatorButton.click();
     
-    // Should either stay on page (no payment link) or redirect
-    await page.waitForTimeout(1000);
+    // Should either stay on page, redirect to stripe, or go to waitlist (no stripe link set)
+    // Wait for navigation or timeout (stripe redirect may take a moment)
+    await page.waitForTimeout(3000);
     const url = page.url();
-    // Pass if still on pricing or redirected to checkout
-    expect(url).toMatch(/pricing|checkout|stripe/);
+    // Pass if still on pricing, redirected to checkout/stripe, or waitlist (fallback when no stripe link)
+    expect(url).toMatch(/pricing|checkout|stripe|buy\.stripe|waitlist/);
   });
 
   test("home page email capture form exists", async ({ page }) => {

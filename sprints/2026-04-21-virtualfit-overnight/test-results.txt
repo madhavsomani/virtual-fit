@@ -1,0 +1,36 @@
+
+> virtual-tryon-v2@0.1.0 test:e2e
+> npx playwright test
+
+
+Running 7 tests using 4 workers
+
+[1A[2K[1/7] [chromium] › e2e/mirror.spec.ts:37:7 › Mirror Page › pricing page loads
+[1A[2K[2/7] [chromium] › e2e/mirror.spec.ts:27:7 › Mirror Page › garment selector is visible
+[1A[2K[3/7] [chromium] › e2e/mirror.spec.ts:47:7 › Mirror Page › checkout flow works in test mode
+[1A[2K[4/7] [chromium] › e2e/mirror.spec.ts:12:7 › Mirror Page › mirror page loads correctly
+[1A[2K[5/7] [chromium] › e2e/mirror.spec.ts:65:7 › Mirror Page › home page email capture form exists
+[1A[2K[6/7] [chromium] › e2e/mirror.spec.ts:73:7 › Mirror Page › email capture submits successfully
+[1A[2K  1) [chromium] › e2e/mirror.spec.ts:47:7 › Mirror Page › checkout flow works in test mode ─────────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoMatch[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected pattern: [32m/pricing|checkout|stripe/[39m
+    Received string:  [31m"http://localhost:3000/?waitlist=1"[39m
+
+      60 |     const url = page.url();
+      61 |     // Pass if still on pricing or redirected to checkout
+    > 62 |     expect(url).toMatch(/pricing|checkout|stripe/);
+         |                 ^
+      63 |   });
+      64 |
+      65 |   test("home page email capture form exists", async ({ page }) => {
+        at /Users/madhav/.openclaw/workspace/projects/virtual-tryon-v2/app/e2e/mirror.spec.ts:62:17
+
+    Error Context: test-results/mirror-Mirror-Page-checkout-flow-works-in-test-mode-chromium/error-context.md
+
+
+[1A[2K[7/7] [chromium] › e2e/mirror.spec.ts:89:7 › Camera Simulation › mirror page handles camera denial gracefully
+[1A[2K  1 failed
+    [chromium] › e2e/mirror.spec.ts:47:7 › Mirror Page › checkout flow works in test mode ──────────
+  6 passed (21.8s)
