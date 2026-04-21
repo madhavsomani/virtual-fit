@@ -294,6 +294,14 @@ function Mirror3DContent() {
         fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif",
       }}
     >
+      {/* Experimental warning */}
+      <div style={{
+        background: "#fef3c7", color: "#92400e", padding: "10px 16px",
+        fontSize: 12, textAlign: "center", borderBottom: "1px solid #f59e0b",
+      }}>
+        ⚠️ <strong>Experimental:</strong> This is a 3D model preview only — no body tracking.
+        For real virtual try-on, use <a href="/mirror" style={{ color: "#6C5CE7", fontWeight: 600 }}>/mirror</a> (2D overlay with pose tracking).
+      </div>
       {/* Header */}
       <div
         style={{
@@ -306,7 +314,7 @@ function Mirror3DContent() {
         }}
       >
         <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>
-          🪞 Mirror 3D Test
+          🧪 Mirror 3D (Preview Only)
         </h1>
         <div style={{ display: "flex", gap: 8 }}>
           <Link href="/generate-3d" style={{ textDecoration: "none" }}>

@@ -37,19 +37,10 @@ export default function Generate3DPage() {
       // Check for HF token
       const token = process.env.NEXT_PUBLIC_HF_TOKEN;
       if (!token) {
-        // Demo mode - simulate generation
-        setState({ status: "processing", progress: 30 });
-        await new Promise((r) => setTimeout(r, 2000));
-        setState({ status: "processing", progress: 60 });
-        await new Promise((r) => setTimeout(r, 2000));
-        setState({ status: "processing", progress: 90 });
-        await new Promise((r) => setTimeout(r, 1000));
-        
-        // Use sample model as demo result
         setState({
-          status: "done",
-          progress: 100,
-          resultUrl: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/main/2.0/Duck/glTF-Binary/Duck.glb",
+          status: "error",
+          progress: 0,
+          error: "3D generation is not configured. NEXT_PUBLIC_HF_TOKEN required. The 2D try-on at /mirror works without this.",
         });
         return;
       }
@@ -146,20 +137,21 @@ export default function Generate3DPage() {
           </Link>
         </div>
 
-        {/* Demo notice */}
+        {/* API not configured warning */}
         {!process.env.NEXT_PUBLIC_HF_TOKEN && (
           <div
             style={{
-              background: "#fef3c7",
-              color: "#92400e",
-              padding: 12,
+              background: "#fecaca",
+              color: "#991b1b",
+              padding: 16,
               borderRadius: 8,
               marginBottom: 24,
               fontSize: 13,
+              border: "1px solid #f87171",
             }}
           >
-            <strong>Demo Mode:</strong> Set NEXT_PUBLIC_HF_TOKEN for real 3D
-            generation. Currently using sample models.
+            <strong>🛑 3D Generation Unavailable:</strong> The AI model API key is not configured.
+            Uploads will fail. Use <a href="/mirror" style={{ color: "#6C5CE7", fontWeight: 600 }}>/mirror</a> for 2D virtual try-on (works now).
           </div>
         )}
 
