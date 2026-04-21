@@ -1260,16 +1260,36 @@ function MirrorContent() {
     }
   }, [initThree, updateGarmentFromLandmarks, facingMode]);
 
-  // Load GLB from URL param (?garment=<url>) when camera is active
+  // Load GLB from URL param (?garment=<url> or ?garment=local) when camera is active
   useEffect(() => {
     if (!garmentGlbUrl || !cameraOn || !sceneRef.current) return;
     
     setGarment3DStatus('loading');
     setStatus('🧊 Loading 3D garment...');
+
+    // Resolve the GLB URL
+    let resolvedUrl: string;
+    if (garmentGlbUrl === 'local') {
+      // Load from localStorage (persisted by /generate-3d)
+      const base64 = localStorage.getItem('virtualfit-glb-data');
+      if (!base64) {
+        setGarment3DStatus('error');
+        setStatus('❌ No 3D model found. Generate one at /generate-3d first.');
+        return;
+      }
+      // Convert base64 back to blob URL
+      const binaryStr = atob(base64);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i);
+      const blob = new Blob([bytes], { type: 'model/gltf-binary' });
+      resolvedUrl = URL.createObjectURL(blob);
+    } else {
+      resolvedUrl = garmentGlbUrl;
+    }
     
     const loader = new GLTFLoader();
     loader.load(
-      garmentGlbUrl,
+      resolvedUrl,
       (gltf) => {
         if (!sceneRef.current) return;
         
@@ -1304,7 +1324,7 @@ function MirrorContent() {
         sceneRef.current.add(model);
         garment3DModelRef.current = model;
         setGarment3DStatus('loaded');
-        setGarment3DProvider(new URLSearchParams(window.location.search).get('provider') || '3D');
+        setGarment3DProvider(localStorage.getItem('virtualfit-glb-provider') || '3D');
         setStatus('✅ 3D garment loaded! Move around to see it track your body.');
       },
       undefined,

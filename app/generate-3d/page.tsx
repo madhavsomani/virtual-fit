@@ -60,6 +60,20 @@ export default function Generate3DPage() {
       const provider = res.headers.get("X-Provider") || "hunyuan3d-2";
       const cache = res.headers.get("X-Cache") || "MISS";
 
+      // Persist GLB to localStorage so it survives navigation to /mirror
+      try {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = (reader.result as string).split(',')[1]; // strip data: prefix
+          localStorage.setItem('virtualfit-glb-data', base64);
+          localStorage.setItem('virtualfit-glb-provider', provider);
+          localStorage.setItem('virtualfit-glb-ts', new Date().toISOString());
+        };
+        reader.readAsDataURL(glbBlob);
+      } catch (e) {
+        console.warn('Failed to persist GLB to localStorage:', e);
+      }
+
       setState({
         status: "done",
         progress: 100,
@@ -358,7 +372,7 @@ export default function Generate3DPage() {
               <Link
                 href={state.isMock
                   ? `/mirror?garmentTexture=${encodeURIComponent(state.textureUrl || "")}`
-                  : `/mirror?garment=${encodeURIComponent(state.resultUrl || "")}`
+                  : `/mirror?garment=local`
                 }
                 style={{ textDecoration: "none" }}
               >
