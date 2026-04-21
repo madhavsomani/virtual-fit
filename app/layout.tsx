@@ -42,6 +42,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+        <link rel="preconnect" href="https://storage.googleapis.com" />
         <style>{`
           /* Skip link for accessibility */
           .skip-link {
