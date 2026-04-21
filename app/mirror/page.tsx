@@ -712,6 +712,7 @@ function MirrorContent() {
   const garmentTextureRef = useRef<THREE.Texture | null>(null);
   const garment3DModelRef = useRef<THREE.Group | null>(null); // set when a GLB is loaded
   const uploadAbortRef = useRef<AbortController | null>(null);
+  const lastUploadFileRef = useRef<File | null>(null);
   const defaultTextureRef = useRef<THREE.Texture | null>(null);
 
   // Pose refs
@@ -1463,6 +1464,7 @@ function MirrorContent() {
       setStatus('⚠️ Upload limit reached.');
       return;
     }
+    lastUploadFileRef.current = file;
     setUploading(true);
     setUploadProgress(5);
     setStatus('🧊 Generating 3D mesh… ~10s');
@@ -1554,7 +1556,7 @@ function MirrorContent() {
       setGarment3DStatus('loaded');
       setGarment3DProvider(resp.headers.get('X-Provider') || 'hunyuan3d-2');
       setUploadProgress(100);
-      setStatus(`✅ 3D garment loaded! Move around to see it track.`);
+      setStatus(`✨ 3D mesh ready! Move around to see it follow you.`);
 
       // Save to gallery
       const garmentName = file.name.replace(/\.[^/.]+$/, '') + ' (3D)';
@@ -6967,7 +6969,22 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
         }}>
           {garment3DStatus === 'loading' && '🔄 Loading 3D garment...'}
           {garment3DStatus === 'loaded' && `🟢 3D garment active (${garment3DProvider || 'loaded'})`}
-          {garment3DStatus === 'error' && '🔴 3D garment failed to load'}
+          {garment3DStatus === 'error' && (
+            <>
+              🔴 3D service busy — using 2D mode.{' '}
+              {lastUploadFileRef.current && (
+                <button
+                  onClick={() => { if (lastUploadFileRef.current) handleUpload3D(lastUploadFileRef.current); }}
+                  style={{
+                    background: 'none', border: 'none', color: '#a29bfe',
+                    textDecoration: 'underline', cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                  }}
+                >
+                  Try 3D again
+                </button>
+              )}
+            </>
+          )}
         </div>
       )}
 
