@@ -6961,9 +6961,12 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
       )}
 
       {/* Status */}
-      <p style={{ color: "#aaa", fontSize: 16, marginTop: 12, fontFamily: "monospace" }}>
-        {status} {cameraOn && fps > 0 && (
-          <>
+      <p style={{ color: "#aaa", fontSize: 14, marginTop: 12 }}>
+        {status}
+      </p>
+      {/* Debug stats — hidden by default, toggle with Alt+D */}
+      {cameraOn && showStats && fps > 0 && (
+        <p style={{ color: "#666", fontSize: 11, marginTop: 4, fontFamily: "monospace" }}>
             <span style={{ color: fps >= 24 ? "#22c55e" : fps >= 15 ? "#eab308" : "#ef4444" }}>({fps} FPS)</span>
             {" "}
             <span style={{ color: trackingConfidence >= 70 ? "#22c55e" : trackingConfidence >= 40 ? "#eab308" : "#ef4444" }}>
@@ -6979,9 +6982,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 <span style={{ color: "#a78bfa" }}>[Size: {estimatedSize}]</span>
               </>
             )}
-          </>
-        )}
-      </p>
+        </p>
+      )}
 
       {/* Low Light Warning */}
       {cameraOn && lowLightWarning && (
