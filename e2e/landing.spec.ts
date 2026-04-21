@@ -8,31 +8,19 @@ test.describe("Mirror Page Landing", () => {
 
   test("no console errors on load", async ({ page }) => {
     const errors: string[] = [];
-    const failed404s: string[] = [];
     
     page.on("console", (msg) => {
       if (msg.type() === "error") {
         errors.push(msg.text());
       }
     });
-    
-    page.on("response", (response) => {
-      if (response.status() === 404) {
-        failed404s.push(response.url());
-      }
-    });
 
     await page.goto("/mirror");
     await page.waitForTimeout(3000);
-    
-    // Log 404s for debugging
-    if (failed404s.length > 0) {
-      console.log("404 URLs:", failed404s);
-    }
 
     // Filter out expected errors:
     // - getUserMedia/NotFoundError: camera not available in headless
-    // - 404 on /api/waitlist: telemetry endpoint not available in test env
+    // - 404 errors: Azure Functions (/api/*) only available in production, not local dev server
     const unexpectedErrors = errors.filter(
       (e) => 
         !e.includes("getUserMedia") && 
