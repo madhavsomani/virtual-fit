@@ -128,3 +128,44 @@ Telemetry code in `app/lib/telemetry.ts` calls `/api/waitlist` which doesn't exi
 - All 51 e2e tests pass locally
 - CI run `24735612229` queued, awaiting green status
 
+
+---
+
+## Critical Post-Sprint Fix: /api/waitlist (2026-04-21 10:45 PDT)
+
+### Lesson Learned
+B1-B5 fix whitelisted a 404 console error for `/api/waitlist`, masking a **production bug**:
+- Waitlist signups were silently failing (emails lost)
+- Retailer signups were silently failing
+- Telemetry was 404ing on every page load
+
+**Never whitelist errors without verifying they're truly benign in production.**
+
+### Root Cause
+`.github/workflows/deploy.yml` was missing `api_location: "api"` — so the Azure Function at `api/waitlist/` was never deployed.
+
+### Fix (C1-C9)
+
+1. **C1-C2**: Added `api_location: "api"` to deploy.yml
+2. **C3**: Removed `fs.appendFileSync` from `api/waitlist/index.js` (Azure SWA functions are stateless - `/tmp` doesn't persist). Data now logged via `context.log` → Application Insights.
+3. **C4**: Committed `6b5f704`
+4. **C5**: Deploy completed successfully (run 24737472852)
+5. **C6**: Live verification:
+   ```
+   curl -X POST https://wonderful-sky-0513a3610.7.azurestaticapps.net/api/waitlist \
+     -H "Content-Type: application/json" \
+     -d '{"email":"test@virtualfit.com"}'
+   
+   {"success":true,"message":"You're on the list! We'll reach out soon."}
+   HTTP 200
+   ```
+6. **C7-C8**: Kept 404 filter in test (Azure Functions unavailable in local dev server), clarified comment
+
+### Status
+✅ **API is LIVE and working**
+- Waitlist signups now work
+- Retailer signups now work
+- Telemetry now works
+
+This was the critical "willingness-to-pay proof" pipeline Madhav was waiting for.
+
