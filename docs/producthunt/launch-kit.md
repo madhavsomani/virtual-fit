@@ -77,25 +77,30 @@ Research these hunters who launch AI/fashion/3D/developer tools:
 
 Need 5 images at 1270x760px:
 
-1. **Hero shot** - `/mirror-3d` with person trying on garment, UI visible
+✅ Screenshots captured from live site on 2026-04-20:
+
+1. **Hero shot** - `/mirror-3d` with camera prompt UI
    - Filename: `ph-hero-mirror3d.png`
-   - Alt: Live 3D try-on demo
+   - Shows: Mirror 3D Test header, "Start Camera" button, Upload button
 
-2. **2D Mirror** - `/mirror` showing body tracking overlay
+2. **2D Mirror** - `/mirror` showing onboarding UI
    - Filename: `ph-mirror-2d.png`
-   - Alt: Real-time body tracking
+   - Shows: "Virtual Try-On" modal, how-it-works sidebar
 
-3. **Upload flow** - `/generate-3d` showing image upload → 3D conversion
+3. **Upload flow** - `/generate-3d` showing image upload
    - Filename: `ph-generate-3d.png`
-   - Alt: Convert any clothing photo to 3D
+   - Shows: Upload area, demo mode notice
 
-4. **Pricing page** - `/pricing` showing Free/Creator/Retailer tiers
+4. **Pricing page** - `/pricing` showing 3-tier pricing
    - Filename: `ph-pricing.png`
-   - Alt: Simple, transparent pricing
+   - Shows: Free/Creator/Retailer plans, FAQ section
 
-5. **Retailer embed** - `/retailer/signup` or code snippet
+5. **Retailer embed** - `/retailer/signup` signup form
    - Filename: `ph-retailer-embed.png`
-   - Alt: One-line embed for any e-commerce site
+   - Shows: Store signup form with platform selection
+
+**Note:** Madhav should re-capture with camera active for better hero shots.
+Alternatively, use screen recordings converted to GIFs.
 
 ---
 
