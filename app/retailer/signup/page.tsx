@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 function generateShopId(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Math.random().toString(36).slice(2, 6);
@@ -9,6 +9,7 @@ export default function RetailerSignupPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [shopId, setShopId] = useState("");
+  const [retailerCount, setRetailerCount] = useState(0);
   const [form, setForm] = useState({
     shopName: "",
     shopUrl: "",
@@ -16,6 +17,16 @@ export default function RetailerSignupPage() {
     productCount: "",
     platform: "",
   });
+
+  // Fetch live retailer count
+  useEffect(() => {
+    fetch('/api/waitlist-stats')
+      .then(r => r.json())
+      .then(data => {
+        if (data.retailers > 0) setRetailerCount(data.retailers);
+      })
+      .catch(() => {}); // Silently fail
+  }, []);
 
   const update = (field: string, value: string) => setForm(f => ({ ...f, [field]: value }));
 
@@ -84,17 +95,32 @@ export default function RetailerSignupPage() {
       <div style={{ maxWidth: 560, width: "100%", marginTop: 40 }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
           {/* Social proof banner */}
-          <div style={{ 
-            background: "rgba(108,92,231,0.1)", 
-            border: "1px solid rgba(108,92,231,0.3)",
-            borderRadius: 8,
-            padding: "8px 16px",
-            marginBottom: 16,
-            fontSize: 13,
-            color: "#a29bfe"
-          }}>
-            🚀 Join 12+ brands testing VirtualFit — be first in your category
-          </div>
+          {retailerCount > 0 && (
+            <div style={{ 
+              background: "rgba(108,92,231,0.1)", 
+              border: "1px solid rgba(108,92,231,0.3)",
+              borderRadius: 8,
+              padding: "8px 16px",
+              marginBottom: 16,
+              fontSize: 13,
+              color: "#a29bfe"
+            }}>
+              🚀 Join {retailerCount}+ brands testing VirtualFit — be first in your category
+            </div>
+          )}
+          {retailerCount === 0 && (
+            <div style={{ 
+              background: "rgba(108,92,231,0.1)", 
+              border: "1px solid rgba(108,92,231,0.3)",
+              borderRadius: 8,
+              padding: "8px 16px",
+              marginBottom: 16,
+              fontSize: 13,
+              color: "#a29bfe"
+            }}>
+              🚀 Be first to add virtual try-on to your store
+            </div>
+          )}
           <div style={{ fontSize: 48 }}>🏪</div>
           <h1 style={{ fontSize: 28, fontWeight: 700, margin: "8px 0 4px" }}>Add Virtual Try-On to Your Store</h1>
           <p style={{ color: "#71717a", fontSize: 14 }}>
