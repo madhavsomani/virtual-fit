@@ -23,6 +23,16 @@ function MirrorContent() {
   const garmentTextureUrl = searchParams.get('garmentTexture');
   const [garment3DStatus, setGarment3DStatus] = useState<'none' | 'loading' | 'loaded' | 'error'>('none');
   const [garment3DProvider, setGarment3DProvider] = useState<string | null>(null);
+  // CLEAN VIEW: hides 30+ status chips/indicators by default (UX fix 2026-04-20).
+  // Persisted in localStorage so power users keep their preference.
+  const [cleanView, setCleanView] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const saved = localStorage.getItem('virtualfit-clean-view');
+    return saved === null ? true : saved === '1';
+  });
+  useEffect(() => {
+    if (typeof window !== 'undefined') localStorage.setItem('virtualfit-clean-view', cleanView ? '1' : '0');
+  }, [cleanView]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const threeCanvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState("Tap below to start trying on clothes");
@@ -3897,7 +3907,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
   }, []);
 
   return (
-    <div ref={containerRef} style={{ 
+    <div ref={containerRef} data-clean={cleanView ? '1' : '0'} style={{ 
       background: "#111", 
       minHeight: "100vh", 
       display: "flex", 
@@ -3907,6 +3917,34 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
       gap: isLandscape ? 24 : 0,
       padding: isLandscape ? 12 : 20 
     }}>
+      {/* CLEAN VIEW: hide "feature creep" indicator chips by default. Toggle below restores them. */}
+      <style>{`
+        [data-clean="1"] [data-indicator-chip] { display: none !important; }
+        [data-clean="1"] [data-secondary-control] { display: none !important; }
+      `}</style>
+      {cameraOn && (
+        <button
+          onClick={() => setCleanView(v => !v)}
+          style={{
+            position: "fixed",
+            top: 12,
+            right: 12,
+            zIndex: 9999,
+            padding: "6px 12px",
+            background: cleanView ? "rgba(108,92,231,0.9)" : "rgba(255,255,255,0.15)",
+            color: "#fff",
+            border: "1px solid rgba(255,255,255,0.2)",
+            borderRadius: 8,
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: "pointer",
+            backdropFilter: "blur(8px)",
+          }}
+          title={cleanView ? "Show all controls" : "Hide secondary controls"}
+        >
+          {cleanView ? "✨ Clean" : "🛠️ Pro"}
+        </button>
+      )}
       {/* Offline warning banner */}
       {!isOnline && (
         <div style={{
@@ -4673,7 +4711,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Fit quality indicator */}
         {cameraOn && trackingConfidence > 0 && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             bottom: 12, right: 12,
             background: "rgba(0,0,0,0.6)",
@@ -4720,7 +4758,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Lock indicator */}
         {cameraOn && adjustmentsLocked && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: 75, left: 12,
             background: "rgba(239, 68, 68, 0.85)",
@@ -4737,7 +4775,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Favorites-only indicator */}
         {cameraOn && favoritesOnly && favoriteGarments.length > 0 && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: adjustmentsLocked ? 100 : 75, left: 12,
             background: "rgba(239, 68, 68, 0.85)",
@@ -4754,7 +4792,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Manual scale mode indicator */}
         {cameraOn && !autoFit && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0), left: 12,
             background: "rgba(59, 130, 246, 0.85)",
@@ -4771,7 +4809,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Flipped indicator */}
         {cameraOn && garmentFlipped && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0) + (!autoFit ? 25 : 0), left: 12,
             background: "rgba(168, 85, 247, 0.85)",
@@ -4788,7 +4826,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Stretch mode indicator */}
         {cameraOn && !aspectLocked && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0) + (!autoFit ? 25 : 0) + (garmentFlipped ? 25 : 0), left: 12,
             background: "rgba(236, 72, 153, 0.85)",
@@ -4805,7 +4843,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Blend mode indicator */}
         {cameraOn && blendMode !== 'normal' && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0) + (!autoFit ? 25 : 0) + (garmentFlipped ? 25 : 0) + (!aspectLocked ? 25 : 0), left: 12,
             background: "rgba(147, 51, 234, 0.85)",
@@ -4822,7 +4860,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Color grade indicator */}
         {cameraOn && colorGradeIdx > 0 && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0) + (!autoFit ? 25 : 0) + (garmentFlipped ? 25 : 0) + (!aspectLocked ? 25 : 0) + (blendMode !== 'normal' ? 25 : 0), left: 12,
             background: "rgba(234, 88, 12, 0.85)",
@@ -4839,7 +4877,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Fit quality indicator */}
         {cameraOn && showGarment && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             bottom: 12, right: 12,
             background: fitQuality === 'excellent' ? "rgba(34, 197, 94, 0.85)" :
@@ -4882,7 +4920,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Split view indicator */}
         {cameraOn && splitViewGarment !== null && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: 12, left: "50%",
             transform: "translateX(-50%)",
@@ -4905,7 +4943,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Color temperature indicator */}
         {cameraOn && colorTemp !== 0 && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0) + (!autoFit ? 25 : 0) + (garmentFlipped ? 25 : 0) + (!aspectLocked ? 25 : 0) + (blendMode !== 'normal' ? 25 : 0) + (colorGradeIdx > 0 ? 25 : 0), left: 12,
             background: colorTemp > 0 ? "rgba(251, 146, 60, 0.85)" : "rgba(96, 165, 250, 0.85)",
@@ -4922,7 +4960,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Category filter indicator */}
         {cameraOn && categoryFilter && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0) + (!autoFit ? 25 : 0) + (garmentFlipped ? 25 : 0) + (!aspectLocked ? 25 : 0) + (blendMode !== 'normal' ? 25 : 0) + (colorGradeIdx > 0 ? 25 : 0) + (colorTemp !== 0 ? 25 : 0), left: 12,
             background: "rgba(16, 185, 129, 0.85)",
@@ -4939,7 +4977,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Auto-lighting indicator */}
         {cameraOn && autoLighting && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0) + (!autoFit ? 25 : 0) + (garmentFlipped ? 25 : 0) + (!aspectLocked ? 25 : 0) + (blendMode !== 'normal' ? 25 : 0) + (colorGradeIdx > 0 ? 25 : 0) + (colorTemp !== 0 ? 25 : 0) + (categoryFilter ? 25 : 0), left: 12,
             background: "rgba(251, 191, 36, 0.85)",
@@ -4956,7 +4994,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Tint mode indicator */}
         {cameraOn && tintMode !== 'none' && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: (adjustmentsLocked ? 100 : 75) + (favoritesOnly && favoriteGarments.length > 0 ? 25 : 0) + (!autoFit ? 25 : 0) + (garmentFlipped ? 25 : 0) + (!aspectLocked ? 25 : 0) + (blendMode !== 'normal' ? 25 : 0) + (colorGradeIdx > 0 ? 25 : 0) + (colorTemp !== 0 ? 25 : 0) + (categoryFilter ? 25 : 0) + (autoLighting ? 25 : 0), left: 12,
             background: tintMode === 'warm' ? "rgba(239, 68, 68, 0.85)" : tintMode === 'cool' ? "rgba(59, 130, 246, 0.85)" : tintMode === 'sepia' ? "rgba(180, 83, 9, 0.85)" : "rgba(79, 70, 229, 0.85)",
@@ -4973,7 +5011,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Distance hint indicator */}
         {cameraOn && distanceHint && distanceHint !== 'optimal' && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             bottom: 80, left: "50%",
             transform: "translateX(-50%)",
@@ -5654,7 +5692,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Smooth mode indicator */}
         {cameraOn && smoothMode && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: 50, left: 12,
             background: "rgba(34, 197, 94, 0.85)",
@@ -6259,7 +6297,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
         
         {/* Stream quality indicator */}
         {cameraOn && streamQuality !== 'excellent' && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: !isOnline ? 48 : 12, left: 12,
             background: streamQuality === 'poor' ? "rgba(239, 68, 68, 0.9)" : "rgba(234, 179, 8, 0.9)",
@@ -6569,7 +6607,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
 
         {/* Compare mode split indicator */}
         {cameraOn && compareMode && (
-          <div style={{
+          <div data-indicator-chip style={{
             position: "absolute",
             top: 0, left: 0, right: 0, bottom: 0,
             pointerEvents: "none",
