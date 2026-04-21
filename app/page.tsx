@@ -361,12 +361,26 @@ export default function Home() {
           </Link>
         </div>
 
+        {/* Demo video placeholder */}
+        <div style={{
+          marginTop: 40, maxWidth: 480, width: "100%",
+          background: "#18181b", border: "1px solid #27272a",
+          borderRadius: 16, overflow: "hidden",
+          aspectRatio: "16/9", display: "flex",
+          alignItems: "center", justifyContent: "center",
+          flexDirection: "column", gap: 8,
+        }}>
+          <div style={{ fontSize: 48 }}>🎥</div>
+          <p style={{ color: "#71717a", fontSize: 14 }}>30s demo coming soon</p>
+          <p style={{ color: "#52525b", fontSize: 11 }}>Upload a photo → 3D mesh → on your body</p>
+        </div>
+
         <div style={{ marginTop: 48, display: "flex", gap: 24, justifyContent: "center", flexWrap: "wrap" }}>
           {[
-            { icon: "📸", label: "Real-time tracking" },
-            { icon: "👕", label: "5 built-in garments" },
-            { icon: "📱", label: "Mobile-friendly" },
-            { icon: "🎨", label: "Color & style controls" },
+            { icon: "🧊", label: "AI 3D mesh generation" },
+            { icon: "📸", label: "Real-time body tracking" },
+            { icon: "📱", label: "Works on any device" },
+            { icon: "⚡", label: "~10 second generation" },
           ].map((f) => (
             <div key={f.label} style={{ display: "flex", alignItems: "center", gap: 6, color: "#71717a", fontSize: 13 }}>
               <span>{f.icon}</span> {f.label}
