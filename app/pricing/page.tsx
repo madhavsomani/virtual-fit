@@ -84,15 +84,15 @@ export default function PricingPage() {
       return;
     }
     
-    // Fallback: Client-side mock checkout (static export, no API routes)
-    // In production, set NEXT_PUBLIC_STRIPE_*_LINK env vars
-    const mockSessionId = `cs_test_${Date.now()}_${plan.toLowerCase()}`;
-    const successUrl = `/checkout/success/?session_id=${mockSessionId}&plan=${plan.toLowerCase()}`;
-    
-    // Simulate brief loading delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    window.location.href = successUrl;
+    // No Payment Link configured — be honest, do NOT fake success
+    setLoading(null);
+    alert(
+      `Checkout for ${plan} is not yet enabled.\n\n` +
+      `Set NEXT_PUBLIC_STRIPE_${plan.toUpperCase()}_LINK in environment to activate.\n\n` +
+      `Meanwhile, join the waitlist on /mirror to be notified when ${plan} goes live.`
+    );
+    analytics.checkoutStart(`${plan}_unavailable`);
+    window.location.href = "/?waitlist=1";
   };
 
   return (
