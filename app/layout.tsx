@@ -20,11 +20,20 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "VirtualFit",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "VirtualFit - Virtual Try-On",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "VirtualFit - Virtual Try-On",
     description: "Try on clothes virtually with AI-powered 3D body tracking",
+    images: ["/og-image.png"],
   },
   keywords: ["virtual try-on", "AR", "clothes", "fashion", "3D", "MediaPipe", "body tracking"],
   authors: [{ name: "VirtualFit" }],
