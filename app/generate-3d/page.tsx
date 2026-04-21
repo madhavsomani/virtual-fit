@@ -3,9 +3,11 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 
-// HuggingFace Inference API for TripoSR
-// Now calls our multi-provider /api/generate-3d instead
-const API_URL = "/api/generate-3d";
+// Direct call to self-hosted Hunyuan3D-2 proxy (Tailscale Funnel public URL)
+// Set NEXT_PUBLIC_TRIPOSR_URL to override (e.g. when running locally vs prod)
+const API_URL =
+  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_TRIPOSR_URL) ||
+  "https://macbook-air.tail367e9e.ts.net:8445/generate3d";
 
 interface GenerationState {
   status: "idle" | "uploading" | "processing" | "done" | "error";
@@ -37,6 +39,45 @@ export default function Generate3DPage() {
     // Start generation
     setState({ status: "uploading", progress: 10 });
 
+    try {
+      // Send the file directly as multipart/form-data to our self-hosted service
+      const fd = new FormData();
+      fd.append("image", file);
+      fd.append("mode", "Turbo");
+
+      setState({ status: "processing", progress: 25, provider: "hunyuan3d-2" });
+
+      const res = await fetch(API_URL, { method: "POST", body: fd });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => res.statusText);
+        throw new Error(`3D service error ${res.status}: ${txt.slice(0, 200)}`);
+      }
+
+      // Service returns the GLB binary directly. Convert to a blob URL we can load in Three.js.
+      const glbBlob = await res.blob();
+      const glbUrl = URL.createObjectURL(glbBlob);
+      const provider = res.headers.get("X-Provider") || "hunyuan3d-2";
+      const cache = res.headers.get("X-Cache") || "MISS";
+
+      setState({
+        status: "done",
+        progress: 100,
+        resultUrl: glbUrl,
+        provider: `${provider} (${cache})`,
+        isMock: false,
+      });
+      return;
+    } catch (err) {
+      setState({
+        status: "error",
+        progress: 0,
+        error: err instanceof Error ? err.message : "Generation failed",
+      });
+      return;
+    }
+
+    // (legacy multi-provider code below kept for reference, never reached)
     try {
       // Convert file to base64 for the API
       const reader = new FileReader();
@@ -177,24 +218,21 @@ export default function Generate3DPage() {
           </Link>
         </div>
 
-        {/* API not configured — softer warning since mock fallback works */}
-        {!process.env.NEXT_PUBLIC_HF_TOKEN && (
-          <div
-            style={{
-              background: "#fef3c7",
-              color: "#92400e",
-              padding: 12,
-              borderRadius: 8,
-              marginBottom: 24,
-              fontSize: 13,
-              border: "1px solid #f59e0b",
-            }}
-          >
-            <strong>⚠️ No 3D API key found.</strong> Uploads will use a flat image overlay.
-            For real 3D meshes, add MESHY_API_KEY in Azure settings.
-            <a href="/mirror" style={{ color: "#6C5CE7", fontWeight: 600, marginLeft: 4 }}>2D try-on works now →</a>
-          </div>
-        )}
+        {/* Provider info banner */}
+        <div
+          style={{
+            background: "#0c4a6e",
+            color: "#bae6fd",
+            padding: 12,
+            borderRadius: 8,
+            marginBottom: 24,
+            fontSize: 13,
+            border: "1px solid #0369a1",
+          }}
+        >
+          🟢 Real 3D mesh generation powered by <strong>Hunyuan3D-2</strong> (Tencent).
+          Typical generation: 5–15 sec. Note: this requires the home service to be online.
+        </div>
 
         {/* Upload area */}
         {state.status === "idle" && (
