@@ -1269,12 +1269,13 @@ function MirrorContent() {
 
     // Resolve the GLB URL
     let resolvedUrl: string;
-    if (garmentGlbUrl === 'local') {
+    if (garmentGlbUrl === 'local' || (garmentGlbUrl && garmentGlbUrl.startsWith('blob:'))) {
+      // 'local' is the new way; 'blob:' is a stale URL from an old session — try localStorage as fallback.
       // Load from localStorage (persisted by /generate-3d)
       const base64 = localStorage.getItem('virtualfit-glb-data');
       if (!base64) {
         setGarment3DStatus('error');
-        setStatus('❌ No 3D model found. Generate one at /generate-3d first.');
+        setStatus('❌ No 3D model found in this browser. Generate one at /generate-3d first.');
         return;
       }
       // Convert base64 back to blob URL
@@ -6687,7 +6688,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               See how clothes look on you in real-time using your camera
             </p>
             <button
-              onClick={() => setShowCameraPrompt(true)}
+              onClick={() => startCamera()}
               disabled={isLoading}
               style={{
                 padding: "16px 40px", fontSize: 18, fontWeight: 700,
