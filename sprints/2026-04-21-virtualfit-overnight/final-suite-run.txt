@@ -1,0 +1,49 @@
+
+> virtual-tryon-v2@0.1.0 test:e2e
+> npx playwright test
+
+
+Running 41 tests using 4 workers
+
+[1A[2K[1/41] [chromium] › e2e/a11y.spec.ts:17:11 › Accessibility Checks › Home › Home has proper document structure
+[1A[2K[2/41] [chromium] › e2e/a11y.spec.ts:63:11 › Accessibility Checks › Home › Home buttons and links are focusable
+[1A[2K[3/41] [chromium] › e2e/a11y.spec.ts:93:11 › Accessibility Checks › Home › Home has no empty buttons or links
+[1A[2K[4/41] [chromium] › e2e/a11y.spec.ts:38:11 › Accessibility Checks › Home › Home images have alt text or are decorative
+[1A[2K[5/41] [chromium] › e2e/a11y.spec.ts:17:11 › Accessibility Checks › Mirror › Mirror has proper document structure
+[1A[2K[6/41] [chromium] › e2e/a11y.spec.ts:38:11 › Accessibility Checks › Mirror › Mirror images have alt text or are decorative
+[1A[2K[7/41] [chromium] › e2e/a11y.spec.ts:63:11 › Accessibility Checks › Mirror › Mirror buttons and links are focusable
+[1A[2K[8/41] [chromium] › e2e/a11y.spec.ts:93:11 › Accessibility Checks › Mirror › Mirror has no empty buttons or links
+[1A[2K[9/41] [chromium] › e2e/a11y.spec.ts:17:11 › Accessibility Checks › Generate 3D › Generate 3D has proper document structure
+[1A[2K[10/41] [chromium] › e2e/a11y.spec.ts:38:11 › Accessibility Checks › Generate 3D › Generate 3D images have alt text or are decorative
+[1A[2K[11/41] [chromium] › e2e/a11y.spec.ts:63:11 › Accessibility Checks › Generate 3D › Generate 3D buttons and links are focusable
+[1A[2K[12/41] [chromium] › e2e/a11y.spec.ts:93:11 › Accessibility Checks › Generate 3D › Generate 3D has no empty buttons or links
+[1A[2K[13/41] [chromium] › e2e/a11y.spec.ts:17:11 › Accessibility Checks › Pricing › Pricing has proper document structure
+[1A[2K[14/41] [chromium] › e2e/a11y.spec.ts:38:11 › Accessibility Checks › Pricing › Pricing images have alt text or are decorative
+[1A[2K[15/41] [chromium] › e2e/a11y.spec.ts:63:11 › Accessibility Checks › Pricing › Pricing buttons and links are focusable
+[1A[2K[16/41] [chromium] › e2e/a11y.spec.ts:93:11 › Accessibility Checks › Pricing › Pricing has no empty buttons or links
+[1A[2K[17/41] [chromium] › e2e/a11y.spec.ts:121:7 › Accessibility Checks › color contrast is sufficient (basic check)
+[1A[2K[18/41] [chromium] › e2e/landing.spec.ts:9:7 › Mirror Page Landing › no console errors on load
+[1A[2K[19/41] [chromium] › e2e/landing.spec.ts:28:7 › Mirror Page Landing › no critical JS exceptions
+[1A[2K[20/41] [chromium] › e2e/landing.spec.ts:52:7 › Mirror Page Landing › all key elements visible
+[1A[2K[21/41] [chromium] › e2e/landing.spec.ts:66:7 › Mirror Page Landing › upload button exists
+[1A[2K[22/41] [chromium] › e2e/landing.spec.ts:86:7 › Mobile Viewport › mirror loads on mobile viewport (390x844)
+[1A[2K[23/41] [chromium] › e2e/landing.spec.ts:96:7 › Mobile Viewport › controls are reachable on mobile
+[1A[2K[24/41] [chromium] › e2e/landing.spec.ts:114:7 › Generate 3D Page › page loads with upload area
+[1A[2K[25/41] [chromium] › e2e/landing.spec.ts:130:7 › Generate 3D Page › shows demo mode notice when no API key
+[1A[2K[26/41] [chromium] › e2e/mirror.spec.ts:12:7 › Mirror Page › mirror page loads correctly
+[1A[2K[27/41] [chromium] › e2e/mirror.spec.ts:27:7 › Mirror Page › garment selector is visible
+[1A[2K[28/41] [chromium] › e2e/mirror.spec.ts:37:7 › Mirror Page › pricing page loads
+[1A[2K[29/41] [chromium] › e2e/mirror.spec.ts:47:7 › Mirror Page › checkout flow works in test mode
+[1A[2K[30/41] [chromium] › e2e/mirror.spec.ts:66:7 › Mirror Page › home page email capture form exists
+[1A[2K[31/41] [chromium] › e2e/mirror.spec.ts:74:7 › Mirror Page › email capture submits successfully
+[1A[2K[32/41] [chromium] › e2e/mirror.spec.ts:90:7 › Camera Simulation › mirror page handles camera denial gracefully
+[1A[2K[33/41] [chromium] › e2e/perf.spec.ts:12:7 › Performance Budget › mirror page loads within performance budget
+[1A[2K[34/41] [chromium] › e2e/perf.spec.ts:30:7 › Performance Budget › home page loads quickly
+[1A[2K[35/41] [chromium] › e2e/perf.spec.ts:39:7 › Performance Budget › pricing page loads quickly
+[1A[2K[36/41] [chromium] › e2e/perf.spec.ts:48:7 › Performance Budget › generate-3d page loads within budget
+[1A[2K[37/41] [chromium] › e2e/perf.spec.ts:56:7 › Performance Budget › mirror page JavaScript bundle size check
+[1A[2K[38/41] [chromium] › e2e/perf.spec.ts:76:7 › Performance Budget › no blocking resources over 1MB
+[1A[2K[39/41] [chromium] › e2e/perf.spec.ts:103:7 › Performance Budget › time to interactive is reasonable
+[1A[2K[40/41] [chromium] › e2e/visual.spec.ts:12:7 › Visual Regression › mirror page desktop baseline (1440x900)
+[1A[2K[41/41] [chromium] › e2e/visual.spec.ts:26:7 › Visual Regression › mirror page mobile baseline (390x844)
+[1A[2K  41 passed (28.3s)

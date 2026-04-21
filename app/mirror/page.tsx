@@ -711,6 +711,7 @@ function MirrorContent() {
   const garmentMeshRef = useRef<THREE.Mesh | null>(null);
   const garmentTextureRef = useRef<THREE.Texture | null>(null);
   const garment3DModelRef = useRef<THREE.Group | null>(null); // set when a GLB is loaded
+  const uploadAbortRef = useRef<AbortController | null>(null);
   const defaultTextureRef = useRef<THREE.Texture | null>(null);
 
   // Pose refs
@@ -1476,7 +1477,10 @@ function MirrorContent() {
         setUploadProgress(Math.round(progress));
       }, 300);
 
-      const resp = await fetch(WORKER_URL, { method: 'POST', body: fd });
+      const abortCtrl = new AbortController();
+      uploadAbortRef.current = abortCtrl;
+      const resp = await fetch(WORKER_URL, { method: 'POST', body: fd, signal: abortCtrl.signal });
+      uploadAbortRef.current = null;
       clearInterval(progressTimer);
       setUploadProgress(92);
 
@@ -7066,6 +7070,28 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               }}
             />
           </label>
+
+          {/* Cancel 3D generation */}
+          {uploading && uploadAbortRef.current && (
+            <button
+              onClick={() => {
+                if (uploadAbortRef.current) {
+                  uploadAbortRef.current.abort();
+                  uploadAbortRef.current = null;
+                }
+                setUploading(false);
+                setUploadProgress(0);
+                setStatus('Cancelled. Upload again to retry.');
+              }}
+              style={{
+                padding: "10px 18px", fontSize: 13, fontWeight: 600,
+                background: "#ef4444", color: "#fff", border: "none",
+                borderRadius: 8, cursor: "pointer",
+              }}
+            >
+              ✕ Cancel
+            </button>
+          )}
 
           {/* 3D Generation toggle — HIDDEN until MESHY_API_KEY is configured
           <button onClick={() => setUse3DGeneration(!use3DGeneration)} ... />
