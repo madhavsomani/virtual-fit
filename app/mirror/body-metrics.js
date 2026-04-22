@@ -280,3 +280,43 @@ export function computeBodyCenterPixels(input) {
     y: Math.round(clamp(bodyCenterMetric.y, 0, 1) * Number(frameHeightPx))
   };
 }
+
+/**
+ * Phase2.3 — Compute Y-axis (yaw) rotation in radians from shoulder Z-delta.
+ * Mirrors the inline logic in mirror/page.tsx. Used for GLB body-rotation tracking.
+ *
+ * Returns 0 when shoulders are missing/invalid (caller treats it as "no rotation").
+ *
+ * @param {{ leftShoulder?: LandmarkPoint | null, rightShoulder?: LandmarkPoint | null }} input
+ * @returns {number} yaw in radians, in (-pi/2, pi/2)
+ */
+export function computeShoulderYawRadians(input) {
+  const ls = input?.leftShoulder;
+  const rs = input?.rightShoulder;
+  if (!ls || !rs) return 0;
+  if (!Number.isFinite(ls.x) || !Number.isFinite(rs.x)) return 0;
+  const lz = Number.isFinite(ls.z) ? ls.z : 0;
+  const rz = Number.isFinite(rs.z) ? rs.z : 0;
+  const zDelta = lz - rz;
+  const xSpan = Math.max(0.05, Math.abs(rs.x - ls.x));
+  return Math.atan2(zDelta, xSpan);
+}
+
+/**
+ * Phase2.4 — Compute depth scale factor from average shoulder Z.
+ * Negative Z (closer to camera) → larger; positive Z → smaller.
+ * Clamped to [0.7, 1.3] to avoid runaway scaling.
+ *
+ * @param {{ leftShoulder?: LandmarkPoint | null, rightShoulder?: LandmarkPoint | null }} input
+ * @returns {number} depth scale in [0.7, 1.3]; returns 1.0 when shoulders missing
+ */
+export function computeDepthScale(input) {
+  const ls = input?.leftShoulder;
+  const rs = input?.rightShoulder;
+  if (!ls || !rs) return 1.0;
+  const lz = Number.isFinite(ls.z) ? ls.z : 0;
+  const rz = Number.isFinite(rs.z) ? rs.z : 0;
+  const avgZ = (lz + rz) / 2;
+  const raw = 1.0 - avgZ * 0.4;
+  return clamp(raw, 0.7, 1.3);
+}
