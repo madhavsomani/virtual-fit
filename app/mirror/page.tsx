@@ -8,6 +8,7 @@ import { smoothScalar } from "./smoothing-utils";
 import { track } from "../lib/telemetry";
 import { detectLeftSwipeIntent, detectRightSwipeIntent, detectGestureCooldownWindow } from "./gesture-intent";
 import useBodyAnchor from "../hooks/useBodyAnchor";
+import { imageToGlbPipeline } from "../lib/image-to-glb";
 
 type PoseResultLandmark = { x: number; y: number; z?: number; visibility?: number };
 
@@ -1495,12 +1496,6 @@ function MirrorContent() {
 
   // 3D upload: send image to Worker proxy → get GLB → load into scene
   const handleUpload3D = useCallback(async (file: File) => {
-    const WORKER_URL = process.env.NEXT_PUBLIC_TRIPOSR_URL;
-    if (!WORKER_URL) {
-      setStatus('❌ 3D service not configured (NEXT_PUBLIC_TRIPOSR_URL). Garment must be 3D — re-upload as GLB.');
-      setGarment3DStatus('error');
-      return;
-    }
     if (savedGarments.length >= 10) {
       setStatus('⚠️ Upload limit reached.');
       return;
@@ -1510,30 +1505,31 @@ function MirrorContent() {
     track('upload_started', { mode: '3d', fileSize: file.size, fileType: file.type });
     setUploading(true);
     setUploadProgress(5);
-    setStatus('🧊 Generating 3D mesh… ~10s');
+    setStatus('🧊 Isolating garment…');
     try {
-      const fd = new FormData();
-      fd.append('image', file);
-
-      // Animate progress 5→90% over 12s while waiting for the fetch
-      let progress = 5;
-      const progressTimer = setInterval(() => {
-        progress = Math.min(90, progress + (90 - progress) * 0.08);
-        setUploadProgress(Math.round(progress));
-      }, 300);
-
       const abortCtrl = new AbortController();
       uploadAbortRef.current = abortCtrl;
-      const resp = await fetch(WORKER_URL, { method: 'POST', body: fd, signal: abortCtrl.signal });
+
+      // Phase 5.1 — browser-direct HF pipeline (segformer/RMBG → TRELLIS).
+      const { glbUrl: remoteGlbUrl, method } = await imageToGlbPipeline(file, {
+        signal: abortCtrl.signal,
+        onProgress: (p) => {
+          if (p.stage === 'segmenting') {
+            setUploadProgress(15);
+            setStatus('🧊 Isolating garment from background…');
+          } else if (p.stage === 'trellis') {
+            const f = typeof p.fraction === 'number' ? p.fraction : 0;
+            setUploadProgress(Math.max(20, Math.min(90, Math.round(20 + f * 70))));
+            setStatus('🧊 Generating 3D mesh on TRELLIS (~30–90s)…');
+          }
+        },
+      });
       uploadAbortRef.current = null;
-      clearInterval(progressTimer);
       setUploadProgress(92);
 
-      if (!resp.ok) {
-        const errText = await resp.text().catch(() => resp.statusText);
-        throw new Error(`3D service error ${resp.status}: ${errText.slice(0, 200)}`);
-      }
-
+      // Fetch the GLB bytes (TRELLIS returns a remote URL we can pull).
+      const resp = await fetch(remoteGlbUrl, { signal: abortCtrl.signal });
+      if (!resp.ok) throw new Error(`GLB fetch ${resp.status}`);
       const glbBlob = await resp.blob();
       setUploadProgress(80);
 
@@ -1543,7 +1539,7 @@ function MirrorContent() {
         reader.onload = () => {
           const b64 = (reader.result as string).split(',')[1];
           localStorage.setItem('virtualfit-glb-data', b64);
-          localStorage.setItem('virtualfit-glb-provider', resp.headers.get('X-Provider') || '3D');
+          localStorage.setItem('virtualfit-glb-provider', `trellis+${method}`);
           localStorage.setItem('virtualfit-glb-ts', new Date().toISOString());
         };
         reader.readAsDataURL(glbBlob);
@@ -1597,10 +1593,10 @@ function MirrorContent() {
       }
 
       setGarment3DStatus('loaded');
-      setGarment3DProvider(resp.headers.get('X-Provider') || 'hunyuan3d-2');
+      setGarment3DProvider(`trellis+${method}`);
       setUploadProgress(100);
       setStatus(`✨ 3D mesh ready! Move around to see it follow you.`);
-      track('upload_succeeded', { mode: '3d', durationMs: Date.now() - t0, provider: resp.headers.get('X-Provider') || '' });
+      track('upload_succeeded', { mode: '3d', durationMs: Date.now() - t0, provider: `trellis+${method}` });
 
       // Save to gallery
       const garmentName = file.name.replace(/\.[^/.]+$/, '') + ' (3D)';
