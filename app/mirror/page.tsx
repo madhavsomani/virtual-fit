@@ -733,7 +733,7 @@ function MirrorContent() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const poseLandmarkerRef = useRef<any>(null);
   const animFrameRef = useRef<number>(0);
-  const smoothPos = useRef({ x: 0, y: 0, w: 0, h: 0, tilt: 0, depth: 1, ready: false });
+  const smoothPos = useRef({ x: 0, y: 0, w: 0, h: 0, tilt: 0, depth: 1, yaw: 0, ready: false });
 
   // Body anchor hook (Phase1.3): exposes computeAnchor/updateMeshPosition for body-relative GLB anchoring.
   // Currently used as a parallel signal source; the legacy smoothPos block remains the active positioner.
@@ -896,6 +896,12 @@ function MirrorContent() {
     const depthScale = 1.0 - (avgShoulderZ * 0.4); // closer (negative Z) = larger
     const clampedDepth = Math.max(0.7, Math.min(1.3, depthScale));
 
+    // Phase2.3: yaw (Y-axis rotation) from shoulder Z-delta — Iron Man suit rotation effect.
+    // When user turns left, left shoulder moves back (positive Z), right comes forward (negative Z).
+    const shoulderZDelta = (ls.z ?? 0) - (rs.z ?? 0);
+    // Mirror flip: visual left = anatomical right
+    const yawAngle = Math.atan2(shoulderZDelta, Math.max(0.05, Math.abs(rs.x - ls.x)));
+
     // Smooth position using smoothing-utils
     // Use higher smoothing in smooth mode
     const alpha = smoothMode ? 0.15 : 0.3;
@@ -903,7 +909,7 @@ function MirrorContent() {
     const depthAlpha = smoothMode ? 0.1 : 0.2;
     
     if (!smoothPos.current.ready) {
-      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, depth: clampedDepth, ready: true };
+      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, depth: clampedDepth, yaw: yawAngle, ready: true };
     } else {
       smoothPos.current.x = smoothScalar(smoothPos.current.x, shoulderCX, { alpha }) ?? shoulderCX;
       smoothPos.current.y = smoothScalar(smoothPos.current.y, shoulderCY, { alpha }) ?? shoulderCY;
@@ -911,6 +917,7 @@ function MirrorContent() {
       smoothPos.current.h = smoothScalar(smoothPos.current.h, torsoH, { alpha, min: 50 }) ?? torsoH;
       smoothPos.current.tilt = smoothScalar(smoothPos.current.tilt, tiltAngle, { alpha: tiltAlpha }) ?? tiltAngle;
       smoothPos.current.depth = smoothScalar(smoothPos.current.depth, clampedDepth, { alpha: depthAlpha, min: 0.7, max: 1.3 }) ?? clampedDepth;
+      smoothPos.current.yaw = smoothScalar(smoothPos.current.yaw, yawAngle, { alpha: tiltAlpha }) ?? yawAngle;
     }
 
     const sp = smoothPos.current;
@@ -960,6 +967,8 @@ function MirrorContent() {
         s3d * 0.5
       );
       model3D.rotation.z = sp.tilt + garmentRotation;
+      // Phase2.3: Y-axis yaw — GLB rotates as user turns body (Iron Man suit effect).
+      model3D.rotation.y = sp.yaw;
       model3D.visible = showGarment;
     }
 
