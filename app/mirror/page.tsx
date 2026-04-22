@@ -1488,8 +1488,8 @@ function MirrorContent() {
   const handleUpload3D = useCallback(async (file: File) => {
     const WORKER_URL = process.env.NEXT_PUBLIC_TRIPOSR_URL;
     if (!WORKER_URL) {
-      setStatus('❌ 3D service not configured (NEXT_PUBLIC_TRIPOSR_URL). Using 2D mode.');
-      handleUpload(file);
+      setStatus('❌ 3D service not configured (NEXT_PUBLIC_TRIPOSR_URL). Garment must be 3D — re-upload as GLB.');
+      setGarment3DStatus('error');
       return;
     }
     if (savedGarments.length >= 10) {
@@ -1603,10 +1603,9 @@ function MirrorContent() {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       console.error('3D upload failed:', msg);
       track('upload_failed', { mode: '3d', reason: msg.slice(0, 100), durationMs: Date.now() - t0 });
-      setStatus(`❌ 3D failed: ${msg}. Falling back to 2D.`);
+      setStatus(`❌ 3D failed: ${msg}. Garment must be 3D — re-upload as GLB.`);
       setGarment3DStatus('error');
-      // Fallback to 2D
-      handleUpload(file);
+      // No 2D fallback — Phase1.2 strip
     } finally {
       setUploading(false);
       setUploadProgress(0);
@@ -7007,7 +7006,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           {garment3DStatus === 'loaded' && `🟢 3D garment active (${garment3DProvider || 'loaded'})`}
           {garment3DStatus === 'error' && (
             <>
-              🔴 3D service busy — using 2D mode.{' '}
+              🔴 3D service busy — garment must be 3D, re-upload as GLB.{' '}
               {lastUploadFileRef.current && (
                 <button
                   onClick={() => { if (lastUploadFileRef.current) handleUpload3D(lastUploadFileRef.current); }}
@@ -7118,7 +7117,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               disabled={uploading}
               onChange={(e) => {
                 const f = e.target.files?.[0];
-                if (f) { if (prefer3D) { handleUpload3D(f); } else { handleUpload(f); } }
+                if (f) { handleUpload3D(f); } // Phase1.2: 3D-only path
                 e.target.value = "";
               }}
             />
@@ -7137,11 +7136,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 setStatus('Cancelled. Upload again to retry.');
                 cancel3DCountRef.current++;
                 track('upload_cancelled', { cancelCount: cancel3DCountRef.current });
-                if (cancel3DCountRef.current >= 2) {
-                  setPrefer3D(false);
-                  localStorage.setItem('mirror.preferredMode', '2d');
-                  setStatus('Switched to fast 2D mode. Toggle back with the 3D/2D button.');
-                }
+                // Phase1.2: removed auto-fallback to 2D mode after repeated cancels.
               }}
               style={{
                 padding: "10px 18px", fontSize: 13, fontWeight: 600,
@@ -7153,8 +7148,8 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             </button>
           )}
 
-          {/* 3D/2D mode toggle */}
-          {!uploading && (
+          {/* 3D/2D mode toggle removed Phase1.2 — 3D-only enforced */}
+          {false && !uploading && (
             <button
               onClick={() => {
                 const next = !prefer3D;
