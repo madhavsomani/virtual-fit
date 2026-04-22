@@ -20,7 +20,9 @@ export default function MirrorPage() {
 
 function MirrorContent() {
   const searchParams = useSearchParams();
-  const garmentGlbUrl = searchParams.get('garment');
+  // Default to demo t-shirt GLB; ?garment=<url> overrides; ?garment=none disables.
+  const garmentParam = searchParams.get('garment');
+  const garmentGlbUrl = garmentParam === 'none' ? null : (garmentParam || '/models/demo-tshirt.glb');
   const garmentTextureUrl = searchParams.get('garmentTexture');
   const [garment3DStatus, setGarment3DStatus] = useState<'none' | 'loading' | 'loaded' | 'error'>('none');
   const [garment3DProvider, setGarment3DProvider] = useState<string | null>(null);
