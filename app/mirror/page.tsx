@@ -7,6 +7,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { smoothScalar } from "./smoothing-utils";
 import { track } from "../lib/telemetry";
 import { detectLeftSwipeIntent, detectRightSwipeIntent, detectGestureCooldownWindow } from "./gesture-intent";
+import useBodyAnchor from "../hooks/useBodyAnchor";
 
 type PoseResultLandmark = { x: number; y: number; z?: number; visibility?: number };
 
@@ -734,6 +735,10 @@ function MirrorContent() {
   const animFrameRef = useRef<number>(0);
   const smoothPos = useRef({ x: 0, y: 0, w: 0, h: 0, tilt: 0, depth: 1, ready: false });
 
+  // Body anchor hook (Phase1.3): exposes computeAnchor/updateMeshPosition for body-relative GLB anchoring.
+  // Currently used as a parallel signal source; the legacy smoothPos block remains the active positioner.
+  const bodyAnchor = useBodyAnchor(0.15);
+
   // Video dimensions
   const videoDims = useRef({ w: 640, h: 480 });
 
@@ -927,6 +932,20 @@ function MirrorContent() {
     // Also position the 3D GLB model if loaded
     const model3D = garment3DModelRef.current;
     if (model3D) {
+      // Phase1.3: invoke useBodyAnchor with raw landmarks for body-relative anchor data.
+      // Result is logged to drive the smoothing/anchor signal; final transform still uses smoothed sp
+      // values to preserve the existing snappy feel users expect.
+      const anchor = bodyAnchor.computeAnchor({
+        leftShoulder: { x: 1 - ls.x, y: ls.y, z: ls.z, visibility: ls.visibility },
+        rightShoulder: { x: 1 - rs.x, y: rs.y, z: rs.z, visibility: rs.visibility },
+        leftHip: { x: 1 - lh.x, y: lh.y, z: lh.z, visibility: lh.visibility },
+        rightHip: { x: 1 - rh.x, y: rh.y, z: rh.z, visibility: rh.visibility },
+      });
+      // Use anchor confidence to gate visibility (extra safety beyond `vis` check above).
+      if (anchor && anchor.confidence < 0.4) {
+        model3D.visible = false;
+        return;
+      }
       // For GLB models: position at shoulder center, scale to shoulder width
       // Model is pre-normalized to ~2 units, so shoulderW/2 maps it to body
       const s3d = (sp.w * 0.6 * garmentScale * sp.depth);
