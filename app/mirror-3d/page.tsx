@@ -13,23 +13,16 @@ function Mirror3DRedirect() {
   const model = searchParams.get("model");
 
   useEffect(() => {
-    // Redirect to /mirror with the garment param
+    // Phase 7.14: simplified redirect logic.
+    // Previously the `else` branch probed localStorage for a `virtualfit_gallery`
+    // key that is **never written** anywhere in the app — a dead read that risked
+    // silently overriding a fresh visit if a stale value ever existed. Now: if
+    // `?model=` is present, forward it; otherwise just go to /mirror unmodified
+    // and let the user pick a garment there.
     if (model) {
       router.replace(`/mirror?garment=${encodeURIComponent(model)}`);
     } else {
-      // Check localStorage for last generated model
-      try {
-        const gallery = localStorage.getItem("virtualfit_gallery");
-        if (gallery) {
-          const items = JSON.parse(gallery);
-          if (items.length > 0 && items[0].modelUrl) {
-            router.replace(`/mirror?garment=${encodeURIComponent(items[0].modelUrl)}`);
-            return;
-          }
-        }
-      } catch {}
-      // No model — go to generate page
-      router.replace("/generate-3d");
+      router.replace("/mirror");
     }
   }, [model, router]);
 
