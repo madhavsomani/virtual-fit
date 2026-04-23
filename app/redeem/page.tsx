@@ -86,14 +86,12 @@ export default function RedeemPage() {
     redemptions.push(redemption);
     localStorage.setItem("redemptions", JSON.stringify(redemptions));
 
-    // Track in analytics
-    const events = JSON.parse(localStorage.getItem("virtualfit_analytics") || "[]");
-    events.push({
-      timestamp: now.toISOString(),
-      event: "code_redeemed",
-      data: { code: normalizedCode, email, tier: validCode.tier },
-    });
-    localStorage.setItem("virtualfit_analytics", JSON.stringify(events));
+    // Phase 7.23: removed direct `virtualfit_analytics` localStorage write
+    // for `code_redeemed` event. The event was never in the typed
+    // `EventName` union and had zero readers anywhere — pure write-only
+    // orphan polluting the visitor's localStorage. If we ever want to
+    // surface redemption counts, add `code_redeemed` to `EventName` in
+    // `lib/analytics.ts` and call `analytics.track(...)` instead.
 
     setSuccess(redemption);
     setLoading(false);

@@ -7,9 +7,12 @@
 // matching `EventName` union members — they had zero callers anywhere in the
 // app and belonged to the old marketplace pivot, not the webcam+3D vision.
 // Phase 7.19: `/admin` and `/admin/stats` deleted (security theater + fake
-// uploader). The `virtualfit_analytics` key is still read by `/redeem` and
-// `/build-in-public` for per-visitor debug; `getAll`/`clear` retained for
-// future consumers.
+// uploader). Phase 7.22: `/build-in-public` no longer reads this key (it
+// was rendering visitor-localStorage as aggregate stats). Phase 7.23:
+// `/redeem` no longer writes a `code_redeemed` event here (was bypassing
+// the typed API with a write-only orphan event). The `virtualfit_analytics`
+// key now has the four typed `track()` writers as its only producers.
+// `getAll`/`clear` retained for future consumers.
 
 type EventName =
   | "page_view"
