@@ -10,6 +10,7 @@ import { track } from "../lib/telemetry";
 import { detectLeftSwipeIntent, detectRightSwipeIntent, detectGestureCooldownWindow } from "./gesture-intent";
 import useBodyAnchor from "../hooks/useBodyAnchor";
 import { imageToGlbPipeline } from "../lib/image-to-glb";
+import { normalizeGlb } from "../lib/glb-normalize";
 
 type PoseResultLandmark = { x: number; y: number; z?: number; visibility?: number };
 
@@ -1373,23 +1374,7 @@ function MirrorContent() {
           garmentMeshRef.current.visible = false;
         }
 
-        const model = gltf.scene;
-        model.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            (child as THREE.Mesh).castShadow = true;
-            if ((child as THREE.Mesh).material) {
-              ((child as THREE.Mesh).material as THREE.Material).side = THREE.DoubleSide;
-            }
-          }
-        });
-
-        // Normalize model to ~2 units
-        const box = new THREE.Box3().setFromObject(model);
-        const size = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
-        model.position.sub(center); // center it
-        const maxDim = Math.max(size.x, size.y, size.z);
-        if (maxDim > 0) model.scale.setScalar(2.0 / maxDim);
+        const model = normalizeGlb(gltf);
 
         sceneRef.current.add(model);
         garment3DModelRef.current = model;
@@ -1575,23 +1560,7 @@ function MirrorContent() {
           garment3DModelRef.current = null;
         }
 
-        const model = gltf.scene;
-        model.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            (child as THREE.Mesh).castShadow = true;
-            if ((child as THREE.Mesh).material) {
-              ((child as THREE.Mesh).material as THREE.Material).side = THREE.DoubleSide;
-            }
-          }
-        });
-
-        // Normalize
-        const box = new THREE.Box3().setFromObject(model);
-        const size = box.getSize(new THREE.Vector3());
-        const center = box.getCenter(new THREE.Vector3());
-        model.position.sub(center);
-        const maxDim = Math.max(size.x, size.y, size.z);
-        if (maxDim > 0) model.scale.setScalar(2.0 / maxDim);
+        const model = normalizeGlb(gltf);
 
         sceneRef.current.add(model);
         garment3DModelRef.current = model;
@@ -1629,90 +1598,6 @@ function MirrorContent() {
     }
   }, [handleUpload, savedGarments, createShirtMesh]);
 
-  /* OLD 3D upload handler — replaced by handleUpload3D above
-    if (savedGarments.length >= 10) {
-      setStatus("⚠️ Upload limit reached (10 garments). Delete some to add more.");
-      return;
-    }
-    setUploading(true);
-    setGen3DStatus('uploading');
-    setGen3DProgress(0);
-    setStatus("🔄 Uploading image for 3D generation...");
-    try {
-      const glbUrl = await generateAndPoll(file, (state: Gen3DState) => {
-        setGen3DStatus(state.status);
-        setGen3DProgress(state.progress);
-        if (state.status === 'pending') setStatus('⏳ Queued for 3D generation...');
-        if (state.status === 'processing') setStatus(`🧊 Generating 3D mesh... ${state.progress}%`);
-        setUploadProgress(Math.min(90, 10 + state.progress * 0.8));
-      });
-
-      setStatus('🔄 Loading 3D model...');
-      setUploadProgress(95);
-
-      // Load GLB into Three.js scene
-      const loader = new GLTFLoader();
-      const gltf = await loader.loadAsync(glbUrl);
-
-      if (sceneRef.current && garmentMeshRef.current) {
-        // Remove old mesh
-        sceneRef.current.remove(garmentMeshRef.current);
-        garmentMeshRef.current.geometry.dispose();
-        (garmentMeshRef.current.material as THREE.Material).dispose();
-
-        // Add GLB model to scene
-        const model = gltf.scene;
-        model.traverse((child) => {
-          if ((child as THREE.Mesh).isMesh) {
-            const mesh = child as THREE.Mesh;
-            mesh.castShadow = true;
-            if (mesh.material) {
-              (mesh.material as THREE.Material).side = THREE.DoubleSide;
-            }
-          }
-        });
-
-        // Scale to fit torso region (will be refined by P2.4/P2.5)
-        const box = new THREE.Box3().setFromObject(model);
-        const size = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z);
-        const scale = 2.0 / maxDim;
-        model.scale.setScalar(scale);
-
-        sceneRef.current.add(model);
-        garment3DModelRef.current = model; // track 3D model for anchoring
-
-        // Dummy mesh reference for compatibility with existing position/scale code
-        const dummyGeo = new THREE.BoxGeometry(0.01, 0.01, 0.01);
-        const dummyMat = new THREE.MeshBasicMaterial({ visible: false });
-        const dummyMesh = new THREE.Mesh(dummyGeo, dummyMat);
-        model.add(dummyMesh);
-        garmentMeshRef.current = dummyMesh;
-      }
-
-      const garmentName = file.name.replace(/\.[^/.]+$/, "") + " (3D)";
-      const newGarment = { name: garmentName, dataUrl: glbUrl };
-      const updatedSaved = [...savedGarments, newGarment];
-      setSavedGarments(updatedSaved);
-      try {
-        localStorage.setItem("virtualfit-saved-garments", JSON.stringify(updatedSaved));
-      } catch {
-        console.warn("Failed to save garment to localStorage");
-      }
-
-      setUploadProgress(100);
-      setGen3DStatus('completed');
-      setStatus(`✅ 3D model "${file.name}" loaded!`);
-    } catch (err: unknown) {
-      setGen3DStatus('failed');
-      setStatus(`3D generation failed: ${err instanceof Error ? err.message : "Unknown"}`);
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
-      setGen3DProgress(0);
-    }
-  }, [savedGarments]);
-  END 3D upload handler */
 
   // Switch to a garment from the gallery
   const switchGarment = useCallback((index: number) => {
