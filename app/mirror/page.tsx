@@ -24,10 +24,10 @@ export default function MirrorPage() {
 
 function MirrorContent() {
   const searchParams = useSearchParams();
-  // Default to demo t-shirt GLB; ?garment=<url> overrides; ?garment=none disables.
+  // ?garment=<url> overrides; ?garment=none disables. (`?garmentTexture=` was
+  // removed in Phase 7.2 along with the 2D flat-overlay path.)
   const garmentParam = searchParams.get('garment');
   const garmentGlbUrl = garmentParam === 'none' ? null : (garmentParam || '/models/demo-tshirt.glb');
-  const garmentTextureUrl = searchParams.get('garmentTexture');
   const [garment3DStatus, setGarment3DStatus] = useState<'none' | 'loading' | 'loaded' | 'error'>('none');
   const [garment3DProvider, setGarment3DProvider] = useState<string | null>(null);
   // CLEAN VIEW: hides 30+ status chips/indicators by default (UX fix 2026-04-20).
@@ -297,7 +297,7 @@ function MirrorContent() {
     track('mirror_loaded', {
       viewport: `${window.innerWidth}x${window.innerHeight}`,
       mobile: /Mobi|Android/i.test(navigator.userAgent),
-      garmentParam: garmentGlbUrl ? 'glb' : garmentTextureUrl ? 'texture' : 'none',
+      garmentParam: garmentGlbUrl ? 'glb' : 'none',
     });
     try {
       const saved = localStorage.getItem("virtualfit-saved-garments");
@@ -1397,8 +1397,9 @@ function MirrorContent() {
   // path that violated the GLB-only vision). Use `?garment=<glb-url>` instead.
 
   // Upload garment image → rembg → texture on 3D mesh
-  // Phase 7.3: dead `handleUpload` (2D upload → /api/remove-bg → textured plane)
-  // removed. Endpoint never existed; only `handleUpload3D` is wired to the UI.
+  // Phase 7.3: dead `handleUpload` (2D upload to background-removal endpoint
+  // → textured plane) removed. Endpoint never existed; only `handleUpload3D`
+  // is wired to the UI.
 
   // 3D upload: send image to Worker proxy → get GLB → load into scene
   const handleUpload3D = useCallback(async (file: File) => {
