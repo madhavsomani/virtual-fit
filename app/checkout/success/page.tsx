@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { analytics } from "../../lib/analytics";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -12,9 +11,6 @@ function SuccessContent() {
   const [isRealPayment, setIsRealPayment] = useState(false);
 
   useEffect(() => {
-    // Track checkout completion
-    analytics.checkoutComplete(plan || "unknown", sessionId || "none");
-    
     // Detect if this is a real Stripe session (not our mock)
     // Real Stripe sessions start with cs_test_ or cs_live_
     if (sessionId && (sessionId.startsWith("cs_test_") || sessionId.startsWith("cs_live_"))) {

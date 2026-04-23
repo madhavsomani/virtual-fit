@@ -1,8 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { analytics } from "../lib/analytics";
+import { useState } from "react";
 
 const plans = [
   {
@@ -58,10 +57,6 @@ const plans = [
 export default function PricingPage() {
   const [loading, setLoading] = useState<string | null>(null);
 
-  useEffect(() => {
-    analytics.pageView("/pricing");
-  }, []);
-
   const handleCheckout = async (plan: string) => {
     if (plan === "Free") {
       window.location.href = "/mirror";
@@ -69,7 +64,6 @@ export default function PricingPage() {
     }
     
     setLoading(plan);
-    analytics.checkoutStart(plan);
     
     // Check for Stripe Payment Links (env vars)
     const creatorLink = process.env.NEXT_PUBLIC_STRIPE_CREATOR_LINK;
@@ -91,7 +85,6 @@ export default function PricingPage() {
       `Set NEXT_PUBLIC_STRIPE_${plan.toUpperCase()}_LINK in environment to activate.\n\n` +
       `Meanwhile, join the waitlist on /mirror to be notified when ${plan} goes live.`
     );
-    analytics.checkoutStart(`${plan}_unavailable`);
     window.location.href = "/?waitlist=1";
   };
 

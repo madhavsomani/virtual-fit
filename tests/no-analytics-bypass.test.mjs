@@ -1,9 +1,10 @@
-// Phase 7.23 — guard: the `virtualfit_analytics` localStorage key must
-// only be touched through the typed `analytics` module in `lib/analytics.ts`.
-// Before this guard, `/redeem` bypassed the typed `track()` API and wrote
-// a `code_redeemed` event that was never in the `EventName` union and had
-// zero readers anywhere — pure write-only orphan event polluting the
-// visitor's localStorage. Catch any future bypass.
+// Phase 7.24 — guard: the entire `lib/analytics.ts` module was deleted
+// after Phases 7.19, 7.22, and 7.23 confirmed it had four typed writers
+// and zero consumers anywhere. The `virtualfit_analytics` localStorage key
+// is **dead** — no file in the repo should touch it ever again. If real
+// analytics are needed, wire to a real provider (Plausible/PostHog/Umami)
+// in one place — not a localStorage ritual that produces orphan write-only
+// events.
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -19,9 +20,6 @@ import { dirname, resolve, join } from "node:path";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 const APP = resolve(ROOT, "app");
-
-// Only the analytics module itself is allowed to touch the storage key.
-const ALLOWLIST = new Set([resolve(ROOT, "app/lib/analytics.ts")]);
 
 function walk(dir) {
   const out = [];
@@ -44,34 +42,47 @@ function strip(src) {
   return s;
 }
 
-test("only lib/analytics.ts touches the 'virtualfit_analytics' localStorage key", () => {
+test("app/lib/analytics.ts stays deleted", () => {
+  assert.ok(
+    !existsSync(resolve(APP, "lib/analytics.ts")),
+    "Phase 7.24 deleted the analytics module (zero consumers — every " +
+      "visitor paid JSON.parse + JSON.stringify + localStorage.setItem on " +
+      "every page view in service of nothing). If you bring analytics " +
+      "back, wire to a real provider, not a localStorage ritual.",
+  );
+});
+
+test("no app/** file references the dead 'virtualfit_analytics' storage key", () => {
   const offenders = [];
   for (const p of walk(APP).filter((p) => /\.(ts|tsx|mjs|js)$/.test(p))) {
-    if (ALLOWLIST.has(p)) continue;
     const c = strip(readFileSync(p, "utf8"));
     if (/['"`]virtualfit_analytics['"`]/.test(c)) offenders.push(p);
   }
   assert.deepEqual(
     offenders,
     [],
-    "Use `analytics.track(...)` from app/lib/analytics.ts. Direct " +
-      "localStorage writes to 'virtualfit_analytics' bypass the typed " +
-      "EventName surface and produce orphan write-only events.",
+    "'virtualfit_analytics' is dead. Use a real analytics provider.",
   );
 });
 
-test("no app/** route emits a 'code_redeemed' analytics event", () => {
-  // The `code_redeemed` event was a write-only orphan with zero readers.
-  // If we ever surface redemptions, add it to EventName + use track().
+test("no app/** file imports from a deleted analytics module", () => {
+  const offenders = [];
+  for (const p of walk(APP).filter((p) => /\.(ts|tsx|mjs|js)$/.test(p))) {
+    const c = strip(readFileSync(p, "utf8"));
+    if (/from\s+['"][^'"]*lib\/analytics['"]/.test(c)) offenders.push(p);
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    "lib/analytics was deleted in Phase 7.24. Don't re-import it.",
+  );
+});
+
+test("no app/** file emits a 'code_redeemed' analytics event", () => {
   const offenders = [];
   for (const p of walk(APP).filter((p) => /\.(ts|tsx|mjs|js)$/.test(p))) {
     const c = strip(readFileSync(p, "utf8"));
     if (/['"`]code_redeemed['"`]/.test(c)) offenders.push(p);
   }
-  assert.deepEqual(
-    offenders,
-    [],
-    "code_redeemed was a write-only orphan event. Add it to EventName " +
-      "in lib/analytics.ts and call analytics.track() if you need it.",
-  );
+  assert.deepEqual(offenders, [], "code_redeemed was a write-only orphan event.");
 });

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { analytics } from "./lib/analytics";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -16,7 +15,6 @@ export default function Home() {
   const [waitlistCount, setWaitlistCount] = useState(0);
 
   useEffect(() => {
-    analytics.pageView("/");
     // Load waitlist count for social proof badge
     const waitlistData = localStorage.getItem("waitlist");
     if (waitlistData) {
@@ -57,8 +55,7 @@ export default function Home() {
       const existing = JSON.parse(localStorage.getItem("waitlist") || "[]");
       existing.push({ email, revenue, wouldPay, killerFeature, timestamp: new Date().toISOString() });
       localStorage.setItem("waitlist", JSON.stringify(existing));
-      
-      analytics.waitlistSignup(email);
+
       setSubmitted(true);
       setEmail("");
     } catch (err) {
@@ -67,7 +64,6 @@ export default function Home() {
       const existing = JSON.parse(localStorage.getItem("waitlist") || "[]");
       existing.push({ email, revenue, wouldPay, killerFeature, timestamp: new Date().toISOString() });
       localStorage.setItem("waitlist", JSON.stringify(existing));
-      analytics.waitlistSignup(email);
       setSubmitted(true);
       setEmail("");
     }

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { analytics } from "../lib/analytics";
 
 interface Code {
   code: string;
@@ -28,7 +27,6 @@ export default function RedeemPage() {
   const [validCodes, setValidCodes] = useState<Code[]>([]);
 
   useEffect(() => {
-    analytics.pageView("/redeem");
     // Load valid codes from public JSON
     fetch("/codes.json")
       .then((res) => res.json())
@@ -86,12 +84,9 @@ export default function RedeemPage() {
     redemptions.push(redemption);
     localStorage.setItem("redemptions", JSON.stringify(redemptions));
 
-    // Phase 7.23: removed direct `virtualfit_analytics` localStorage write
-    // for `code_redeemed` event. The event was never in the typed
-    // `EventName` union and had zero readers anywhere — pure write-only
-    // orphan polluting the visitor's localStorage. If we ever want to
-    // surface redemption counts, add `code_redeemed` to `EventName` in
-    // `lib/analytics.ts` and call `analytics.track(...)` instead.
+    // Phase 7.24: analytics module deleted entirely. If we ever want to
+    // surface redemption counts, wire to a real analytics provider
+    // (Plausible/PostHog/Umami) at one place — not a localStorage ritual.
 
     setSuccess(redemption);
     setLoading(false);
