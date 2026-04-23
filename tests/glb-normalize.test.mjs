@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { computeNormalizeScale } from "../app/lib/glb-normalize.mjs";
+import { computeNormalizeScale } from "../app/lib/glb-normalize-pure.mjs";
 
 test("scales unit cube to targetSize 2 → factor 2", () => {
   assert.equal(computeNormalizeScale(1.0, 2.0), 2.0);

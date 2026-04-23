@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { imageToGlbPipelineImpl } from "../app/lib/image-to-glb.mjs";
+import { imageToGlbPipelineImpl } from "../app/lib/image-to-glb-pure.mjs";
 
 const FAKE_INPUT = { size: 1234, type: "image/jpeg" };
 const SEGMENTED_PNG = { size: 999, _tag: "segmented" };
