@@ -730,7 +730,6 @@ function MirrorContent() {
   const garment3DModelRef = useRef<THREE.Group | null>(null); // set when a GLB is loaded
   const uploadAbortRef = useRef<AbortController | null>(null);
   const lastUploadFileRef = useRef<File | null>(null);
-  const defaultTextureRef = useRef<THREE.Texture | null>(null);
 
   // Pose refs
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -754,7 +753,7 @@ function MirrorContent() {
   const detectGestureRef = useRef<((landmarks: PoseResultLandmark[]) => void) | null>(null);
 
   // Build a 3D shirt mesh (curved plane that wraps around body)
-  const createShirtMesh = useCallback((texture?: THREE.Texture) => {
+  const createShirtMesh = useCallback(() => {
     // Create a curved plane geometry (simulates shirt wrapping around torso)
     const widthSegs = 20;
     const heightSegs = 20;
@@ -773,60 +772,24 @@ function MirrorContent() {
     }
     geo.computeVertexNormals();
 
-    // Use texture if provided, otherwise use default texture or fallback to solid color
-    const textureToUse = texture || defaultTextureRef.current;
-    let mat: THREE.Material;
-    if (textureToUse) {
-      mat = new THREE.MeshStandardMaterial({
-        map: textureToUse,
-        side: THREE.DoubleSide,
-        transparent: true,
-        alphaTest: 0.1,
-      });
-    } else {
-      // Fallback to solid yellow if texture not loaded yet
-      mat = new THREE.MeshStandardMaterial({
-        color: 0xf0c040,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.85,
-        roughness: 0.8,
-        metalness: 0.0,
-      });
-    }
+    // Phase 7.5: anchor never renders, so we ship a tiny invisible material
+    // and skip the texture/color decision tree entirely.
+    const mat: THREE.Material = new THREE.MeshBasicMaterial({
+      visible: false,
+      transparent: true,
+      opacity: 0,
+      side: THREE.DoubleSide,
+    });
 
     const mesh = new THREE.Mesh(geo, mat);
     mesh.visible = false;
     return mesh;
   }, []);
 
-  // Load default yellow shirt texture
-  const loadDefaultTexture = useCallback(() => {
-    const loader = new THREE.TextureLoader();
-    loader.load(
-      "/garments/yellow-shirt-nobg.png",
-      (texture) => {
-        texture.colorSpace = THREE.SRGBColorSpace;
-        defaultTextureRef.current = texture;
-        // Update existing mesh if it exists with solid color fallback
-        if (garmentMeshRef.current && sceneRef.current) {
-          const oldMesh = garmentMeshRef.current;
-          const newMesh = createShirtMesh(texture);
-          newMesh.visible = oldMesh.visible;
-          newMesh.position.copy(oldMesh.position);
-          newMesh.scale.copy(oldMesh.scale);
-          newMesh.rotation.copy(oldMesh.rotation);
-          sceneRef.current.remove(oldMesh);
-          oldMesh.geometry.dispose();
-          (oldMesh.material as THREE.Material).dispose();
-          sceneRef.current.add(newMesh);
-          garmentMeshRef.current = newMesh;
-        }
-      },
-      undefined,
-      (err) => console.warn("Failed to load default shirt texture:", err)
-    );
-  }, [createShirtMesh]);
+  // Phase 7.5: `loadDefaultTexture` removed. The 2D anchor mesh is forced
+  // invisible (Phase 7.2), so eagerly fetching `/garments/yellow-shirt-nobg.png`
+  // on every mount was pure dead bandwidth. The default visual is now the GLB
+  // (`/models/demo-tshirt.glb`) loaded via the URL-param effect.
 
   // Init Three.js scene
   const initThree = useCallback((canvas: HTMLCanvasElement, w: number, h: number) => {
@@ -853,10 +816,7 @@ function MirrorContent() {
     cameraRef.current = camera;
     rendererRef.current = renderer;
     garmentMeshRef.current = shirt;
-
-    // Load the default yellow shirt texture
-    loadDefaultTexture();
-  }, [createShirtMesh, loadDefaultTexture]);
+  }, [createShirtMesh]);
 
   // Update garment mesh position based on body landmarks
   const updateGarmentFromLandmarks = useCallback((landmarks: PoseResultLandmark[]) => {
@@ -1603,7 +1563,7 @@ function MirrorContent() {
         
         if (sceneRef.current && garmentMeshRef.current) {
           const oldMesh = garmentMeshRef.current;
-          const newMesh = createShirtMesh(texture);
+          const newMesh = createShirtMesh();
           newMesh.visible = oldMesh.visible;
           newMesh.position.copy(oldMesh.position);
           newMesh.scale.copy(oldMesh.scale);
@@ -1791,7 +1751,7 @@ function MirrorContent() {
         
         if (sceneRef.current && garmentMeshRef.current) {
           const oldMesh = garmentMeshRef.current;
-          const newMesh = createShirtMesh(texture);
+          const newMesh = createShirtMesh();
           newMesh.visible = oldMesh.visible;
           newMesh.position.copy(oldMesh.position);
           newMesh.scale.copy(oldMesh.scale);
@@ -6990,7 +6950,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 sceneRef.current.remove(garmentMeshRef.current);
                 garmentMeshRef.current.geometry.dispose();
                 (garmentMeshRef.current.material as THREE.Material).dispose();
-                const newMesh = createShirtMesh(defaultTextureRef.current || undefined);
+                const newMesh = createShirtMesh();
                 sceneRef.current.add(newMesh);
                 garmentMeshRef.current = newMesh;
                 garmentTextureRef.current = null;
