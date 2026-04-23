@@ -29,12 +29,36 @@ test("no Tailscale URL anywhere in app/* source", () => {
   const offenders = [];
   for (const p of SOURCE_FILES) {
     const txt = readFileSync(p, "utf8");
-    if (/tail367e9e|\.ts\.net/.test(txt)) offenders.push(p);
+    if (/tail367e9e|\.ts\.net|tail[a-z0-9]+\./.test(txt)) offenders.push(p);
   }
   assert.deepEqual(
     offenders,
     [],
     `Tailscale URLs leaked into client code: ${offenders.join(", ")}`,
+  );
+});
+
+test("no localhost/127.0.0.1 URL in shipped app/* source", () => {
+  // The spirit of the HARD RULE is "no personal-machine URLs reach the
+  // client." Hardcoded http://localhost or 127.0.0.1 is exactly that. Comments
+  // (// or /* */) and string-literal docs are stripped before scanning.
+  const offenders = [];
+  for (const p of SOURCE_FILES) {
+    let txt = readFileSync(p, "utf8");
+    // Strip /* ... */ block comments and // line comments.
+    txt = txt.replace(/\/\*[\s\S]*?\*\//g, "");
+    txt = txt
+      .split("\n")
+      .map((l) => l.replace(/\/\/.*$/, ""))
+      .join("\n");
+    if (/https?:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?\b/.test(txt)) {
+      offenders.push(p);
+    }
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    `Personal-machine URLs (localhost/127.0.0.1) hardcoded in app/: ${offenders.join(", ")}`,
   );
 });
 
