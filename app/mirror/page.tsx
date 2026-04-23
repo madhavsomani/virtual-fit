@@ -7,6 +7,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { smoothScalar } from "./smoothing-utils";
 import { computeBodyPitch } from "./body-metrics.js";
 import { track } from "../lib/telemetry";
+import { formatRelativeAgo } from "../lib/format-relative";
 import { detectLeftSwipeIntent, detectRightSwipeIntent, detectGestureCooldownWindow } from "./gesture-intent";
 import useBodyAnchor from "../hooks/useBodyAnchor";
 import { imageToGlbPipeline } from "../lib/image-to-glb";
@@ -30,6 +31,9 @@ function MirrorContent() {
   const garmentGlbUrl = garmentParam === 'none' ? null : (garmentParam || '/models/demo-tshirt.glb');
   const [garment3DStatus, setGarment3DStatus] = useState<'none' | 'loading' | 'loaded' | 'error'>('none');
   const [garment3DProvider, setGarment3DProvider] = useState<string | null>(null);
+  // Phase 7.15: surface when the locally-cached GLB was generated. Reads
+  // `virtualfit-glb-ts` (previously a dead write).
+  const [garment3DGeneratedAt, setGarment3DGeneratedAt] = useState<string | null>(null);
   // CLEAN VIEW: hides 30+ status chips/indicators by default (UX fix 2026-04-20).
   // Persisted in localStorage so power users keep their preference.
   const [cleanView, setCleanView] = useState<boolean>(() => {
@@ -1340,6 +1344,7 @@ function MirrorContent() {
         garment3DModelRef.current = model;
         setGarment3DStatus('loaded');
         setGarment3DProvider(localStorage.getItem('virtualfit-glb-provider') || '3D');
+        setGarment3DGeneratedAt(localStorage.getItem('virtualfit-glb-ts'));
         setStatus('✅ 3D garment loaded! Move around to see it track your body.');
       },
       undefined,
@@ -1443,6 +1448,7 @@ function MirrorContent() {
 
       setGarment3DStatus('loaded');
       setGarment3DProvider(`trellis+${method}`);
+      setGarment3DGeneratedAt(new Date().toISOString());
       setUploadProgress(100);
       setStatus(`✨ 3D mesh ready! Move around to see it follow you.`);
       track('upload_succeeded', { mode: '3d', durationMs: Date.now() - t0, provider: `trellis+${method}` });
@@ -6659,7 +6665,10 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           border: `1px solid ${garment3DStatus === 'loaded' ? 'rgba(16,185,129,0.3)' : garment3DStatus === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(108,92,231,0.3)'}`,
         }}>
           {garment3DStatus === 'loading' && '🔄 Loading 3D garment...'}
-          {garment3DStatus === 'loaded' && `🟢 3D garment active (${garment3DProvider || 'loaded'})`}
+          {garment3DStatus === 'loaded' && (() => {
+            const ago = formatRelativeAgo(garment3DGeneratedAt);
+            return `🟢 3D garment active (${garment3DProvider || 'loaded'})${ago ? ` · generated ${ago}` : ''}`;
+          })()}
           {garment3DStatus === 'error' && (
             <>
               🔴 3D service busy — garment must be 3D, re-upload as GLB.{' '}
