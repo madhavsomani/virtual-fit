@@ -945,8 +945,10 @@ function MirrorContent() {
     
     // Apply shoulder tilt as Z-rotation
     mesh.rotation.z = sp.tilt + garmentRotation;
-    
-    mesh.visible = showGarment;
+
+    // Phase 7.2: GLB-only render. The curved plane is an invisible transform
+    // anchor; only the GLB (`garment3DModelRef`) is shown to the user.
+    mesh.visible = false;
 
     // Also position the 3D GLB model if loaded
     const model3D = garment3DModelRef.current;
@@ -1391,42 +1393,8 @@ function MirrorContent() {
     );
   }, [garmentGlbUrl, cameraOn]);
 
-  // Load garment texture from URL param (?garmentTexture=<url>) for mock/flat overlay
-  useEffect(() => {
-    if (!garmentTextureUrl || !cameraOn || !sceneRef.current || !garmentMeshRef.current) return;
-    
-    setGarment3DStatus('loading');
-    setStatus('🖼️ Loading garment image...');
-    
-    const loader = new THREE.TextureLoader();
-    loader.load(
-      garmentTextureUrl,
-      (texture) => {
-        texture.colorSpace = THREE.SRGBColorSpace;
-        if (garmentMeshRef.current && sceneRef.current) {
-          const oldMesh = garmentMeshRef.current;
-          const newMesh = createShirtMesh(texture);
-          newMesh.visible = oldMesh.visible;
-          newMesh.position.copy(oldMesh.position);
-          newMesh.scale.copy(oldMesh.scale);
-          newMesh.rotation.copy(oldMesh.rotation);
-          sceneRef.current.remove(oldMesh);
-          oldMesh.geometry.dispose();
-          (oldMesh.material as THREE.Material).dispose();
-          sceneRef.current.add(newMesh);
-          garmentMeshRef.current = newMesh;
-        }
-        setGarment3DStatus('loaded');
-        setGarment3DProvider('mock (flat overlay)');
-        setStatus('✅ Garment loaded as flat overlay. Add MESHY_API_KEY for real 3D.');
-      },
-      undefined,
-      () => {
-        setGarment3DStatus('error');
-        setStatus('❌ Failed to load garment image');
-      }
-    );
-  }, [garmentTextureUrl, cameraOn, createShirtMesh]);
+  // Phase 7.2: `?garmentTexture=` URL param removed (was a 2D flat-overlay
+  // path that violated the GLB-only vision). Use `?garment=<glb-url>` instead.
 
   // Upload garment image → rembg → texture on 3D mesh
   const handleUpload = useCallback(async (file: File) => {
