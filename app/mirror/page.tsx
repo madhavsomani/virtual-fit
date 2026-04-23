@@ -726,7 +726,8 @@ function MirrorContent() {
   const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const garmentMeshRef = useRef<THREE.Mesh | null>(null);
-  const garmentTextureRef = useRef<THREE.Texture | null>(null);
+  // Phase 7.7: `garmentTextureRef` removed (no consumers — last writer was
+  // the misleading "Default Shirt" reset button, now rewired to load the GLB).
   const garment3DModelRef = useRef<THREE.Group | null>(null); // set when a GLB is loaded
   const uploadAbortRef = useRef<AbortController | null>(null);
   const lastUploadFileRef = useRef<File | null>(null);
@@ -1331,10 +1332,7 @@ function MirrorContent() {
           sceneRef.current.remove(garment3DModelRef.current);
           garment3DModelRef.current = null;
         }
-        // Hide default 2D garment mesh
-        if (garmentMeshRef.current) {
-          garmentMeshRef.current.visible = false;
-        }
+        // (anchor is invisible per Phase 7.2 — nothing to hide here)
 
         const model = normalizeGlb(gltf);
 
@@ -6829,19 +6827,33 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           <button onClick={() => setUse3DGeneration(!use3DGeneration)} ... />
           */}
 
-          {/* Reset to default yellow shirt */}
+          {/* Reset to demo GLB (Phase 7.7 — was a misleading 2D-anchor reset) */}
           <button
             onClick={() => {
-              if (sceneRef.current && garmentMeshRef.current) {
-                sceneRef.current.remove(garmentMeshRef.current);
-                garmentMeshRef.current.geometry.dispose();
-                (garmentMeshRef.current.material as THREE.Material).dispose();
-                const newMesh = createShirtMesh();
-                sceneRef.current.add(newMesh);
-                garmentMeshRef.current = newMesh;
-                garmentTextureRef.current = null;
-                setStatus("Default yellow shirt loaded");
-              }
+              if (!sceneRef.current) return;
+              setStatus('🔄 Reloading demo 3D garment...');
+              const loader = new GLTFLoader();
+              loader.load(
+                '/models/demo-tshirt.glb',
+                (gltf) => {
+                  if (!sceneRef.current) return;
+                  if (garment3DModelRef.current) {
+                    sceneRef.current.remove(garment3DModelRef.current);
+                    garment3DModelRef.current = null;
+                  }
+                  const model = normalizeGlb(gltf);
+                  sceneRef.current.add(model);
+                  garment3DModelRef.current = model;
+                  setGarment3DStatus('loaded');
+                  setGarment3DProvider('demo');
+                  setStatus('✅ Demo 3D garment reloaded.');
+                },
+                undefined,
+                (err) => {
+                  console.error('Demo GLB reload failed:', err);
+                  setStatus(`❌ Failed to reload demo: ${err instanceof Error ? err.message : 'unknown'}`);
+                },
+              );
             }}
             style={{
               padding: "12px 24px", fontSize: 16, fontWeight: 600,
@@ -6849,7 +6861,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               borderRadius: 10, cursor: "pointer",
             }}
           >  
-            👕 Default Shirt
+            👕 Reset to Demo
           </button>
 
           {/* Screenshot button */}
