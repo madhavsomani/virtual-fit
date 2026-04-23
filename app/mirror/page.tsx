@@ -54,10 +54,12 @@ function MirrorContent() {
   const totalFramesRef = useRef(0);
   const [cameraOn, setCameraOn] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [prefer3D, setPrefer3D] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return localStorage.getItem('mirror.preferredMode') !== '2d';
-  });
+  // Phase 7.25: removed dead `prefer3D` state + `mirror.preferredMode`
+  // localStorage key. The 3D/2D toggle JSX was already wrapped in
+  // `{false && ...}` (Phase 1.2 — 3D-only enforced by hard-rule), but
+  // the state pair + storage-key reader were still alive on every mount
+  // for zero functional readers. Vision is 3D-only — there is no "prefer"
+  // to express.
   const cancel3DCountRef = useRef(0);
   const [uploadProgress, setUploadProgress] = useState(0);
   // 3D generation state — DISABLED until HF Inference TripoSR is configured (Phase 7.10: Meshy/paid removed)
@@ -6813,24 +6815,9 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             </button>
           )}
 
-          {/* 3D/2D mode toggle removed Phase1.2 — 3D-only enforced */}
-          {false && !uploading && (
-            <button
-              onClick={() => {
-                const next = !prefer3D;
-                setPrefer3D(next);
-                localStorage.setItem('mirror.preferredMode', next ? '3d' : '2d');
-                setStatus(next ? '🧊 3D mode — uploads generate a 3D mesh (~10s)' : '🖼️ Fast 2D mode — instant overlay');
-              }}
-              style={{
-                padding: "8px 14px", fontSize: 12, fontWeight: 600,
-                background: prefer3D ? "#10b981" : "#27272a",
-                color: "#fff", border: "none", borderRadius: 8, cursor: "pointer",
-              }}
-            >
-              {prefer3D ? "🧊 3D" : "🖼️ 2D"}
-            </button>
-          )}
+          {/* Phase 7.25: 3D/2D mode toggle deleted entirely (was a {false && ...}
+              dead-JSX block keeping the `prefer3D` state alive for nothing).
+              3D-only is enforced by hard-rule — there is no toggle. */}
 
           {/* 3D Generation toggle — HIDDEN until HF Inference TripoSR is configured (Phase 7.10: Meshy/paid removed)
           <button onClick={() => setUse3DGeneration(!use3DGeneration)} ... />
