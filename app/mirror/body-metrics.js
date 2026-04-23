@@ -320,3 +320,56 @@ export function computeDepthScale(input) {
   const raw = 1.0 - avgZ * 0.4;
   return clamp(raw, 0.7, 1.3);
 }
+
+/**
+ * Phase 6.1 — Compute body pitch (X-axis lean forward/back) in radians.
+ *
+ * MediaPipe gives us per-landmark Z (depth, in image-width units, negative =
+ * closer to camera). When the user leans forward, shoulders move closer to
+ * the camera relative to hips → average shoulder.z < average hip.z. We map
+ * that depth delta along the torso into a pitch angle: atan2(ΔZ, torsoLengthY).
+ *
+ * Sign convention: leaning FORWARD → positive pitch (head toward camera).
+ * Returns 0 when hip data is missing/invisible (graceful) and `null` when
+ * shoulders themselves fail visibility — matches `computeAnchor` semantics.
+ *
+ * @param {{
+ *   leftShoulder?: LandmarkPoint|null,
+ *   rightShoulder?: LandmarkPoint|null,
+ *   leftHip?: LandmarkPoint|null,
+ *   rightHip?: LandmarkPoint|null,
+ *   minVisibility?: number,
+ * }} input
+ * @returns {number|null} radians; null when shoulders unreliable
+ */
+export function computeBodyPitch(input) {
+  const ls = input?.leftShoulder;
+  const rs = input?.rightShoulder;
+  const minV = Number.isFinite(input?.minVisibility) ? input.minVisibility : 0.5;
+  if (!ls || !rs) return null;
+  const lsv = Number.isFinite(ls.visibility) ? ls.visibility : 1;
+  const rsv = Number.isFinite(rs.visibility) ? rs.visibility : 1;
+  if (lsv < minV || rsv < minV) return null;
+
+  const shoulderZ = ((Number.isFinite(ls.z) ? ls.z : 0) + (Number.isFinite(rs.z) ? rs.z : 0)) / 2;
+  const shoulderY = ((Number.isFinite(ls.y) ? ls.y : 0) + (Number.isFinite(rs.y) ? rs.y : 0)) / 2;
+
+  const lh = input?.leftHip;
+  const rh = input?.rightHip;
+  // No hips = no torso vector = no pitch reference. Return 0 (upright) gracefully.
+  if (!lh || !rh) return 0;
+  const lhv = Number.isFinite(lh.visibility) ? lh.visibility : 1;
+  const rhv = Number.isFinite(rh.visibility) ? rh.visibility : 1;
+  if (lhv < minV || rhv < minV) return 0;
+
+  const hipZ = ((Number.isFinite(lh.z) ? lh.z : 0) + (Number.isFinite(rh.z) ? rh.z : 0)) / 2;
+  const hipY = ((Number.isFinite(lh.y) ? lh.y : 0) + (Number.isFinite(rh.y) ? rh.y : 0)) / 2;
+
+  // Shoulder closer to camera (more negative Z) than hips → leaning forward → +pitch.
+  const zDelta = hipZ - shoulderZ; // > 0 when leaning forward
+  const torsoLengthY = Math.max(0.05, Math.abs(hipY - shoulderY));
+
+  // Clamp to ±60° to avoid wild values when MediaPipe Z is noisy.
+  const raw = Math.atan2(zDelta, torsoLengthY);
+  return clamp(raw, -Math.PI / 3, Math.PI / 3);
+}

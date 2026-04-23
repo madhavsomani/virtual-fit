@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { smoothScalar } from "./smoothing-utils";
+import { computeBodyPitch } from "./body-metrics.js";
 import { track } from "../lib/telemetry";
 import { detectLeftSwipeIntent, detectRightSwipeIntent, detectGestureCooldownWindow } from "./gesture-intent";
 import useBodyAnchor from "../hooks/useBodyAnchor";
@@ -734,7 +735,7 @@ function MirrorContent() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const poseLandmarkerRef = useRef<any>(null);
   const animFrameRef = useRef<number>(0);
-  const smoothPos = useRef({ x: 0, y: 0, w: 0, h: 0, tilt: 0, depth: 1, yaw: 0, ready: false });
+  const smoothPos = useRef({ x: 0, y: 0, w: 0, h: 0, tilt: 0, depth: 1, yaw: 0, pitch: 0, ready: false });
 
   // Body anchor hook (Phase1.3): exposes computeAnchor/updateMeshPosition for body-relative GLB anchoring.
   // Currently used as a parallel signal source; the legacy smoothPos block remains the active positioner.
@@ -903,6 +904,14 @@ function MirrorContent() {
     // Mirror flip: visual left = anatomical right
     const yawAngle = Math.atan2(shoulderZDelta, Math.max(0.05, Math.abs(rs.x - ls.x)));
 
+    // Phase 6.1: pitch (X-axis lean) from shoulder→hip Z-delta along torso vector.
+    const pitchAngle = computeBodyPitch({
+      leftShoulder:  { x: ls.x, y: ls.y, z: ls.z, visibility: ls.visibility },
+      rightShoulder: { x: rs.x, y: rs.y, z: rs.z, visibility: rs.visibility },
+      leftHip:  { x: lh.x, y: lh.y, z: lh.z, visibility: lh.visibility },
+      rightHip: { x: rh.x, y: rh.y, z: rh.z, visibility: rh.visibility },
+    }) ?? 0;
+
     // Smooth position using smoothing-utils
     // Use higher smoothing in smooth mode
     const alpha = smoothMode ? 0.15 : 0.3;
@@ -910,7 +919,7 @@ function MirrorContent() {
     const depthAlpha = smoothMode ? 0.1 : 0.2;
     
     if (!smoothPos.current.ready) {
-      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, depth: clampedDepth, yaw: yawAngle, ready: true };
+      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, depth: clampedDepth, yaw: yawAngle, pitch: pitchAngle, ready: true };
     } else {
       smoothPos.current.x = smoothScalar(smoothPos.current.x, shoulderCX, { alpha }) ?? shoulderCX;
       smoothPos.current.y = smoothScalar(smoothPos.current.y, shoulderCY, { alpha }) ?? shoulderCY;
@@ -919,6 +928,7 @@ function MirrorContent() {
       smoothPos.current.tilt = smoothScalar(smoothPos.current.tilt, tiltAngle, { alpha: tiltAlpha }) ?? tiltAngle;
       smoothPos.current.depth = smoothScalar(smoothPos.current.depth, clampedDepth, { alpha: depthAlpha, min: 0.7, max: 1.3 }) ?? clampedDepth;
       smoothPos.current.yaw = smoothScalar(smoothPos.current.yaw, yawAngle, { alpha: tiltAlpha }) ?? yawAngle;
+      smoothPos.current.pitch = smoothScalar(smoothPos.current.pitch, pitchAngle, { alpha: tiltAlpha }) ?? pitchAngle;
     }
 
     const sp = smoothPos.current;
@@ -970,6 +980,8 @@ function MirrorContent() {
       model3D.rotation.z = sp.tilt + garmentRotation;
       // Phase2.3: Y-axis yaw — GLB rotates as user turns body (Iron Man suit effect).
       model3D.rotation.y = sp.yaw;
+      // Phase 6.1: X-axis pitch — GLB leans with the body (forward/back).
+      model3D.rotation.x = sp.pitch;
       model3D.visible = showGarment;
     }
 
