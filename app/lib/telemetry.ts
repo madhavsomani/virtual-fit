@@ -1,7 +1,12 @@
 /**
  * Lightweight client-side telemetry for VirtualFit.
- * Events are stored in localStorage and batched to /api/waitlist (reused endpoint).
- * No external dependencies. ~1KB.
+ *
+ * Phase 7.12: removed the network sink. Previously `track()` POSTed every
+ * event to `/api/waitlist` with a fake `telemetry@<sessionId>` email and
+ * smuggled the event into the `revenue` / `killerFeature` fields. That
+ * abused the waitlist endpoint, exfiltrated a persistent UUID without
+ * consent, and 404-stormed (no such route exists in this repo). Local-only
+ * now: a 200-event ring buffer in localStorage for user-side debug.
  */
 
 const STORAGE_KEY = 'virtualfit_telemetry';
@@ -60,19 +65,7 @@ export function track(event: string, props?: Record<string, string | number | bo
 
   saveEvent(evt);
 
-  // Fire-and-forget to server (reuse waitlist endpoint as telemetry sink)
-  try {
-    fetch('/api/waitlist', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: `telemetry@${getSessionId().slice(0, 8)}`,
-        source: 'telemetry',
-        revenue: event,
-        killerFeature: JSON.stringify(props || {}),
-      }),
-    }).catch(() => {}); // silent fail
-  } catch {}
+  // Phase 7.12: network sink removed (see file header). Local-only.
 
   // Console in dev
   if (process.env.NODE_ENV === 'development') {
