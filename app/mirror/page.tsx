@@ -1397,67 +1397,8 @@ function MirrorContent() {
   // path that violated the GLB-only vision). Use `?garment=<glb-url>` instead.
 
   // Upload garment image → rembg → texture on 3D mesh
-  const handleUpload = useCallback(async (file: File) => {
-    // Check upload limit
-    if (savedGarments.length >= 10) {
-      setStatus("⚠️ Upload limit reached (10 garments). Delete some to add more.");
-      return;
-    }
-    setUploading(true);
-    setUploadProgress(10);
-    setStatus("🔄 Uploading image...");
-    try {
-      const formData = new FormData();
-      formData.append("image", file);
-      setUploadProgress(30);
-      setStatus("🔄 Removing background...");
-      const res = await fetch("/api/remove-bg", { method: "POST", body: formData });
-      setUploadProgress(60);
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error || "Failed");
-
-      setUploadProgress(80);
-      setStatus("🔄 Loading texture...");
-      // Load as Three.js texture
-      const loader = new THREE.TextureLoader();
-      const texture = await new Promise<THREE.Texture>((resolve, reject) => {
-        loader.load(data.imageUrl, resolve, undefined, reject);
-      });
-      texture.colorSpace = THREE.SRGBColorSpace;
-      setUploadProgress(90);
-
-      // Replace mesh with textured version
-      if (sceneRef.current && garmentMeshRef.current) {
-        sceneRef.current.remove(garmentMeshRef.current);
-        garmentMeshRef.current.geometry.dispose();
-        (garmentMeshRef.current.material as THREE.Material).dispose();
-
-        const newMesh = createShirtMesh(texture);
-        sceneRef.current.add(newMesh);
-        garmentMeshRef.current = newMesh;
-        garmentTextureRef.current = texture;
-      }
-
-      // Save to localStorage for persistence
-      const garmentName = file.name.replace(/\.[^/.]+$/, ""); // remove extension
-      const newGarment = { name: garmentName, dataUrl: data.imageUrl };
-      const updatedSaved = [...savedGarments, newGarment];
-      setSavedGarments(updatedSaved);
-      try {
-        localStorage.setItem("virtualfit-saved-garments", JSON.stringify(updatedSaved));
-      } catch {
-        console.warn("Failed to save garment to localStorage");
-      }
-
-      setUploadProgress(100);
-      setStatus(`✅ "${file.name}" loaded and saved!`);
-    } catch (err: unknown) {
-      setStatus(`Upload failed: ${err instanceof Error ? err.message : "Unknown"}`);
-    } finally {
-      setUploading(false);
-      setUploadProgress(0);
-    }
-  }, [createShirtMesh, savedGarments]);
+  // Phase 7.3: dead `handleUpload` (2D upload → /api/remove-bg → textured plane)
+  // removed. Endpoint never existed; only `handleUpload3D` is wired to the UI.
 
   // 3D upload: send image to Worker proxy → get GLB → load into scene
   const handleUpload3D = useCallback(async (file: File) => {
@@ -1564,7 +1505,7 @@ function MirrorContent() {
       setUploading(false);
       setUploadProgress(0);
     }
-  }, [handleUpload, savedGarments, createShirtMesh]);
+  }, [savedGarments]);
 
 
   // Switch to a garment from the gallery
