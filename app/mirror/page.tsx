@@ -6,7 +6,10 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { smoothScalar } from "./smoothing-utils";
 import { computeBodyPitch } from "./body-metrics.js";
-import { track } from "../lib/telemetry";
+// Phase 7.26: removed `track` import — lib/telemetry.ts deleted entirely
+// (5 call sites here were the module's only callers; getAll/session/clear
+// had zero readers anywhere). When real telemetry is needed, wire to one
+// server-side provider in one place.
 import { formatRelativeAgo } from "../lib/format-relative";
 import { detectLeftSwipeIntent, detectRightSwipeIntent, detectGestureCooldownWindow } from "./gesture-intent";
 import useBodyAnchor from "../hooks/useBodyAnchor";
@@ -300,11 +303,7 @@ function MirrorContent() {
 
   // Load saved garments from localStorage on mount
   useEffect(() => {
-    track('mirror_loaded', {
-      viewport: `${window.innerWidth}x${window.innerHeight}`,
-      mobile: /Mobi|Android/i.test(navigator.userAgent),
-      garmentParam: garmentGlbUrl ? 'glb' : 'none',
-    });
+    // Phase 7.26: removed `track('mirror_loaded', {...})` — telemetry deleted.
     try {
       const saved = localStorage.getItem("virtualfit-saved-garments");
       if (saved) {
@@ -1373,8 +1372,9 @@ function MirrorContent() {
       return;
     }
     lastUploadFileRef.current = file;
-    const t0 = Date.now();
-    track('upload_started', { mode: '3d', fileSize: file.size, fileType: file.type });
+    // Phase 7.26: removed `track('upload_started', {...})` — telemetry deleted.
+    // (`t0 = Date.now()` was only used as duration baseline for the dead
+    // `track` calls; removed too.)
     setUploading(true);
     setUploadProgress(5);
     setStatus('🧊 Isolating garment…');
@@ -1453,7 +1453,7 @@ function MirrorContent() {
       setGarment3DGeneratedAt(new Date().toISOString());
       setUploadProgress(100);
       setStatus(`✨ 3D mesh ready! Move around to see it follow you.`);
-      track('upload_succeeded', { mode: '3d', durationMs: Date.now() - t0, provider: `trellis+${method}` });
+      // Phase 7.26: removed `track('upload_succeeded', {...})` — telemetry deleted.
 
       // Save to gallery
       const garmentName = file.name.replace(/\.[^/.]+$/, '') + ' (3D)';
@@ -1464,7 +1464,7 @@ function MirrorContent() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       console.error('3D upload failed:', msg);
-      track('upload_failed', { mode: '3d', reason: msg.slice(0, 100), durationMs: Date.now() - t0 });
+      // Phase 7.26: removed `track('upload_failed', {...})` — telemetry deleted.
       setStatus(`❌ 3D failed: ${msg}. Garment must be 3D — re-upload as GLB.`);
       setGarment3DStatus('error');
       // No 2D fallback — Phase1.2 strip
@@ -6802,7 +6802,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 setUploadProgress(0);
                 setStatus('Cancelled. Upload again to retry.');
                 cancel3DCountRef.current++;
-                track('upload_cancelled', { cancelCount: cancel3DCountRef.current });
+                // Phase 7.26: removed `track('upload_cancelled', ...)` — telemetry deleted.
                 // Phase1.2: removed auto-fallback to 2D mode after repeated cancels.
               }}
               style={{
