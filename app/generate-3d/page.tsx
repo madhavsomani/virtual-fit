@@ -3,21 +3,21 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 
-// Direct call to self-hosted Hunyuan3D-2 proxy (Tailscale Funnel public URL)
-// Set NEXT_PUBLIC_TRIPOSR_URL to override (e.g. when running locally vs prod)
+// Phase 7.8: Tailscale URL fallback removed (HARD RULE: no Tailscale URLs in
+// client code). `NEXT_PUBLIC_TRIPOSR_URL` is now mandatory; if unset, the page
+// renders a clear configuration error instead of silently calling a personal
+// dev machine.
 const API_URL =
-  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_TRIPOSR_URL) ||
-  "https://macbook-air.tail367e9e.ts.net:8445/generate3d";
+  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_TRIPOSR_URL) || "";
 
 interface GenerationState {
   status: "idle" | "uploading" | "processing" | "done" | "error";
   progress: number;
   error?: string;
   resultUrl?: string;
-  textureUrl?: string;
   provider?: string;
-  isMock?: boolean;
-  mockMessage?: string;
+  // Phase 7.8: `isMock`/`textureUrl`/`mockMessage` removed — they powered a 2D
+  // flat-overlay fallback that violated HARD RULE #1 (no 2D garment rendering).
 }
 
 export default function Generate3DPage() {
@@ -40,6 +40,11 @@ export default function Generate3DPage() {
     setState({ status: "uploading", progress: 10 });
 
     try {
+      if (!API_URL) {
+        throw new Error(
+          "NEXT_PUBLIC_TRIPOSR_URL is not configured. Set it to your TRELLIS / Hunyuan3D-2 endpoint URL before using this page.",
+        );
+      }
       // Send the file directly as multipart/form-data to our self-hosted service
       const fd = new FormData();
       fd.append("image", file);
@@ -79,7 +84,6 @@ export default function Generate3DPage() {
         progress: 100,
         resultUrl: glbUrl,
         provider: `${provider} (${cache})`,
-        isMock: false,
       });
       return;
     } catch (err) {
@@ -139,7 +143,6 @@ export default function Generate3DPage() {
               progress: 100,
               resultUrl: pollData.glbUrl,
               provider: data.provider,
-              isMock: false,
             });
             return;
           }
@@ -150,25 +153,23 @@ export default function Generate3DPage() {
         throw new Error("Generation timed out after 5 minutes");
       }
 
-      // Immediate result (HF, Replicate, or Mock)
+      // Immediate result (HF, Replicate). Phase 7.8: removed `isMock` flat-overlay
+      // branch that returned a 2D texture URL — violated HARD RULE #1 (no 2D).
       if (data.isMock) {
-        setState({
-          status: "done",
-          progress: 100,
-          textureUrl: data.textureUrl,
-          provider: "mock",
-          isMock: true,
-          mockMessage: data.message,
-        });
-      } else {
-        setState({
-          status: "done",
-          progress: 100,
-          resultUrl: data.glbUrl,
-          provider: data.provider,
-          isMock: false,
-        });
+        throw new Error(
+          "Backend returned a mock/2D response. The vision is GLB-only — " +
+            "configure a real Hunyuan3D-2 / TRELLIS endpoint.",
+        );
       }
+      if (!data.glbUrl) {
+        throw new Error("Backend response missing glbUrl.");
+      }
+      setState({
+        status: "done",
+        progress: 100,
+        resultUrl: data.glbUrl,
+        provider: data.provider,
+      });
     } catch (err) {
       setState({
         status: "error",
@@ -355,25 +356,15 @@ export default function Generate3DPage() {
               ✓
             </div>
             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
-              {state.isMock ? "🖼️ Image Ready (Flat Overlay)" : "🧊 3D Model Ready!"}
+              🧊 3D Model Ready!
             </h2>
             <p style={{ color: "#71717a", fontSize: 14, marginBottom: 8 }}>
-              {state.isMock
-                ? "No 3D API configured — using your image as a flat overlay"
-                : `Generated via ${state.provider || 'AI'}`}
+              {`Generated via ${state.provider || 'AI'}`}
             </p>
-            {state.isMock && state.mockMessage && (
-              <p style={{ color: "#f59e0b", fontSize: 12, marginBottom: 16 }}>
-                {state.mockMessage}
-              </p>
-            )}
 
             <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
               <Link
-                href={state.isMock
-                  ? `/mirror?garmentTexture=${encodeURIComponent(state.textureUrl || "")}`
-                  : `/mirror?garment=local`
-                }
+                href="/mirror?garment=local"
                 style={{ textDecoration: "none" }}
               >
                 <button
