@@ -13,7 +13,7 @@
  */
 
 import http from 'node:http';
-import { hfGenerate3D } from './app/lib/generate-3d.js';
+import { hfGenerate3D } from './lib/generate-3d.js';
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
 

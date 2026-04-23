@@ -67,3 +67,17 @@ test("app/** source is free of paid-API references", () => {
 test("api-server.ts (dev tool) is free of paid-API references", () => {
   scan([resolve(ROOT, "api-server.ts")], "api-server.ts");
 });
+
+test("root lib/ (server-only modules) is free of paid-API references", () => {
+  // Phase 7.13: `generate-3d.ts` lives at root `lib/` now (see file move).
+  // Scan it (and any future siblings) for the same paid-API patterns.
+  const ROOT_LIB = resolve(ROOT, "lib");
+  let files = [];
+  try {
+    files = walk(ROOT_LIB).filter((p) => /\.(ts|tsx|mjs|js)$/.test(p));
+  } catch {
+    // dir may not exist if nothing has been moved yet — skip silently.
+    return;
+  }
+  scan(files, "lib/**");
+});
