@@ -2,8 +2,8 @@
 // Calls the public microsoft/TRELLIS HF Space directly. Free ZeroGPU A10G tier.
 //
 // Endpoints (Gradio queue API):
-//   POST {SPACE}/gradio_api/queue/join     — enqueue with input image
-//   GET  {SPACE}/gradio_api/queue/data?session_hash=… — SSE stream of results
+//   POST {SPACE}/queue/join     — enqueue with input image
+//   GET  {SPACE}/queue/data?session_hash=… — SSE stream of results
 //
 // We expose a Promise-based wrapper that uploads the segmented garment PNG
 // and resolves with a downloadable .glb URL.
@@ -50,7 +50,7 @@ async function uploadFile(
   const fd = new FormData();
   const named = new File([file], "garment.png", { type: file.type || "image/png" });
   fd.append("files", named);
-  const res = await fetch(`${base}/gradio_api/upload`, {
+  const res = await fetch(`${base}/upload`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
     body: fd,
@@ -95,7 +95,7 @@ export async function generateGlbFromImage(
   const fnIndex = info.image_to_3d_fn_index;
   const sessionHash = makeSessionHash();
 
-  const joinRes = await fetch(`${base}/gradio_api/queue/join`, {
+  const joinRes = await fetch(`${base}/queue/join`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -142,7 +142,7 @@ async function fetchSpaceInfo(
 ): Promise<SpaceInfo> {
   const cached = infoCache.get(base);
   if (cached) return cached;
-  const res = await fetch(`${base}/gradio_api/info`, {
+  const res = await fetch(`${base}/info`, {
     headers: { Authorization: `Bearer ${token}` },
     signal,
   });
@@ -177,7 +177,7 @@ async function streamUntilGlb(
   signal: AbortSignal | undefined,
   timeoutMs: number,
 ): Promise<string> {
-  const url = `${base}/gradio_api/queue/data?session_hash=${sessionHash}`;
+  const url = `${base}/queue/data?session_hash=${sessionHash}`;
   const ac = new AbortController();
   const timer = setTimeout(() => ac.abort(new Error("TRELLIS stream timeout")), timeoutMs);
   if (signal) {
