@@ -95,88 +95,14 @@ export default function Generate3DPage() {
       return;
     }
 
-    // (legacy multi-provider code below kept for reference, never reached)
-    try {
-      // Convert file to base64 for the API
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-      const imageBase64 = await base64Promise;
-
-      setState({ status: "processing", progress: 20 });
-
-      // Call our multi-provider API
-      const res = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64 }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(err.error || `API error: ${res.status}`);
-      }
-
-      const data = await res.json();
-
-      // If Meshy (async) — poll for completion
-      if (data.status === "pending" && data.pollUrl) {
-        setState({ status: "processing", progress: 30, provider: data.provider });
-        const maxPolls = 60; // 5 min at 5s intervals
-        for (let i = 0; i < maxPolls; i++) {
-          await new Promise((r) => setTimeout(r, 5000));
-          const pollRes = await fetch(data.pollUrl);
-          const pollData = await pollRes.json();
-          
-          setState({
-            status: "processing",
-            progress: 30 + (pollData.progress || 0) * 0.6,
-            provider: data.provider,
-          });
-
-          if (pollData.status === "completed" && pollData.glbUrl) {
-            setState({
-              status: "done",
-              progress: 100,
-              resultUrl: pollData.glbUrl,
-              provider: data.provider,
-            });
-            return;
-          }
-          if (pollData.status === "failed") {
-            throw new Error(pollData.error || "Generation failed");
-          }
-        }
-        throw new Error("Generation timed out after 5 minutes");
-      }
-
-      // Immediate result (HF, Replicate). Phase 7.8: removed `isMock` flat-overlay
-      // branch that returned a 2D texture URL — violated HARD RULE #1 (no 2D).
-      if (data.isMock) {
-        throw new Error(
-          "Backend returned a mock/2D response. The vision is GLB-only — " +
-            "configure a real Hunyuan3D-2 / TRELLIS endpoint.",
-        );
-      }
-      if (!data.glbUrl) {
-        throw new Error("Backend response missing glbUrl.");
-      }
-      setState({
-        status: "done",
-        progress: 100,
-        resultUrl: data.glbUrl,
-        provider: data.provider,
-      });
-    } catch (err) {
-      setState({
-        status: "error",
-        progress: 0,
-        error: err instanceof Error ? err.message : "Generation failed",
-      });
-    }
+    // Phase 7.27: removed ~83 lines of unreachable "legacy multi-provider"
+    // code. The block was preserved "for reference" immediately after a
+    // `return;` so JS control flow never reached it. It hard-coded a
+    // Meshy/Replicate polling pattern (HARD RULE #2: no paid APIs) and
+    // revived the `data.isMock` 2D-texture path Phase 7.8 already rejected
+    // (HARD RULE #1). The live HF/Hunyuan3D-2 multipart path above is the
+    // single supported flow — no fallback, no "reuse this for the next
+    // provider."
   };
 
   const reset = () => {
