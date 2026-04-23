@@ -192,7 +192,7 @@ function MirrorContent() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [helpPage, setHelpPage] = useState(1);
-  const [garmentLoading, setGarmentLoading] = useState(false);
+  // Phase 7.6: `garmentLoading` removed — no async texture load anymore.
   const [showGarmentInfo, setShowGarmentInfo] = useState(false);
   const [viewportAspect, setViewportAspect] = useState<'auto' | '9:16' | '4:5' | '1:1'>('auto');
   const [zoomLevel, setZoomLevel] = useState(1.0);
@@ -1543,70 +1543,13 @@ function MirrorContent() {
     }
     
     setStatus(`Loading ${garment.name}...`);
-    
-    // Fade out current garment
-    if (garmentMeshRef.current) {
-      const mat = garmentMeshRef.current.material as THREE.MeshBasicMaterial;
-      if (mat.opacity !== undefined) {
-        mat.opacity = 0.3; // dim during transition
-        mat.needsUpdate = true;
-      }
-    }
-    
-    setGarmentLoading(true);
-    const loader = new THREE.TextureLoader();
-    loader.load(
-      garment.path,
-      (texture) => {
-        setGarmentLoading(false);
-        texture.colorSpace = THREE.SRGBColorSpace;
-        
-        if (sceneRef.current && garmentMeshRef.current) {
-          const oldMesh = garmentMeshRef.current;
-          const newMesh = createShirtMesh();
-          newMesh.visible = oldMesh.visible;
-          newMesh.position.copy(oldMesh.position);
-          newMesh.scale.copy(oldMesh.scale);
-          newMesh.rotation.copy(oldMesh.rotation);
-          
-          // Start new mesh at low opacity
-          const newMat = newMesh.material as THREE.MeshBasicMaterial;
-          newMat.opacity = 0.3;
-          
-          sceneRef.current.remove(oldMesh);
-          oldMesh.geometry.dispose();
-          (oldMesh.material as THREE.Material).dispose();
-          
-          sceneRef.current.add(newMesh);
-          garmentMeshRef.current = newMesh;
-          garmentTextureRef.current = texture;
-          
-          // Fade in new garment
-          let fadeStep = 0;
-          const fadeIn = () => {
-            fadeStep += 0.1;
-            if (fadeStep < garmentOpacity) {
-              newMat.opacity = 0.3 + fadeStep * 0.7;
-              newMat.needsUpdate = true;
-              requestAnimationFrame(fadeIn);
-            } else {
-              newMat.opacity = garmentOpacity;
-              newMat.needsUpdate = true;
-            }
-          };
-          requestAnimationFrame(fadeIn);
-          
-          setStatus(`✅ ${garment.name} loaded!`);
-        }
-      },
-      undefined,
-      (err) => {
-        setGarmentLoading(false);
-        console.error("Failed to load garment:", err);
-        setStatus(`Failed to load ${garment.name}`);
-      }
-    );
-  }, [createShirtMesh]);
+
+    // Phase 7.6: dead TextureLoader+fade tail removed. The 2D anchor mesh is
+    // invisible (Phase 7.2), so loading PNGs and fading them onto it was a
+    // no-op since the GLB pipeline shipped. Per-item GLB swap is a Phase 8
+    // problem; until then the gallery selection just updates state + status.
+    setStatus(`👕 ${garment.name} selected. (Per-item 3D garments coming soon — currently showing the demo GLB.)`);
+  }, []);
 
   // Session duration timer
   useEffect(() => {
@@ -1733,48 +1676,17 @@ function MirrorContent() {
     setSelectedGarment(-1); // deselect preset gallery
     setStatus(`Loading ${garment.name}...`);
 
-    // Detect 3D garment (GLB data URI or URL) — skip if 3D not supported yet
+    // Detect 3D garment (GLB data URI or URL)
     const is3D = garment.name.includes('(3D)') || garment.dataUrl.startsWith('data:model/gltf-binary') || garment.dataUrl.endsWith('.glb');
 
     if (is3D) {
-      setStatus(`3D garments not yet supported. Delete and re-upload as 2D.`);
+      setStatus(`3D garments not yet supported via gallery swap. Re-upload via the 3D upload button.`);
       return;
     }
 
-    // 2D texture path (original)
-    
-    const loader = new THREE.TextureLoader();
-    loader.load(
-      garment.dataUrl,
-      (texture) => {
-        texture.colorSpace = THREE.SRGBColorSpace;
-        
-        if (sceneRef.current && garmentMeshRef.current) {
-          const oldMesh = garmentMeshRef.current;
-          const newMesh = createShirtMesh();
-          newMesh.visible = oldMesh.visible;
-          newMesh.position.copy(oldMesh.position);
-          newMesh.scale.copy(oldMesh.scale);
-          newMesh.rotation.copy(oldMesh.rotation);
-          
-          sceneRef.current.remove(oldMesh);
-          oldMesh.geometry.dispose();
-          (oldMesh.material as THREE.Material).dispose();
-          
-          sceneRef.current.add(newMesh);
-          garmentMeshRef.current = newMesh;
-          garmentTextureRef.current = texture;
-          
-          setStatus(`✅ ${garment.name} loaded!`);
-        }
-      },
-      undefined,
-      (err) => {
-        console.error("Failed to load saved garment:", err);
-        setStatus(`Failed to load ${garment.name}`);
-      }
-    );
-  }, [createShirtMesh, savedGarments]);
+    // Phase 7.6: dead 2D TextureLoader path removed (anchor is invisible).
+    setStatus(`👕 ${garment.name} selected. (Per-item 3D garments coming soon — currently showing the demo GLB.)`);
+  }, [savedGarments]);
 
   // Delete a saved garment
   const deleteSavedGarment = useCallback((index: number) => {
@@ -6413,33 +6325,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           </div>
         )}
 
-        {/* Loading indicator */}
-        {garmentLoading && (
-          <div style={{
-            position: "absolute",
-            top: "50%", left: "50%",
-            transform: "translate(-50%, -50%)",
-            background: "rgba(0,0,0,0.8)",
-            padding: "16px 24px",
-            borderRadius: 12,
-            color: "#fff",
-            fontSize: 14,
-            fontWeight: 600,
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            zIndex: 100,
-          }}>
-            <div style={{
-              width: 20, height: 20,
-              border: "3px solid rgba(255,255,255,0.3)",
-              borderTop: "3px solid #fff",
-              borderRadius: "50%",
-              animation: "spin 1s linear infinite",
-            }} />
-            Loading...
-          </div>
-        )}
+        {/* Loading indicator removed (Phase 7.6 — gallery selection is sync) */}
 
         {/* Current garment name badge */}
         {cameraOn && GARMENTS[selectedGarment] && (
