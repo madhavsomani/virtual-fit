@@ -1,15 +1,19 @@
 /**
  * Lightweight dev API server for 3D generation.
  * Run alongside `next dev` for local development.
- * 
+ *
  * Usage: node --import tsx api-server.ts
  * Or:    npx tsx api-server.ts
- * 
- * Env: MESHY_API_KEY, HF_TOKEN (optional), PORT (default 3001)
+ *
+ * Env: HF_TOKEN (optional), PORT (default 3001)
+ *
+ * Phase 7.10: Meshy (paid API) removed. HF Inference TripoSR is the only
+ * supported backend in this dev server now. For TRELLIS-grade quality, point
+ * the client at a self-hosted HF Space via NEXT_PUBLIC_TRIPOSR_URL instead.
  */
 
 import http from 'node:http';
-import { meshyCreateTask, meshyPollTask, hfGenerate3D } from './app/lib/generate-3d.js';
+import { hfGenerate3D } from './app/lib/generate-3d.js';
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
 
@@ -32,7 +36,7 @@ async function parseMultipart(req: http.IncomingMessage): Promise<{ imageBuffer:
     req.on('end', () => {
       const body = Buffer.concat(chunks);
       const ct = req.headers['content-type'] || '';
-      
+
       // Simple multipart boundary extraction
       const boundaryMatch = ct.match(/boundary=(.+)/);
       if (!boundaryMatch) {
@@ -41,18 +45,18 @@ async function parseMultipart(req: http.IncomingMessage): Promise<{ imageBuffer:
       }
       const boundary = boundaryMatch[1];
       const parts = body.toString('binary').split(`--${boundary}`);
-      
+
       for (const part of parts) {
         if (part.includes('name="image"')) {
           const headerEnd = part.indexOf('\r\n\r\n');
           if (headerEnd === -1) continue;
           const fileData = part.slice(headerEnd + 4).replace(/\r\n$/, '');
           const imageBuffer = Buffer.from(fileData, 'binary');
-          
+
           const ctMatch = part.match(/Content-Type:\s*(\S+)/i);
-          resolve({ 
-            imageBuffer, 
-            contentType: ctMatch?.[1] || 'image/png' 
+          resolve({
+            imageBuffer,
+            contentType: ctMatch?.[1] || 'image/png'
           });
           return;
         }
@@ -64,8 +68,9 @@ async function parseMultipart(req: http.IncomingMessage): Promise<{ imageBuffer:
 }
 
 const server = http.createServer(async (req, res) => {
+  // Note: localhost in this URL is OK — server-side only (request parsing).
   const url = new URL(req.url || '/', `http://localhost:${PORT}`);
-  
+
   if (req.method === 'OPTIONS') {
     cors(res);
     res.writeHead(204);
@@ -74,54 +79,32 @@ const server = http.createServer(async (req, res) => {
   }
 
   try {
-    // POST /api/generate-3d — start generation
+    // POST /api/generate-3d — HF TripoSR (synchronous, returns GLB data URI)
     if (req.method === 'POST' && url.pathname === '/api/generate-3d') {
       const { imageBuffer, contentType } = await parseMultipart(req);
-      
-      // Convert to data URI for APIs that need a URL
-      // For Meshy, we'd need to host it temporarily — for now use base64
       const base64 = imageBuffer.toString('base64');
       const dataUri = `data:${contentType};base64,${base64}`;
-      
-      const provider = process.env.MESHY_API_KEY ? 'meshy' : 'huggingface';
-      
-      if (provider === 'meshy') {
-        // Meshy needs a real URL — for dev, use the data URI (Meshy supports it)
-        const { taskId } = await meshyCreateTask(dataUri);
-        json(res, 200, { taskId, provider: 'meshy' });
-      } else {
-        const result = await hfGenerate3D(dataUri);
-        json(res, 200, { 
-          taskId: result.taskId, 
-          provider: 'huggingface',
-          glbUrl: result.glbUrl 
-        });
-      }
+
+      const result = await hfGenerate3D(dataUri);
+      json(res, 200, {
+        taskId: result.taskId,
+        provider: 'huggingface',
+        glbUrl: result.glbUrl,
+      });
       return;
     }
 
-    // GET /api/generate-3d/status?taskId=...&provider=...
+    // GET /api/generate-3d/status — HF completes synchronously, no polling.
     if (req.method === 'GET' && url.pathname === '/api/generate-3d/status') {
-      const taskId = url.searchParams.get('taskId');
-      const provider = url.searchParams.get('provider');
-      
-      if (!taskId || !provider) {
-        json(res, 400, { error: 'taskId and provider required' });
-        return;
-      }
-
-      if (provider === 'meshy') {
-        const result = await meshyPollTask(taskId);
-        json(res, 200, result);
-      } else {
-        json(res, 400, { error: 'HF tasks complete immediately, no polling needed' });
-      }
+      json(res, 400, {
+        error: 'HF TripoSR completes synchronously \u2014 no polling endpoint.',
+      });
       return;
     }
 
     // Health
     if (url.pathname === '/health') {
-      json(res, 200, { ok: true, meshy: !!process.env.MESHY_API_KEY, hf: !!process.env.HF_TOKEN });
+      json(res, 200, { ok: true, hf: !!process.env.HF_TOKEN });
       return;
     }
 
@@ -134,6 +117,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`3D Generation API running on http://localhost:${PORT}`);
-  console.log(`  Meshy: ${process.env.MESHY_API_KEY ? '✅ configured' : '❌ not set (set MESHY_API_KEY)'}`);
-  console.log(`  HF:    ${process.env.HF_TOKEN ? '✅ configured' : '⚠️  no token (free tier, rate-limited)'}`);
+  console.log(`  HF:    ${process.env.HF_TOKEN ? '\u2705 configured' : '\u26a0\ufe0f  no token (free tier, rate-limited)'}`);
 });

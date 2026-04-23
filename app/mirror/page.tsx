@@ -56,7 +56,7 @@ function MirrorContent() {
   });
   const cancel3DCountRef = useRef(0);
   const [uploadProgress, setUploadProgress] = useState(0);
-  // 3D generation state — DISABLED until MESHY_API_KEY is configured
+  // 3D generation state — DISABLED until HF Inference TripoSR is configured (Phase 7.10: Meshy/paid removed)
   // const [gen3DStatus, setGen3DStatus] = useState<string>('idle');
   // const [gen3DProgress, setGen3DProgress] = useState(0);
   // const [use3DGeneration, setUse3DGeneration] = useState(false);
@@ -6823,7 +6823,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             </button>
           )}
 
-          {/* 3D Generation toggle — HIDDEN until MESHY_API_KEY is configured
+          {/* 3D Generation toggle — HIDDEN until HF Inference TripoSR is configured (Phase 7.10: Meshy/paid removed)
           <button onClick={() => setUse3DGeneration(!use3DGeneration)} ... />
           */}
 
