@@ -7,7 +7,7 @@
 **Body:**
 I built a virtual try-on mirror that overlays 3D clothing on your body in real-time using just a webcam.
 
-**Live demo:** https://wonderful-sky-0513a3610.7.azurestaticapps.net/mirror-3d
+**Live demo:** https://wonderful-sky-0513a3610.7.azurestaticapps.net/mirror
 
 **How it works:**
 - MediaPipe Pose detects 33 body landmarks at 30fps
@@ -53,7 +53,7 @@ Currently free to try. Looking for feedback from anyone who's tried virtual try-
 **Title:** Show HN: I made a virtual fitting room that works in your browser
 
 **Body:**
-**Demo:** https://wonderful-sky-0513a3610.7.azurestaticapps.net/mirror-3d
+**Demo:** https://wonderful-sky-0513a3610.7.azurestaticapps.net/mirror
 
 - Open the link
 - Allow camera access

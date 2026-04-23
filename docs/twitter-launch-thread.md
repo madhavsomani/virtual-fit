@@ -30,7 +30,7 @@ Here's the breakdown 🧵
 ## Full Thread (8 tweets)
 
 ### Tweet 1 (Hook — use one of the above)
-[ATTACH: screen-recording-hero.mp4 — 15 sec GIF of you using /mirror-3d]
+[ATTACH: screen-recording-hero.mp4 — 15 sec GIF of you using /mirror]
 
 ### Tweet 2 (The Problem)
 The online fashion industry loses $550B/year to returns.
@@ -92,7 +92,7 @@ Thinking about open-sourcing this widget. Would that be useful?
 Try it yourself:
 
 🪞 2D try-on: [link]/mirror
-🎮 3D try-on: [link]/mirror-3d
+🎮 3D try-on: [link]/mirror
 🎨 Upload your own: [link]/generate-3d
 
 Feedback welcome — especially on:
@@ -120,7 +120,7 @@ Like this? RT tweet 1 to help others find it.
 
 | Tweet | Filename | Description | Duration/Size |
 |-------|----------|-------------|---------------|
-| 1 | `screen-recording-hero.mp4` | You using /mirror-3d, waving | 15 sec |
+| 1 | `screen-recording-hero.mp4` | You using /mirror, waving | 15 sec |
 | 3 | `screenshot-mobile-desktop.png` | Split screen comparison | 1200x675 |
 | 4 | `diagram-landmarks.png` | Body tracking visualization | 1200x675 |
 | 5 | `screen-recording-generate3d.mp4` | Upload → 3D → try-on | 20 sec |

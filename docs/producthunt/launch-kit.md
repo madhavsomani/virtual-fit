@@ -79,7 +79,7 @@ Need 5 images at 1270x760px:
 
 ✅ Screenshots captured from live site on 2026-04-20:
 
-1. **Hero shot** - `/mirror-3d` with camera prompt UI
+1. **Hero shot** - `/mirror` with camera prompt UI
    - Filename: `ph-hero-mirror3d.png`
    - Shows: Mirror 3D Test header, "Start Camera" button, Upload button
 

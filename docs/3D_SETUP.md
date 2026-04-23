@@ -67,7 +67,7 @@ User uploads image → /generate-3d page
   - Remove background before uploading (or the API will try)
 
 ### Model doesn't track body
-→ Ensure you're on /mirror (not /mirror-3d which just redirects now)
+→ Ensure you're on /mirror (the canonical 3D try-on with body tracking)
 → Stand back so shoulders + torso are visible
 → Check lighting — MediaPipe needs to see you
 

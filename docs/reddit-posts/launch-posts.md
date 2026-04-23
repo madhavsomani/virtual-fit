@@ -21,7 +21,7 @@ After getting annoyed by online shopping returns, I spent a weekend building Vir
 - Pick a garment from the library (or upload your own)
 - See it overlaid on your body in real-time
 
-**Live demo:** https://wonderful-sky-0513a3610.7.azurestaticapps.net/mirror-3d
+**Live demo:** https://wonderful-sky-0513a3610.7.azurestaticapps.net/mirror
 
 **Tech stack:**
 - Next.js 14 (static export)
@@ -58,7 +58,7 @@ The image-to-3D conversion uses HuggingFace's TripoSR model via their inference 
 Virtual fitting room that works in your browser — try on 3D clothes with your webcam
 
 ### Body
-https://wonderful-sky-0513a3610.7.azurestaticapps.net/mirror-3d
+https://wonderful-sky-0513a3610.7.azurestaticapps.net/mirror
 
 Open the link, allow camera access, and you can try on 3D garments in real-time.
 
@@ -91,7 +91,7 @@ Hey r/webdev,
 
 I built a virtual try-on that overlays 3D clothing on your body using just a webcam. Looking for feedback on the implementation.
 
-**Demo:** https://wonderful-sky-0513a3610.7.azurestaticapps.net/mirror-3d
+**Demo:** https://wonderful-sky-0513a3610.7.azurestaticapps.net/mirror
 
 **Stack:**
 - Next.js 14 with static export (`output: 'export'`)
