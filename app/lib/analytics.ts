@@ -1,18 +1,20 @@
-// Simple client-side analytics tracker for VirtualFit
-// Uses localStorage for persistence (no server needed for static export)
+// Simple client-side analytics tracker for VirtualFit.
+// Uses localStorage for persistence (no server needed for static export).
+//
+// Phase 7.16: pruned to vision-fit. Removed marketplace/widget-embed/retailer
+// convenience methods (`mirrorOpen`, `garmentSelect`, `widgetOpened`,
+// `widgetClosed`, `garmentChanged`, `addToCart`, `retailerSignup`) and their
+// matching `EventName` union members — they had zero callers anywhere in the
+// app and belonged to the old marketplace pivot, not the webcam+3D vision.
+// Consumers verified: page imports of `analytics.{pageView, waitlistSignup,
+// checkoutStart, checkoutComplete}` plus `/admin/stats` raw-read of the
+// `virtualfit_analytics` localStorage key.
 
 type EventName =
   | "page_view"
   | "waitlist_signup"
   | "checkout_start"
-  | "checkout_complete"
-  | "mirror_open"
-  | "garment_select"
-  | "widget_opened"
-  | "widget_closed"
-  | "garment_changed"
-  | "add_to_cart"
-  | "retailer_signup";
+  | "checkout_complete";
 
 interface AnalyticsEvent {
   timestamp: string;
@@ -61,23 +63,19 @@ export function trackEvent(event: EventName, data?: Record<string, string | numb
   }
 }
 
-// Convenience functions
+// Convenience functions — kept narrow on purpose. Add new methods only when
+// a real caller exists, not speculatively.
 export const analytics = {
   pageView: (page: string) => trackEvent("page_view", { page }),
-  waitlistSignup: (email: string) => trackEvent("waitlist_signup", { email: email.slice(0, 3) + "***" }),
+  waitlistSignup: (email: string) =>
+    trackEvent("waitlist_signup", { email: email.slice(0, 3) + "***" }),
   checkoutStart: (plan: string) => trackEvent("checkout_start", { plan }),
-  checkoutComplete: (plan: string, sessionId: string) => trackEvent("checkout_complete", { plan, sessionId }),
-  mirrorOpen: () => trackEvent("mirror_open"),
-  garmentSelect: (garmentId: string) => trackEvent("garment_select", { garmentId }),
-  widgetOpened: (shopId: string) => trackEvent("widget_opened", { shopId }),
-  widgetClosed: (shopId: string) => trackEvent("widget_closed", { shopId }),
-  garmentChanged: (garmentId: string, shopId?: string) => trackEvent("garment_changed", { garmentId, shopId: shopId || '' }),
-  addToCart: (productId: string) => trackEvent("add_to_cart", { productId }),
-  retailerSignup: (shopId: string) => trackEvent("retailer_signup", { shopId }),
-  
-  // Get all tracked events (for debugging/export)
+  checkoutComplete: (plan: string, sessionId: string) =>
+    trackEvent("checkout_complete", { plan, sessionId }),
+
+  // Get all tracked events (for debugging/export by /admin/stats)
   getAll: () => getEvents(),
-  
+
   // Clear all events
   clear: () => {
     if (typeof window !== "undefined") {
