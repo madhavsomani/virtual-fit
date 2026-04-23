@@ -6,9 +6,10 @@
 // `widgetClosed`, `garmentChanged`, `addToCart`, `retailerSignup`) and their
 // matching `EventName` union members — they had zero callers anywhere in the
 // app and belonged to the old marketplace pivot, not the webcam+3D vision.
-// Consumers verified: page imports of `analytics.{pageView, waitlistSignup,
-// checkoutStart, checkoutComplete}` plus `/admin/stats` raw-read of the
-// `virtualfit_analytics` localStorage key.
+// Phase 7.19: `/admin` and `/admin/stats` deleted (security theater + fake
+// uploader). The `virtualfit_analytics` key is still read by `/redeem` and
+// `/build-in-public` for per-visitor debug; `getAll`/`clear` retained for
+// future consumers.
 
 type EventName =
   | "page_view"
@@ -73,7 +74,7 @@ export const analytics = {
   checkoutComplete: (plan: string, sessionId: string) =>
     trackEvent("checkout_complete", { plan, sessionId }),
 
-  // Get all tracked events (for debugging/export by /admin/stats)
+  // Get all tracked events (for debugging/export)
   getAll: () => getEvents(),
 
   // Clear all events

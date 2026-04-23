@@ -207,9 +207,6 @@ export default function RetailerPage() {
             }}>
               <h3 style={{ margin: "0 0 12px", fontSize: 16, fontWeight: 600 }}>🔗 Quick Links</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <a href="/admin" style={{ color: "#6C5CE7", textDecoration: "none", fontSize: 14 }}>
-                  → Manage Garment Inventory
-                </a>
                 <a href="/mirror" style={{ color: "#6C5CE7", textDecoration: "none", fontSize: 14 }}>
                   → Preview Try-On Experience
                 </a>
