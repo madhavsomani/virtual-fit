@@ -69,10 +69,11 @@ function MirrorContent() {
   // to express.
   const cancel3DCountRef = useRef(0);
   const [uploadProgress, setUploadProgress] = useState(0);
-  // 3D generation state — DISABLED until HF Inference TripoSR is configured (Phase 7.10: Meshy/paid removed)
-  // const [gen3DStatus, setGen3DStatus] = useState<string>('idle');
-  // const [gen3DProgress, setGen3DProgress] = useState(0);
-  // const [use3DGeneration, setUse3DGeneration] = useState(false);
+  // Phase 7.34: removed dormant `gen3DStatus`/`gen3DProgress`/`use3DGeneration`
+  // commented-out state (annotated since Phase 7.10). The dedicated
+  // `/generate-3d` route already runs the photo→3D pipeline and persists the
+  // GLB to localStorage; `/mirror` consumes that. An in-place toggle on
+  // `/mirror` would be a redundant second generator UI — don't resurrect.
   const [selectedGarment, setSelectedGarment] = useState(0);
   const [savedGarments, setSavedGarments] = useState<Array<{name: string, dataUrl: string}>>([]);
   const [estimatedSize, setEstimatedSize] = useState<string | null>(null);
@@ -6786,9 +6787,9 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               dead-JSX block keeping the `prefer3D` state alive for nothing).
               3D-only is enforced by hard-rule — there is no toggle. */}
 
-          {/* 3D Generation toggle — HIDDEN until HF Inference TripoSR is configured (Phase 7.10: Meshy/paid removed)
-          <button onClick={() => setUse3DGeneration(!use3DGeneration)} ... />
-          */}
+          {/* Phase 7.34: removed dormant 3D Generation toggle JSX comment.
+              The /generate-3d route owns the photo→3D flow; /mirror consumes
+              its localStorage output. Don't add a second in-place generator UI. */}
 
           {/* Reset to demo GLB (Phase 7.7 — was a misleading 2D-anchor reset) */}
           <button
