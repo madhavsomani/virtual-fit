@@ -28,10 +28,16 @@ export default function RedeemPage() {
   const [validCodes, setValidCodes] = useState<Code[]>([]);
 
   useEffect(() => {
-    // Load valid codes from public JSON
+    // Load valid codes from public JSON.
+    // Phase 7.38: check res.ok and Array.isArray before storing — a CDN
+    // misdeploy or a JSON error envelope (e.g. {"error":"..."}) used to
+    // land in state and crash `validCodes.find` on the next click.
     fetch("/codes.json")
-      .then((res) => res.json())
-      .then((codes) => setValidCodes(codes))
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((codes) => setValidCodes(Array.isArray(codes) ? codes : []))
       .catch(() => setValidCodes([]));
   }, []);
 
@@ -43,7 +49,8 @@ export default function RedeemPage() {
     const normalizedCode = code.trim().toUpperCase();
     
     // Check if code is valid
-    const validCode = validCodes.find((c) => c.code === normalizedCode);
+    const codes = Array.isArray(validCodes) ? validCodes : [];
+    const validCode = codes.find((c) => c.code === normalizedCode);
     if (!validCode) {
       setError("Invalid code. Please check and try again.");
       setLoading(false);
