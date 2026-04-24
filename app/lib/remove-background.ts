@@ -6,6 +6,11 @@
 // Returns a PNG with transparent background.
 //
 // Token: NEXT_PUBLIC_HF_TOKEN (browser-callable; HF read tokens are low-risk).
+//
+// Phase 7.29: the segformer→RMBG fall-through orchestration lives in
+// isolate-garment.mjs (single truth source). isolateGarment() is now a
+// typed forwarder so the coverage-threshold logic isn't maintained twice.
+import { isolateGarmentImpl } from "./isolate-garment.mjs";
 
 const HF_RMBG_URL = "https://api-inference.huggingface.co/models/briaai/RMBG-1.4";
 
@@ -75,15 +80,11 @@ export async function isolateGarment(
   ) => Promise<{ garmentPng: Blob; coverage: number }>,
   opts?: RemoveBackgroundOptions,
 ): Promise<{ png: Blob; method: "segformer" | "rmbg" }> {
-  try {
-    const seg = await segment(input, opts);
-    if (seg.coverage > 0.02) {
-      return { png: seg.garmentPng, method: "segformer" };
-    }
-    // Coverage too low — likely no person in shot. Fall through to RMBG.
-  } catch {
-    // Fall through.
-  }
-  const png = await removeBackground(input, opts);
-  return { png, method: "rmbg" };
+  // Phase 7.29: thin typed wrapper. Real logic lives in
+  // isolate-garment.mjs so node:test and Next compile against the same source.
+  return isolateGarmentImpl(
+    input,
+    (b: Blob | File) => segment(b, opts),
+    (b: Blob | File) => removeBackground(b, opts),
+  ) as Promise<{ png: Blob; method: "segformer" | "rmbg" }>;
 }

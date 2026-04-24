@@ -9,6 +9,13 @@
 // and resolves with a downloadable .glb URL.
 //
 // Token: NEXT_PUBLIC_HF_TOKEN (browser-callable HF read token).
+//
+// Phase 7.29: extractGlbPath() now lives in trellis-helpers.mjs (single
+// truth source). This module just re-exports the typed binding so the
+// recursive .glb-path walker isn't maintained in two places.
+import { extractGlbPath as _extractGlbPath } from "./trellis-helpers.mjs";
+
+export const extractGlbPath: (data: unknown) => string | null = _extractGlbPath;
 
 const TRELLIS_BASE = "https://microsoft-trellis.hf.space";
 
@@ -232,32 +239,4 @@ async function streamUntilGlb(
   }
 }
 
-export function extractGlbPath(data: unknown): string | null {
-  // Recursively scan the Gradio output for the first .glb URL/path.
-  const seen = new Set<unknown>();
-  function walk(x: unknown): string | null {
-    if (!x || seen.has(x)) return null;
-    if (typeof x === "string") {
-      return x.endsWith(".glb") ? x : null;
-    }
-    if (typeof x !== "object") return null;
-    seen.add(x);
-    const obj = x as Record<string, unknown>;
-    if (typeof obj.path === "string" && obj.path.endsWith(".glb")) return obj.path;
-    if (typeof obj.url === "string" && obj.url.endsWith(".glb")) return obj.url;
-    if (typeof obj.name === "string" && obj.name.endsWith(".glb")) return obj.name;
-    if (Array.isArray(x)) {
-      for (const item of x) {
-        const r = walk(item);
-        if (r) return r;
-      }
-    } else {
-      for (const v of Object.values(obj)) {
-        const r = walk(v);
-        if (r) return r;
-      }
-    }
-    return null;
-  }
-  return walk(data);
-}
+// extractGlbPath was deleted in Phase 7.29 — see import at top of file.
