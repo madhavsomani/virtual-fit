@@ -11,6 +11,12 @@ export default function RetailerSignupPage() {
   const [loading, setLoading] = useState(false);
   const [shopId, setShopId] = useState("");
   const [retailerCount, setRetailerCount] = useState(0);
+  // Phase 7.59: brand colour picker (Phase 7.57 wiring) + per-product
+  // snippet builder (Phase 7.56 + 7.58 wiring). Without this UI the
+  // most valuable embed knobs are invisible to retailers without it.
+  const [brandColor, setBrandColor] = useState("#6C5CE7");
+  const [pdpProductId, setPdpProductId] = useState("");
+  const [pdpGarmentImage, setPdpGarmentImage] = useState("");
   const [form, setForm] = useState({
     shopName: "",
     shopUrl: "",
@@ -73,11 +79,26 @@ export default function RetailerSignupPage() {
   data-shop-id="${shopId}"
   data-retailer="${form.shopName}"
   data-position="bottom-right"
-  data-color="#6C5CE7">
+  data-color="${brandColor}">
 <\/script>`;
 
+  // Phase 7.59: per-product snippet — wraps the basic script with the
+  // two embed knobs the iframe consumes (Phase 7.56 add-to-cart CTA
+  // + Phase 7.58 "Try this product on" CTA).
+  const pdpSnippet = `<script
+  src="${embedOrigin}/embed.js"
+  data-shop-id="${shopId}"
+  data-retailer="${form.shopName}"
+  data-position="bottom-right"
+  data-color="${brandColor}"${pdpProductId ? `
+  data-product-id="${pdpProductId}"` : ''}${pdpGarmentImage ? `
+  data-garment-image="${pdpGarmentImage}"` : ''}>
+<\/script>`;
+
+  const iframeExtras = (pdpProductId ? `&productId=${encodeURIComponent(pdpProductId)}` : '')
+    + (pdpGarmentImage ? `&garmentImage=${encodeURIComponent(pdpGarmentImage)}` : '');
   const iframeSnippet = `<iframe
-  src="${embedOrigin}/mirror/?embed=true&shopId=${encodeURIComponent(shopId)}&retailer=${encodeURIComponent(form.shopName)}"
+  src="${embedOrigin}/mirror/?embed=true&shopId=${encodeURIComponent(shopId)}&retailer=${encodeURIComponent(form.shopName)}&primaryColor=${encodeURIComponent(brandColor)}${iframeExtras}"
   width="100%" height="600"
   frameborder="0" allow="camera"
 />`;
@@ -208,6 +229,23 @@ export default function RetailerSignupPage() {
               </div>
             </div>
 
+            {/* Phase 7.59: brand colour picker — wires Phase 7.57 theming.
+                Without this UI a retailer copying the snippet defeats their
+                own theming by re-baking VirtualFit purple. */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={labelStyle}>Brand colour</label>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <input
+                  type="color"
+                  value={brandColor}
+                  onChange={e => setBrandColor(e.target.value)}
+                  style={{ width: 56, height: 40, border: "1px solid #27272a", borderRadius: 8, background: "#09090b", cursor: "pointer", padding: 4 }}
+                />
+                <code style={{ background: "#27272a", padding: "6px 10px", borderRadius: 6, fontSize: 13 }}>{brandColor}</code>
+                <span style={{ color: "#71717a", fontSize: 12 }}>Used for the try-on CTA buttons</span>
+              </div>
+            </div>
+
             {/* What you get */}
             <div style={{ 
               background: "#09090b", 
@@ -290,6 +328,45 @@ export default function RetailerSignupPage() {
                 style={copyBtnStyle}
               >
                 📋 Copy iframe
+              </button>
+            </div>
+
+            {/* Phase 7.59: per-product snippet — surfaces data-product-id
+                + data-garment-image (Phase 7.56 + 7.58 wiring). Without this
+                UI the most valuable embed knobs are invisible to retailers without it. */}
+            <div style={cardStyle}>
+              <h3 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600 }}>
+                Per-product snippet (recommended on PDPs)
+              </h3>
+              <p style={{ color: "#71717a", fontSize: 13, marginBottom: 12 }}>
+                Use this on each product page — the user sees <strong>this</strong> product overlaid and can add it to cart from the iframe.
+              </p>
+              <div style={{ marginBottom: 12 }}>
+                <label style={labelStyle}>Product ID (your SKU)</label>
+                <input
+                  type="text"
+                  value={pdpProductId}
+                  onChange={e => setPdpProductId(e.target.value)}
+                  placeholder="sku-12345"
+                  style={inputStyle}
+                />
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={labelStyle}>Product image URL</label>
+                <input
+                  type="url"
+                  value={pdpGarmentImage}
+                  onChange={e => setPdpGarmentImage(e.target.value)}
+                  placeholder="https://shop.com/images/sku-12345.jpg"
+                  style={inputStyle}
+                />
+              </div>
+              <pre style={codeStyle}>{pdpSnippet}</pre>
+              <button
+                onClick={() => navigator.clipboard?.writeText(pdpSnippet.replace('<\\/script>', '</script>'))}
+                style={copyBtnStyle}
+              >
+                📋 Copy PDP snippet
               </button>
             </div>
 
