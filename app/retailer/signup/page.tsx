@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { safeLoadJson } from "../../lib/safe-storage";
 
 function generateShopId(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Math.random().toString(36).slice(2, 6);
@@ -55,12 +56,12 @@ export default function RetailerSignupPage() {
       // Non-blocking — still show success
     }
 
-    // Save locally
-    try {
-      const shops = JSON.parse(localStorage.getItem('virtualfit-shops') || '[]');
-      shops.push({ ...form, shopId: id, createdAt: new Date().toISOString() });
-      localStorage.setItem('virtualfit-shops', JSON.stringify(shops));
-    } catch {}
+    // Save locally (Phase 7.36: safeLoadJson + Array.isArray guard —
+    // consolidates the previous try/catch into the single-source helper).
+    const loaded = safeLoadJson<unknown>('virtualfit-shops', []);
+    const shops = Array.isArray(loaded) ? loaded : [];
+    shops.push({ ...form, shopId: id, createdAt: new Date().toISOString() });
+    try { localStorage.setItem('virtualfit-shops', JSON.stringify(shops)); } catch {}
 
     setLoading(false);
     setStep(2);

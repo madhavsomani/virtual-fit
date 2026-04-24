@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { safeLoadJson } from "../../lib/safe-storage";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
@@ -16,8 +17,11 @@ function SuccessContent() {
     if (sessionId && (sessionId.startsWith("cs_test_") || sessionId.startsWith("cs_live_"))) {
       setIsRealPayment(true);
       
-      // Store subscription locally
-      const subscriptions = JSON.parse(localStorage.getItem("subscriptions") || "[]");
+      // Store subscription locally (Phase 7.36: safeLoadJson + Array.isArray
+      // guard — corrupt subscriptions key must not silently swallow this
+      // just-paid record nor flip the success badge to "not real").
+      const existing = safeLoadJson<unknown>("subscriptions", []);
+      const subscriptions = Array.isArray(existing) ? existing : [];
       subscriptions.push({
         sessionId,
         plan: plan || "unknown",

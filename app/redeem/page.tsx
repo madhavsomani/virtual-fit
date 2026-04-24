@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { safeLoadJson } from "../lib/safe-storage";
 
 interface Code {
   code: string;
@@ -49,8 +50,11 @@ export default function RedeemPage() {
       return;
     }
 
-    // Check if already redeemed (localStorage)
-    const redemptions: Redemption[] = JSON.parse(localStorage.getItem("redemptions") || "[]");
+    // Check if already redeemed (localStorage). Phase 7.36: safeLoadJson +
+    // Array.isArray guard — corrupt key must not throw inside the click
+    // handler and freeze the "Validating..." button.
+    const loaded = safeLoadJson<unknown>("redemptions", []);
+    const redemptions: Redemption[] = (Array.isArray(loaded) ? loaded : []) as Redemption[];
     const alreadyRedeemed = redemptions.find((r) => r.code === normalizedCode);
     if (alreadyRedeemed) {
       setError("This code has already been redeemed.");

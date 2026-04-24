@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { safeLoadJson } from "./lib/safe-storage";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -15,12 +16,12 @@ export default function Home() {
   const [waitlistCount, setWaitlistCount] = useState(0);
 
   useEffect(() => {
-    // Load waitlist count for social proof badge
-    const waitlistData = localStorage.getItem("waitlist");
-    if (waitlistData) {
-      const waitlist = JSON.parse(waitlistData);
-      setWaitlistCount(waitlist.length);
-    }
+    // Load waitlist count for social proof badge.
+    // Phase 7.36: safeLoadJson + Array.isArray guard — corrupt waitlist data
+    // must not crash the homepage mount, and `.length` on a non-array would
+    // be undefined or wrong.
+    const waitlist = safeLoadJson<unknown>("waitlist", []);
+    if (Array.isArray(waitlist)) setWaitlistCount(waitlist.length);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -51,19 +52,21 @@ export default function Home() {
 
       if (!res.ok) throw new Error('Failed to submit');
       
-      // Also save locally as backup
-      const existing = JSON.parse(localStorage.getItem("waitlist") || "[]");
-      existing.push({ email, revenue, wouldPay, killerFeature, timestamp: new Date().toISOString() });
-      localStorage.setItem("waitlist", JSON.stringify(existing));
+      // Also save locally as backup (Phase 7.36: safeLoadJson + Array.isArray guard).
+      const existing = safeLoadJson<unknown>("waitlist", []);
+      const list = Array.isArray(existing) ? existing : [];
+      list.push({ email, revenue, wouldPay, killerFeature, timestamp: new Date().toISOString() });
+      localStorage.setItem("waitlist", JSON.stringify(list));
 
       setSubmitted(true);
       setEmail("");
     } catch (err) {
       console.error("Waitlist submit failed:", err);
-      // Fallback: save locally even if API fails
-      const existing = JSON.parse(localStorage.getItem("waitlist") || "[]");
-      existing.push({ email, revenue, wouldPay, killerFeature, timestamp: new Date().toISOString() });
-      localStorage.setItem("waitlist", JSON.stringify(existing));
+      // Fallback: save locally even if API fails (Phase 7.36: safeLoadJson + Array.isArray guard).
+      const existing = safeLoadJson<unknown>("waitlist", []);
+      const list = Array.isArray(existing) ? existing : [];
+      list.push({ email, revenue, wouldPay, killerFeature, timestamp: new Date().toISOString() });
+      localStorage.setItem("waitlist", JSON.stringify(list));
       setSubmitted(true);
       setEmail("");
     }
