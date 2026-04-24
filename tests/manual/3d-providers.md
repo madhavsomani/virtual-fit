@@ -1,72 +1,27 @@
-# Manual 3D Provider Tests
+# 3D Provider Smoke Tests — DEPRECATED (Phase 7.41)
 
-## Test the API locally
-```bash
-# Start the API (Azure Functions Core Tools)
-cd /Users/madhav/.openclaw/workspace/projects/virtual-tryon-v2/app
-func start --port 7071
-```
+**This file used to document `curl` smoke-tests against `api/generate-3d/`,
+a 311-line Azure SWA function that wired up Meshy + HuggingFace + Replicate
+as fallback providers.**
 
-## Test each provider
+That endpoint was deleted in Phase 7.41 because:
 
-### 1. Mock (no keys needed — always works)
-```bash
-curl -X POST http://localhost:7071/api/generate-3d \
-  -H "Content-Type: application/json" \
-  -d '{"imageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400"}'
-```
-Expected: `{"provider": "mock", "isMock": true, "textureUrl": "...", "message": "No 3D API key configured..."}`
+1. **It violated the project HARD RULE: "NO paid APIs."** Meshy and
+   Replicate are paid. The HF rule allows free Spaces only.
+2. **Zero client code called it.** A grep across `app/**/*.tsx` and
+   `app/**/*.ts` for `fetch('/api/generate-3d'` returned no matches.
+3. **The real photo→GLB pipeline lives at `app/lib/trellis-client.ts`**
+   and calls the public `microsoft/TRELLIS` HF Space directly (free
+   ZeroGPU A10G tier). The user-facing `/generate-3d` Next.js page is the
+   single entrypoint.
 
-### 2. Meshy (needs MESHY_API_KEY)
-```bash
-# Get key: https://www.meshy.ai → Sign up → API Keys
-export MESHY_API_KEY=your_key_here
+## How to smoke-test the real path
 
-# Start generation
-curl -X POST http://localhost:7071/api/generate-3d \
-  -H "Content-Type: application/json" \
-  -d '{"imageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400"}'
-# Returns: {"taskId": "xxx", "provider": "meshy", "status": "pending", "pollUrl": "/api/generate-3d?taskId=xxx&provider=meshy"}
+Open `/generate-3d` in the browser, drop in a garment image, and watch
+the GLB download. The flow is fully client-side; there is no Azure
+Function involved.
 
-# Poll for result (repeat every 5s until status=completed)
-curl "http://localhost:7071/api/generate-3d?taskId=xxx&provider=meshy"
-# Returns: {"status": "completed", "glbUrl": "https://...model.glb"}
-```
-
-### 3. HuggingFace (needs HF_TOKEN)
-```bash
-# Get token: https://huggingface.co/settings/tokens
-export HF_TOKEN=hf_xxxx
-
-curl -X POST http://localhost:7071/api/generate-3d \
-  -H "Content-Type: application/json" \
-  -d '{"imageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400"}'
-# Returns: {"provider": "huggingface", "status": "completed", "glbUrl": "data:model/gltf-binary;base64,..."}
-```
-
-### 4. Replicate (needs REPLICATE_API_TOKEN)
-```bash
-# Get token: https://replicate.com/account/api-tokens
-export REPLICATE_API_TOKEN=r8_xxxx
-
-curl -X POST http://localhost:7071/api/generate-3d \
-  -H "Content-Type: application/json" \
-  -d '{"imageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400"}'
-# Takes 30-120s, returns: {"provider": "replicate", "status": "completed", "glbUrl": "https://..."}
-```
-
-## Set up in Azure SWA
-1. Go to Azure Portal → your Static Web App → Settings → Configuration
-2. Add these Application settings:
-   - `MESHY_API_KEY` = your Meshy key
-   - `HF_TOKEN` = your HuggingFace token
-   - `REPLICATE_API_TOKEN` = your Replicate token (optional)
-3. Save → the API will automatically use the first available provider
-
-## Provider comparison
-| Provider | Speed | Quality | Free Tier | Best For |
-|----------|-------|---------|-----------|----------|
-| Meshy | 30-60s | ★★★★★ | 100 credits/mo | Clothing, production |
-| HuggingFace | 10-30s | ★★★☆☆ | Unlimited (rate-limited) | Testing, dev |
-| Replicate | 30-120s | ★★★★☆ | $0 credit to start | Fallback |
-| Mock | Instant | ★☆☆☆☆ | Always free | Flat image overlay |
+For programmatic testing, see `app/lib/trellis-client.ts` — its
+`generateMesh()` export is the canonical entry point. There is no curl
+recipe because the auth header reads `NEXT_PUBLIC_HF_TOKEN` from the
+browser environment.

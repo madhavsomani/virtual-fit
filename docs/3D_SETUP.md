@@ -1,95 +1,81 @@
-# 3D Generation Setup Guide
+# 3D Generation Setup Guide (Phase 7.41 rewrite)
 
-## Quick Start
-1. Get a free Meshy API key: https://www.meshy.ai (sign up → API Keys)
-2. Add to Azure SWA: Portal → Static Web App → Settings → Configuration → Application settings
-3. Add: `MESHY_API_KEY` = your key
-4. Save. Done — 3D generation now works at `/generate-3d`
+## TL;DR
+Set `NEXT_PUBLIC_HF_TOKEN` (a free HuggingFace read-only token) in your
+deployment environment. That's it. No paid keys, no Azure Functions, no
+provider chain — the photo→GLB pipeline calls the public
+`microsoft/TRELLIS` HF Space directly and runs on the free ZeroGPU A10G
+tier.
 
-## Provider Priority
-The API tries providers in order until one succeeds:
+## Why no paid providers
+The project HARD RULES include "NO paid APIs." Phase 7.41 deleted the
+old `api/generate-3d/` Azure Function (311 lines wiring Meshy +
+HuggingFace + Replicate as fallbacks) because:
+- Meshy and Replicate are paid.
+- Zero client code called the endpoint — `app/lib/trellis-client.ts`
+  was already the real path used by the `/generate-3d` page.
+- Dead paid-API code is a footgun: a future agent could set
+  `MESHY_API_KEY` and burn real money on a code path nobody uses.
 
-| Priority | Provider | Env Var | Quality | Speed | Free Tier |
-|----------|----------|---------|---------|-------|-----------|
-| 1 | Meshy | `MESHY_API_KEY` | ★★★★★ | 30-60s | 100 credits/mo |
-| 2 | HuggingFace | `HF_TOKEN` | ★★★☆☆ | 10-30s | Unlimited (rate-limited) |
-| 3 | Replicate | `REPLICATE_API_TOKEN` | ★★★★☆ | 30-120s | Free credits to start |
-| 4 | Mock | (none needed) | ★☆☆☆☆ | Instant | Always available |
-
-## How to Get Keys
-
-### Meshy (Recommended)
-1. Go to https://www.meshy.ai
-2. Sign up (free account)
-3. Go to Settings → API Keys
-4. Create a new key
-5. Add to Azure: `MESHY_API_KEY=msy_xxxxx`
-
-### HuggingFace
+## How to get the HF token
 1. Go to https://huggingface.co/settings/tokens
-2. Create a new token (read access is enough)
-3. Add to Azure: `HF_TOKEN=hf_xxxxx`
+2. Create a token with **read** access (free).
+3. Set `NEXT_PUBLIC_HF_TOKEN=hf_xxxxx` in:
+   - local dev: `.env.local`
+   - Azure SWA: Portal → Static Web App → Configuration →
+     Application settings (must start with `NEXT_PUBLIC_` since the
+     browser reads it directly).
+4. Redeploy. Done.
 
-### Replicate
-1. Go to https://replicate.com/account/api-tokens
-2. Create a token
-3. Add to Azure: `REPLICATE_API_TOKEN=r8_xxxxx`
-
-## Azure SWA Environment Variables
-1. Azure Portal → your Static Web App resource
-2. Settings → Configuration → Application settings
-3. Add each key as a new setting
-4. Click Save
-5. The API auto-detects which keys are available
-
-## End-to-End Flow
+## End-to-end flow
 ```
-User uploads image → /generate-3d page
-    → POST /api/generate-3d { imageBase64 }
-    → Provider chain: Meshy → HF → Replicate → Mock
-    → Returns { glbUrl, provider, isMock }
-    → Redirect to /mirror?garment=<glbUrl>
-    → GLTFLoader loads mesh into Three.js scene
-    → MediaPipe tracks body landmarks
+User uploads image → /generate-3d page (Next.js)
+    → app/lib/trellis-client.ts.generateMesh(file)
+    → POST https://microsoft-trellis.hf.space/run/predict
+       Authorization: Bearer NEXT_PUBLIC_HF_TOKEN
+    → Returns GLB URL on the HF Space's CDN
+    → Persist to localStorage
+    → Redirect to /mirror
+    → GLTFLoader loads the GLB into the Three.js scene
+    → MediaPipe Pose tracks body landmarks
     → Mesh anchored to shoulders/torso in real-time
 ```
 
 ## Troubleshooting
 
-### "No 3D API key configured" on /generate-3d
-→ Add at least one API key (MESHY_API_KEY recommended)
+### "NEXT_PUBLIC_TRIPOSR_URL is not configured" / "NEXT_PUBLIC_HF_TOKEN is required"
+→ Set the env var as above.
 
 ### Model looks wrong / not like clothing
-→ TripoSR/Meshy work best with:
-  - Clear photos on plain/white background
-  - Single garment, no person wearing it
-  - Good lighting, no shadows
-  - Remove background before uploading (or the API will try)
+TRELLIS works best with:
+- Clear photos on plain/white background
+- Single garment, no person wearing it
+- Good lighting, no shadows
 
 ### Model doesn't track body
-→ Ensure you're on /mirror (the canonical 3D try-on with body tracking)
-→ Stand back so shoulders + torso are visible
-→ Check lighting — MediaPipe needs to see you
+- Use `/mirror` (the canonical try-on with body tracking).
+- Stand back so shoulders + torso are visible.
+- Check lighting — MediaPipe needs to see you.
 
 ### Slow generation
-→ Meshy: 30-60s is normal (cloud GPU processing)
-→ HF: may show "model loading" on first request (cold start ~30s)
-→ Replicate: can take 2+ minutes on free tier
+TRELLIS on the free ZeroGPU tier can take 30-60s and may queue behind
+other users. There is no paid fallback by design.
 
 ## Architecture
 ```
 ┌─────────────────────────────────────┐
-│  /generate-3d (upload UI)           │
-│  → POST /api/generate-3d           │
-│  → Provider chain                   │
-│  → Redirect /mirror?garment=url     │
+│  /generate-3d (Next.js client page) │
+│  → trellis-client.generateMesh()    │
+│  → microsoft/TRELLIS HF Space       │
+│  → Persist GLB to localStorage      │
+│  → Redirect /mirror                 │
 └─────────────────┬───────────────────┘
                   │
 ┌─────────────────▼───────────────────┐
 │  /mirror (full try-on)              │
 │  ├─ MediaPipe Pose (body tracking)  │
-│  ├─ Three.js (GLB rendering)       │
+│  ├─ Three.js (GLB rendering)        │
 │  ├─ GLTFLoader (loads the mesh)     │
-│  └─ Anchor: shoulders → mesh pos   │
+│  └─ Anchor: shoulders → mesh pos    │
 └─────────────────────────────────────┘
 ```
