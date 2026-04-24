@@ -112,3 +112,31 @@ test("mirror page reads ?embed=true and posts virtualfit:close from a close butt
 test("public/embed.js still handles virtualfit:close from the iframe (cross-side guard)", () => {
   assert.match(EMBED, /'virtualfit:close'/, "embed.js must still handle 'virtualfit:close' from the iframe.");
 });
+
+test("mirror page reads ?productId and posts virtualfit:add-to-cart from a CTA", () => {
+  // Phase 7.56: declared in embed.js; pre-7.56 the iframe never read the
+  // productId or sent the message — the conversion-funnel hook was dead.
+  assert.match(
+    MIRROR,
+    /searchParams\.get\(['"]productId['"]\)/,
+    "app/mirror/page.tsx must read ?productId so the add-to-cart CTA knows which SKU to send.",
+  );
+  assert.match(
+    MIRROR,
+    /'virtualfit:add-to-cart'/,
+    "app/mirror/page.tsx must reference the literal 'virtualfit:add-to-cart' message type.",
+  );
+  assert.match(
+    MIRROR,
+    /window\.parent\.postMessage\([^)]*virtualfit:add-to-cart/s,
+    "app/mirror/page.tsx must call window.parent.postMessage(...) with virtualfit:add-to-cart.",
+  );
+});
+
+test("public/embed.js still handles virtualfit:add-to-cart from the iframe (cross-side guard)", () => {
+  assert.match(
+    EMBED,
+    /'virtualfit:add-to-cart'/,
+    "embed.js must still handle 'virtualfit:add-to-cart' from the iframe.",
+  );
+});

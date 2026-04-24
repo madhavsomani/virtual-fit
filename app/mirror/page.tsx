@@ -42,6 +42,11 @@ function MirrorContent() {
   // self-parent for same-origin iframes, and the URL flag also works
   // for non-iframe embedding contexts like webviews).
   const isEmbedded = searchParams.get('embed') === 'true';
+  // Phase 7.56: when embedded, embed.js may pass ?productId=<sku> via
+  // its data-product-id attribute. We use it to enable the add-to-cart
+  // CTA. State for the post-click confirmation flash.
+  const productId = searchParams.get('productId');
+  const [addToCartFlash, setAddToCartFlash] = useState(false);
   // Phase 7.53: when embedded in a retailer iframe, the parent can override
   // the garment via postMessage `virtualfit:set-garment`. We seed null and
   // let the message listener (below) flip it. `?garment=none` is still the
@@ -3860,6 +3865,54 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           }}
         >
           ×
+        </button>
+      )}
+      {/* Phase 7.56: embed-mode add-to-cart CTA. Only when isEmbedded AND
+          a productId was passed by embed.js AND the garment is actually
+          loaded (don't tempt a buy on a broken try-on). Bottom-center
+          pill, brand-purple, taller than close button — this is the
+          conversion surface the embed widget exists to enable. */}
+      {isEmbedded && productId && garment3DStatus === 'loaded' && (
+        <button
+          type="button"
+          aria-label="Add to cart"
+          disabled={addToCartFlash}
+          onClick={() => {
+            try {
+              if (typeof window !== 'undefined') {
+                window.parent.postMessage({
+                  type: 'virtualfit:add-to-cart',
+                  productId,
+                  garment: { url: garmentGlbUrl },
+                }, '*');
+              }
+            } catch {}
+            setAddToCartFlash(true);
+            setTimeout(() => setAddToCartFlash(false), 1500);
+          }}
+          style={{
+            position: 'fixed',
+            bottom: 24,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            height: 48,
+            padding: '0 24px',
+            borderRadius: 24,
+            border: 'none',
+            background: addToCartFlash ? '#10b981' : '#6C5CE7',
+            color: '#fff',
+            fontSize: 16,
+            fontWeight: 600,
+            cursor: addToCartFlash ? 'default' : 'pointer',
+            zIndex: 2147483646,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+            transition: 'background 200ms ease',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+          }}
+        >
+          {addToCartFlash ? '✓ Added' : '🛍️ Add to cart'}
         </button>
       )}
       {cameraOn && (
