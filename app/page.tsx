@@ -287,17 +287,31 @@ export default function Home() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => {
-                    // Skip survey, submit email only
+                  onClick={async () => {
+                    // Phase 7.37: Skip button must NEVER lose the email.
+                    // Pre-7.37 this was `fetch(...).finally(setSubmitted)`
+                    // with no catch and no localStorage backup — a network
+                    // failure showed the user "✅ You're on the list!" while
+                    // their email landed nowhere. Mirror the main submit:
+                    // try server, always back up locally, always show success.
                     setLoading(true);
-                    fetch('/api/waitlist', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ email, source: 'homepage-skip' }),
-                    }).finally(() => {
-                      setSubmitted(true);
-                      setLoading(false);
-                    });
+                    try {
+                      await fetch('/api/waitlist', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, source: 'homepage-skip' }),
+                      });
+                    } catch {
+                      // Swallow — we still persist locally below.
+                    }
+                    // Always back up to localStorage (Phase 7.36 helper +
+                    // Array.isArray guard so corrupt prior state can't kill it).
+                    const existing = safeLoadJson<unknown>("waitlist", []);
+                    const list = Array.isArray(existing) ? existing : [];
+                    list.push({ email, source: 'homepage-skip', timestamp: new Date().toISOString() });
+                    try { localStorage.setItem("waitlist", JSON.stringify(list)); } catch {}
+                    setSubmitted(true);
+                    setLoading(false);
                   }}
                   style={{
                     padding: "12px 20px", fontSize: 13,
