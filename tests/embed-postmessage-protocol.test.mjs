@@ -60,6 +60,20 @@ test("mirror page posts virtualfit:garment-changed when a GLB finishes loading",
   );
 });
 
+test("mirror page posts virtualfit:screenshot to the embedding parent on capture", () => {
+  // Phase 7.54: declared in embed.js; pre-7.54 the iframe never sent it.
+  assert.match(
+    MIRROR,
+    /'virtualfit:screenshot'/,
+    "app/mirror/page.tsx must reference the literal 'virtualfit:screenshot' message type.",
+  );
+  assert.match(
+    MIRROR,
+    /window\.parent\.postMessage\([^)]*virtualfit:screenshot/s,
+    "app/mirror/page.tsx must call window.parent.postMessage(...) with virtualfit:screenshot.",
+  );
+});
+
 test("public/embed.js still declares matching parent-side handlers (cross-side regression guard)", () => {
   // If a future edit removes one side without the other, surface it here.
   assert.match(EMBED, /'virtualfit:ready'/, "embed.js must still handle 'virtualfit:ready' from the iframe.");

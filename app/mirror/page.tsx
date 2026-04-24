@@ -1797,6 +1797,15 @@ function MirrorContent() {
         const updated = [dataUrl, ...prev].slice(0, 10);
         return updated;
       });
+
+      // Phase 7.54: post screenshot dataUrl to embedding parent so the
+      // retailer can hook 'virtualfit:screenshot' (declared in embed.js).
+      // Same source-identity guard pattern as Phase 7.53.
+      try {
+        if (typeof window !== 'undefined' && window.parent !== window) {
+          window.parent.postMessage({ type: 'virtualfit:screenshot', dataUrl }, '*');
+        }
+      } catch {}
       
       // Try Web Share API on mobile, fallback to download
       if (navigator.share && navigator.canShare) {
