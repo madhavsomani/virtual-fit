@@ -28,6 +28,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile || pnpm install
 
+      - name: Tests (gate — Phase 7.45)
+        # All tests/*.test.mjs guards (no fake metric, no perma-zero, no
+        # silent server failure, no dead SWA fn, no dead ThreeOverlay,
+        # /generate-3d uses TRELLIS, no dead api-server, etc.) must pass
+        # before we burn a Next build or deploy to Azure.
+        run: pnpm test
+
       - name: Build
         run: pnpm build
         env:
