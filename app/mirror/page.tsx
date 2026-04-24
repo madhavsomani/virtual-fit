@@ -36,6 +36,12 @@ function MirrorContent() {
   // ?garment=<url> overrides; ?garment=none disables. (`?garmentTexture=` was
   // removed in Phase 7.2 along with the 2D flat-overlay path.)
   const garmentParam = searchParams.get('garment');
+  // Phase 7.55: embed.js passes ?embed=true when iframing the mirror.
+  // Single source of truth for "are we in a retailer iframe" — more
+  // reliable than window.parent !== window (browsers can report
+  // self-parent for same-origin iframes, and the URL flag also works
+  // for non-iframe embedding contexts like webviews).
+  const isEmbedded = searchParams.get('embed') === 'true';
   // Phase 7.53: when embedded in a retailer iframe, the parent can override
   // the garment via postMessage `virtualfit:set-garment`. We seed null and
   // let the message listener (below) flip it. `?garment=none` is still the
@@ -317,7 +323,7 @@ function MirrorContent() {
   // intentionally deferred — no theme system exists yet (separate item).
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (window.parent === window) return; // not embedded
+    if (!isEmbedded) return; // not embedded
 
     // Announce ready. Target origin '*' because we don't know the retailer
     // origin a priori — the embed widget enforces origin check on its end.
@@ -347,13 +353,13 @@ function MirrorContent() {
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, []);
+  }, [isEmbedded]);
 
   // Phase 7.53: notify parent when a garment finishes loading so the embed
   // widget's analytics tracker fires `garment_changed`.
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (window.parent === window) return;
+    if (!isEmbedded) return;
     if (garment3DStatus !== 'loaded' || !garmentGlbUrl) return;
     try {
       window.parent.postMessage({
@@ -361,7 +367,7 @@ function MirrorContent() {
         garment: { url: garmentGlbUrl },
       }, '*');
     } catch {}
-  }, [garment3DStatus, garmentGlbUrl]);
+  }, [garment3DStatus, garmentGlbUrl, isEmbedded]);
 
   // Show garment name when navigating grid with keyboard
   useEffect(() => {
@@ -1802,7 +1808,7 @@ function MirrorContent() {
       // retailer can hook 'virtualfit:screenshot' (declared in embed.js).
       // Same source-identity guard pattern as Phase 7.53.
       try {
-        if (typeof window !== 'undefined' && window.parent !== window) {
+        if (typeof window !== 'undefined' && isEmbedded) {
           window.parent.postMessage({ type: 'virtualfit:screenshot', dataUrl }, '*');
         }
       } catch {}
@@ -1836,7 +1842,7 @@ function MirrorContent() {
       vibrate(25);
       setStatus("📸 Screenshot saved!");
     }, "image/png");
-  }, [isMirrored, vibrate]);
+  }, [isMirrored, vibrate, isEmbedded]);
 
   // Capture screenshot with 3-second countdown
   const captureScreenshot = useCallback(() => {
@@ -3817,6 +3823,45 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
         [data-clean="1"] [data-indicator-chip] { display: none !important; }
         [data-clean="1"] [data-secondary-control] { display: none !important; }
       `}</style>
+      {/* Phase 7.55: embed-mode close button. Posts virtualfit:close to
+          the embedding parent; embed.js handles by calling closePanel().
+          Without this an embedded user has no way out except killing the
+          parent tab. Top-right, 44x44 tap-target, above all chrome. */}
+      {isEmbedded && (
+        <button
+          type="button"
+          aria-label="Close try-on"
+          onClick={() => {
+            try {
+              if (typeof window !== 'undefined') {
+                window.parent.postMessage({ type: 'virtualfit:close' }, '*');
+              }
+            } catch {}
+          }}
+          style={{
+            position: 'fixed',
+            top: 12,
+            right: 12,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            border: '1px solid rgba(255,255,255,0.25)',
+            background: 'rgba(0,0,0,0.55)',
+            color: '#fff',
+            fontSize: 20,
+            lineHeight: 1,
+            cursor: 'pointer',
+            zIndex: 2147483647,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+          }}
+        >
+          ×
+        </button>
+      )}
       {cameraOn && (
         <button
           onClick={() => setCleanView(v => !v)}

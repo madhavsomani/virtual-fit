@@ -88,3 +88,27 @@ test("public/embed.js still declares matching parent-side handlers (cross-side r
     "embed.js must still document/define the parent\u2192iframe 'virtualfit:set-garment' message.",
   );
 });
+
+test("mirror page reads ?embed=true and posts virtualfit:close from a close button", () => {
+  // Phase 7.55: declared in embed.js; pre-7.55 the iframe had no close UI
+  // and never honored the ?embed=true URL flag.
+  assert.match(
+    MIRROR,
+    /searchParams\.get\(['"]embed['"]\)/,
+    "app/mirror/page.tsx must read ?embed=true so it knows it's running inside the embed widget.",
+  );
+  assert.match(
+    MIRROR,
+    /'virtualfit:close'/,
+    "app/mirror/page.tsx must reference the literal 'virtualfit:close' message type.",
+  );
+  assert.match(
+    MIRROR,
+    /window\.parent\.postMessage\([^)]*virtualfit:close/s,
+    "app/mirror/page.tsx must call window.parent.postMessage(...) with virtualfit:close.",
+  );
+});
+
+test("public/embed.js still handles virtualfit:close from the iframe (cross-side guard)", () => {
+  assert.match(EMBED, /'virtualfit:close'/, "embed.js must still handle 'virtualfit:close' from the iframe.");
+});
