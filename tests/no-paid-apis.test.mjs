@@ -1,5 +1,5 @@
 // Phase 7.10 — guard: HARD RULE "NO paid APIs". Ban Meshy/Replicate/OpenAI
-// from app/** and from the dev api-server.ts.
+// from app/**. (Phase 7.44 deleted the dev api-server.ts and root lib/.)
 
 import assert from "node:assert/strict";
 import test from "node:test";
@@ -64,20 +64,8 @@ test("app/** source is free of paid-API references", () => {
   scan(APP_FILES, "app/**");
 });
 
-test("api-server.ts (dev tool) is free of paid-API references", () => {
-  scan([resolve(ROOT, "api-server.ts")], "api-server.ts");
-});
+// Phase 7.44: api-server.ts (dev tool) and the root lib/ directory were
+// deleted (zero callers, no tsx dep, the only consumer of hfGenerate3D was
+// api-server.ts itself). The stale per-file scans for those paths are gone
+// with them; the deletion itself is guarded by tests/no-dead-api-server.test.mjs.
 
-test("root lib/ (server-only modules) is free of paid-API references", () => {
-  // Phase 7.13: `generate-3d.ts` lives at root `lib/` now (see file move).
-  // Scan it (and any future siblings) for the same paid-API patterns.
-  const ROOT_LIB = resolve(ROOT, "lib");
-  let files = [];
-  try {
-    files = walk(ROOT_LIB).filter((p) => /\.(ts|tsx|mjs|js)$/.test(p));
-  } catch {
-    // dir may not exist if nothing has been moved yet — skip silently.
-    return;
-  }
-  scan(files, "lib/**");
-});
