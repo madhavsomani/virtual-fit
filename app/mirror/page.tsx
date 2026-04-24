@@ -36,7 +36,15 @@ function MirrorContent() {
   // ?garment=<url> overrides; ?garment=none disables. (`?garmentTexture=` was
   // removed in Phase 7.2 along with the 2D flat-overlay path.)
   const garmentParam = searchParams.get('garment');
-  const garmentGlbUrl = garmentParam === 'none' ? null : (garmentParam || '/models/demo-tshirt.glb');
+  // Phase 7.53: when embedded in a retailer iframe, the parent can override
+  // the garment via postMessage `virtualfit:set-garment`. We seed null and
+  // let the message listener (below) flip it. `?garment=none` is still the
+  // kill-switch and beats both. Otherwise: embed override > URL param >
+  // demo default.
+  const [embedGarmentOverride, setEmbedGarmentOverride] = useState<string | null>(null);
+  const garmentGlbUrl = garmentParam === 'none'
+    ? null
+    : (embedGarmentOverride || garmentParam || '/models/demo-tshirt.glb');
   const [garment3DStatus, setGarment3DStatus] = useState<'none' | 'loading' | 'loaded' | 'error'>('none');
   const [garment3DProvider, setGarment3DProvider] = useState<string | null>(null);
   // Phase 7.15: surface when the locally-cached GLB was generated. Reads
@@ -299,6 +307,61 @@ function MirrorContent() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // Phase 7.53: iframe side of the embed postMessage protocol.
+  // The parent (public/embed.js) declares: iframe→parent `virtualfit:ready`,
+  // `virtualfit:garment-changed`; parent→iframe `virtualfit:set-garment`,
+  // `virtualfit:set-theme`. Pre-7.53 the iframe never posted ready (so the
+  // parent's theme handshake fired into the void) and never listened for
+  // set-garment (so retailer JS API was a no-op). Theme handling is
+  // intentionally deferred — no theme system exists yet (separate item).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.parent === window) return; // not embedded
+
+    // Announce ready. Target origin '*' because we don't know the retailer
+    // origin a priori — the embed widget enforces origin check on its end.
+    try {
+      window.parent.postMessage({ type: 'virtualfit:ready', version: '2.0.0' }, '*');
+    } catch {}
+
+    function onMessage(event: MessageEvent) {
+      // Only accept from our embedding parent (we can't validate origin
+      // because retailer sites are unknown; source identity is the guard).
+      if (event.source !== window.parent) return;
+      const data = event.data;
+      if (!data || typeof data.type !== 'string' || !data.type.startsWith('virtualfit:')) return;
+
+      switch (data.type) {
+        case 'virtualfit:set-garment':
+          if (typeof data.garmentUrl === 'string' && data.garmentUrl.length > 0) {
+            setEmbedGarmentOverride(data.garmentUrl);
+          } else if (data.garmentUrl === null) {
+            setEmbedGarmentOverride(null);
+          }
+          break;
+        // virtualfit:set-theme — deferred (no theme system yet)
+        default:
+          break;
+      }
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, []);
+
+  // Phase 7.53: notify parent when a garment finishes loading so the embed
+  // widget's analytics tracker fires `garment_changed`.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.parent === window) return;
+    if (garment3DStatus !== 'loaded' || !garmentGlbUrl) return;
+    try {
+      window.parent.postMessage({
+        type: 'virtualfit:garment-changed',
+        garment: { url: garmentGlbUrl },
+      }, '*');
+    } catch {}
+  }, [garment3DStatus, garmentGlbUrl]);
 
   // Show garment name when navigating grid with keyboard
   useEffect(() => {
