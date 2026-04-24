@@ -12,6 +12,7 @@ import { computeBodyPitch } from "./body-metrics.js";
 // had zero readers anywhere). When real telemetry is needed, wire to one
 // server-side provider in one place.
 import { formatRelativeAgo } from "../lib/format-relative";
+import { safeLoadJson, safeLoadString } from "../lib/safe-storage";
 import { detectLeftSwipeIntent, detectRightSwipeIntent, detectGestureCooldownWindow } from "./gesture-intent";
 // Phase 7.28: removed `useBodyAnchor` import — hook deleted entirely. Of
 // 3 exports (computeAnchor, updateMeshPosition, reset) only computeAnchor
@@ -311,58 +312,59 @@ function MirrorContent() {
   }, [gridHighlightIdx, showGarmentGrid, garmentSearch, categoryFilter, favoritesOnly, favoriteGarments]);
 
   // Load saved garments from localStorage on mount
+  // Phase 7.35: replaced one-giant-try wrapping seven JSON.parse blocks with
+  // per-block `safeLoadJson` calls. Previously a single corrupt key would
+  // throw on the first parse and silently skip every later rehydrate —
+  // losing garments + adjustments + favorites + last-garment + UI prefs at
+  // once, and the catch's console.warn blamed "saved garments" regardless
+  // of which key was actually bad. Each block is now self-healing.
   useEffect(() => {
     // Phase 7.26: removed `track('mirror_loaded', {...})` — telemetry deleted.
+    const saved = safeLoadJson<Array<{name: string, dataUrl: string}> | null>("virtualfit-saved-garments", null);
+    if (saved) setSavedGarments(saved);
+
+    // Load saved adjustments
+    const adj = safeLoadJson<Record<string, number> | null>("virtualfit-adjustments", null);
+    if (adj) {
+      if (adj.opacity !== undefined) setGarmentOpacity(adj.opacity);
+      if (adj.scale !== undefined) setGarmentScale(adj.scale);
+      if (adj.yOffset !== undefined) setGarmentYOffset(adj.yOffset);
+      if (adj.xOffset !== undefined) setGarmentXOffset(adj.xOffset);
+      if (adj.brightness !== undefined) setGarmentBrightness(adj.brightness);
+      if (adj.rotation !== undefined) setGarmentRotation(adj.rotation);
+      if (adj.hue !== undefined) setGarmentHue(adj.hue);
+    }
+
+    // Check if first-time user (plain string read — absence triggers onboarding).
+    const hasSeenOnboarding = safeLoadString("virtualfit-onboarding-seen");
+    if (!hasSeenOnboarding) setShowOnboarding(true);
+
+    // Load favorite garments
+    const savedFavorites = safeLoadJson<number[] | null>("virtualfit-favorites", null);
+    if (savedFavorites) setFavoriteGarments(savedFavorites);
+
+    // Load last selected garment (plain string → int).
+    const lastGarment = safeLoadString("virtualfit-last-garment");
+    if (lastGarment) {
+      const idx = parseInt(lastGarment, 10);
+      if (!isNaN(idx) && idx >= 0) setSelectedGarment(idx);
+    }
+
+    // Load UI preferences
+    const prefs = safeLoadJson<Record<string, unknown> | null>("virtualfit-ui-prefs", null);
+    if (prefs) {
+      if (prefs.uiTheme) setUiTheme(prefs.uiTheme as 'purple' | 'blue' | 'green' | 'pink');
+      if (prefs.compactMode !== undefined) setCompactMode(Boolean(prefs.compactMode));
+      if (prefs.nightMode !== undefined) setNightMode(Boolean(prefs.nightMode));
+      if (prefs.batterySaver !== undefined) setBatterySaver(Boolean(prefs.batterySaver));
+      // Phase 7.32: removed `prefs.soundEnabled` rehydrate — state deleted.
+      if (prefs.hapticEnabled !== undefined) setHapticEnabled(Boolean(prefs.hapticEnabled));
+      if (prefs.touchSensitivity) setTouchSensitivity(prefs.touchSensitivity as 'low' | 'medium' | 'high');
+    }
+
+    // Load config from URL params (for shareable links). URLSearchParams
+    // never throws on garbage input, so no try wrapper needed here.
     try {
-      const saved = localStorage.getItem("virtualfit-saved-garments");
-      if (saved) {
-        setSavedGarments(JSON.parse(saved));
-      }
-      // Load saved adjustments
-      const savedAdjustments = localStorage.getItem("virtualfit-adjustments");
-      if (savedAdjustments) {
-        const adj = JSON.parse(savedAdjustments);
-        if (adj.opacity !== undefined) setGarmentOpacity(adj.opacity);
-        if (adj.scale !== undefined) setGarmentScale(adj.scale);
-        if (adj.yOffset !== undefined) setGarmentYOffset(adj.yOffset);
-        if (adj.xOffset !== undefined) setGarmentXOffset(adj.xOffset);
-        if (adj.brightness !== undefined) setGarmentBrightness(adj.brightness);
-        if (adj.rotation !== undefined) setGarmentRotation(adj.rotation);
-        if (adj.hue !== undefined) setGarmentHue(adj.hue);
-      }
-      // Check if first-time user
-      const hasSeenOnboarding = localStorage.getItem("virtualfit-onboarding-seen");
-      if (!hasSeenOnboarding) {
-        setShowOnboarding(true);
-      }
-      // Load favorite garments
-      const savedFavorites = localStorage.getItem("virtualfit-favorites");
-      if (savedFavorites) {
-        setFavoriteGarments(JSON.parse(savedFavorites));
-      }
-      // Load last selected garment
-      const lastGarment = localStorage.getItem("virtualfit-last-garment");
-      if (lastGarment) {
-        const idx = parseInt(lastGarment, 10);
-        if (!isNaN(idx) && idx >= 0) {
-          setSelectedGarment(idx);
-        }
-      }
-      
-      // Load UI preferences
-      const uiPrefs = localStorage.getItem("virtualfit-ui-prefs");
-      if (uiPrefs) {
-        const prefs = JSON.parse(uiPrefs);
-        if (prefs.uiTheme) setUiTheme(prefs.uiTheme);
-        if (prefs.compactMode !== undefined) setCompactMode(prefs.compactMode);
-        if (prefs.nightMode !== undefined) setNightMode(prefs.nightMode);
-        if (prefs.batterySaver !== undefined) setBatterySaver(prefs.batterySaver);
-        // Phase 7.32: removed `prefs.soundEnabled` rehydrate — state deleted.
-        if (prefs.hapticEnabled !== undefined) setHapticEnabled(prefs.hapticEnabled);
-        if (prefs.touchSensitivity) setTouchSensitivity(prefs.touchSensitivity);
-      }
-      
-      // Load config from URL params (for shareable links)
       const params = new URLSearchParams(window.location.search);
       let loadedFromUrl = false;
       if (params.has('g')) {
@@ -380,14 +382,14 @@ function MirrorContent() {
       if (params.has('b')) { setGarmentBrightness(parseInt(params.get('b') || '100', 10)); loadedFromUrl = true; }
       if (params.has('h')) { setGarmentHue(parseInt(params.get('h') || '0', 10)); loadedFromUrl = true; }
       if (params.has('f')) { setGarmentFlipped(params.get('f') === '1'); loadedFromUrl = true; }
-      
+
       if (loadedFromUrl) {
         // Show toast and clear URL params
         setTimeout(() => setStatus("📥 Loaded shared config!"), 500);
         window.history.replaceState({}, '', '/mirror');
       }
     } catch {
-      console.warn("Failed to load saved garments");
+      // SSR window access can throw; safe to ignore.
     }
   }, []);
 
@@ -584,20 +586,16 @@ function MirrorContent() {
     setStatus(`📥 Loaded "${preset.name}"`);
   }, []);
 
-  // Load presets from localStorage on mount
+  // Load presets from localStorage on mount (Phase 7.35: safeLoadJson).
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("virtualfit-presets");
-      if (stored) setSavedPresets(JSON.parse(stored));
-    } catch {}
+    const stored = safeLoadJson<typeof savedPresets | null>("virtualfit-presets", null);
+    if (stored) setSavedPresets(stored);
   }, []);
 
-  // Load per-garment adjustments from localStorage on mount
+  // Load per-garment adjustments from localStorage on mount (Phase 7.35: safeLoadJson).
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("virtualfit-per-garment");
-      if (stored) setPerGarmentAdjustments(JSON.parse(stored));
-    } catch {}
+    const stored = safeLoadJson<typeof perGarmentAdjustments | null>("virtualfit-per-garment", null);
+    if (stored) setPerGarmentAdjustments(stored);
   }, []);
 
   // Check if user has seen onboarding
