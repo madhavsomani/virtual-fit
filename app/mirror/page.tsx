@@ -56,7 +56,11 @@ function MirrorContent() {
   const threeCanvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState("Tap below to start trying on clothes");
   const [showCameraPrompt, setShowCameraPrompt] = useState(false); // pre-permission screen
-  const [fps, setFps] = useState(0);
+  // Phase 7.39: deleted parallel `fps` useState; `currentFps` is the
+  // canonical single source (declared below). Pre-7.39 two FPS counters
+  // ran in parallel inside the detect/render loop, used different time
+  // bases (`performance.now()` vs `Date.now()`), and could desync on
+  // camera restart since only `setFps(0)` reset existed.
   const [lowFpsWarning, setLowFpsWarning] = useState(false);
   const lowFpsCountRef = useRef(0);
   const totalFramesRef = useRef(0);
@@ -742,8 +746,9 @@ function MirrorContent() {
   const lastWristX = useRef<number | null>(null);
   const lastGestureTime = useRef<number>(0);
   const lastFrameTime = useRef<number>(0);
-  const frameCount = useRef(0);
-  const lastFpsUpdate = useRef(0);
+  // Phase 7.39: removed `frameCount` + `lastFpsUpdate` refs — the parallel
+  // FPS counter they fed (`setFps`) was deleted; `fpsCounterRef` below
+  // is the only counter now.
   const detectGestureRef = useRef<((landmarks: PoseResultLandmark[]) => void) | null>(null);
 
   // Build a 3D shirt mesh (curved plane that wraps around body)
@@ -1199,27 +1204,10 @@ function MirrorContent() {
           }
         }
 
-        // FPS tracking
-        frameCount.current++;
+        // Phase 7.39: only-counter is `fpsCounterRef` below — see ~30 lines
+        // down. The low-FPS warning + totalFrames now live there too so
+        // they all share one time base and one tick.
         totalFramesRef.current++;
-        if (now - lastFpsUpdate.current >= 1000) {
-          const currentFps = frameCount.current;
-          setFps(currentFps);
-          
-          // Low FPS warning (below 15 fps for 3 seconds)
-          if (currentFps < 15 && currentFps > 0) {
-            lowFpsCountRef.current++;
-            if (lowFpsCountRef.current >= 3) {
-              setLowFpsWarning(true);
-            }
-          } else {
-            lowFpsCountRef.current = 0;
-            setLowFpsWarning(false);
-          }
-          
-          frameCount.current = 0;
-          lastFpsUpdate.current = now;
-        }
 
         try {
           const result = poseLandmarkerRef.current.detectForVideo(videoRef.current, now);
@@ -1238,10 +1226,21 @@ function MirrorContent() {
         fpsCounterRef.current.frames++;
         const fpsNow = Date.now();
         if (fpsNow - fpsCounterRef.current.lastTime >= 1000) {
-          setCurrentFps(fpsCounterRef.current.frames);
-          // Update stream quality based on FPS
           const fps = fpsCounterRef.current.frames;
+          setCurrentFps(fps);
+          // Update stream quality based on FPS
           setStreamQuality(fps >= 25 ? 'excellent' : fps >= 15 ? 'good' : 'poor');
+          // Phase 7.39: low-FPS warning relocated here (single time base).
+          // Pre-7.39 it lived in a parallel counter that used
+          // performance.now() while this counter uses Date.now(), causing
+          // up-to-1s flicker between the FPS badge and the stats panel.
+          if (fps < 15 && fps > 0) {
+            lowFpsCountRef.current++;
+            if (lowFpsCountRef.current >= 3) setLowFpsWarning(true);
+          } else {
+            lowFpsCountRef.current = 0;
+            setLowFpsWarning(false);
+          }
           fpsCounterRef.current.frames = 0;
           fpsCounterRef.current.lastTime = fpsNow;
         }
@@ -3684,7 +3683,9 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
     }
     setCameraOn(false);
     setTorchOn(false);
-    setFps(0);
+    // Phase 7.39: removed `setFps(0)` — the canonical counter `currentFps`
+    // is what consumers read. Reset it instead.
+    setCurrentFps(0);
     setLowFpsWarning(false);
     lowFpsCountRef.current = 0;
     totalFramesRef.current = 0;
@@ -6660,10 +6661,13 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
       <p style={{ color: "#aaa", fontSize: 14, marginTop: 12 }}>
         {status}
       </p>
-      {/* Debug stats — hidden by default, toggle with Alt+D */}
-      {cameraOn && showStats && fps > 0 && (
+      {/* Debug stats — hidden by default, toggle with Alt+D. Phase 7.39:
+          repointed to canonical `currentFps`; pre-7.39 this read a
+          parallel `fps` state on a different time base, so the FPS shown
+          here could lag the corner badge by up to 1s. */}
+      {cameraOn && showStats && currentFps > 0 && (
         <p style={{ color: "#666", fontSize: 11, marginTop: 4, fontFamily: "monospace" }}>
-            <span style={{ color: fps >= 24 ? "#22c55e" : fps >= 15 ? "#eab308" : "#ef4444" }}>({fps} FPS)</span>
+            <span style={{ color: currentFps >= 24 ? "#22c55e" : currentFps >= 15 ? "#eab308" : "#ef4444" }}>({currentFps} FPS)</span>
             {" "}
             <span style={{ color: trackingConfidence >= 70 ? "#22c55e" : trackingConfidence >= 40 ? "#eab308" : "#ef4444" }}>
               [{trackingConfidence}% conf]
