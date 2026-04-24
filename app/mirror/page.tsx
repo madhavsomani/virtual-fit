@@ -12,7 +12,10 @@ import { computeBodyPitch } from "./body-metrics.js";
 // server-side provider in one place.
 import { formatRelativeAgo } from "../lib/format-relative";
 import { detectLeftSwipeIntent, detectRightSwipeIntent, detectGestureCooldownWindow } from "./gesture-intent";
-import useBodyAnchor from "../hooks/useBodyAnchor";
+// Phase 7.28: removed `useBodyAnchor` import — hook deleted entirely. Of
+// 3 exports (computeAnchor, updateMeshPosition, reset) only computeAnchor
+// had any caller, and only `confidence` of its 4-field return was read,
+// duplicating the existing avg-vis gate 80 lines below the import.
 import { imageToGlbPipeline } from "../lib/image-to-glb";
 import { normalizeGlb } from "../lib/glb-normalize";
 
@@ -743,9 +746,11 @@ function MirrorContent() {
   const animFrameRef = useRef<number>(0);
   const smoothPos = useRef({ x: 0, y: 0, w: 0, h: 0, tilt: 0, depth: 1, yaw: 0, pitch: 0, ready: false });
 
-  // Body anchor hook (Phase1.3): exposes computeAnchor/updateMeshPosition for body-relative GLB anchoring.
-  // Currently used as a parallel signal source; the legacy smoothPos block remains the active positioner.
-  const bodyAnchor = useBodyAnchor(0.15);
+  // Phase 7.28: removed `useBodyAnchor` hook — the Phase 1.3 "parallel signal
+  // source" experiment never replaced the smoothPos positioner, and only its
+  // `confidence` field was read (a stricter restating of the avg-vis gate
+  // already in place). Net cost was per-frame allocation in the webcam loop
+  // for zero shipped behavior.
 
   // Video dimensions
   const videoDims = useRef({ w: 640, h: 480 });
@@ -919,20 +924,10 @@ function MirrorContent() {
     // Also position the 3D GLB model if loaded
     const model3D = garment3DModelRef.current;
     if (model3D) {
-      // Phase1.3: invoke useBodyAnchor with raw landmarks for body-relative anchor data.
-      // Result is logged to drive the smoothing/anchor signal; final transform still uses smoothed sp
-      // values to preserve the existing snappy feel users expect.
-      const anchor = bodyAnchor.computeAnchor({
-        leftShoulder: { x: 1 - ls.x, y: ls.y, z: ls.z, visibility: ls.visibility },
-        rightShoulder: { x: 1 - rs.x, y: rs.y, z: rs.z, visibility: rs.visibility },
-        leftHip: { x: 1 - lh.x, y: lh.y, z: lh.z, visibility: lh.visibility },
-        rightHip: { x: 1 - rh.x, y: rh.y, z: rh.z, visibility: rh.visibility },
-      });
-      // Use anchor confidence to gate visibility (extra safety beyond `vis` check above).
-      if (anchor && anchor.confidence < 0.4) {
-        model3D.visible = false;
-        return;
-      }
+      // Phase 7.28: removed dead `bodyAnchor.computeAnchor()` call. Its
+      // confidence-gate restated the avg-vis gate ~80 lines above; its 3
+      // other return fields were discarded; final transform never used
+      // its outputs.
       // For GLB models: position at shoulder center, scale to shoulder width
       // Model is pre-normalized to ~2 units, so shoulderW/2 maps it to body
       const s3d = (sp.w * 0.6 * garmentScale * sp.depth);
