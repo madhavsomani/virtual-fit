@@ -47,6 +47,15 @@ function MirrorContent() {
   // CTA. State for the post-click confirmation flash.
   const productId = searchParams.get('productId');
   const [addToCartFlash, setAddToCartFlash] = useState(false);
+  // Phase 7.57: theme primary color (retailer brand colour). Seed from
+  // ?primaryColor= URL param; can be overridden mid-session by
+  // virtualfit:set-theme postMessage. Sanitized: only #rgb or #rrggbb.
+  const HEX_RE = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+  const urlPrimaryColor = (() => {
+    const v = searchParams.get('primaryColor');
+    return v && HEX_RE.test(v) ? v : null;
+  })();
+  const [themePrimaryColor, setThemePrimaryColor] = useState<string>(urlPrimaryColor || '#6C5CE7');
   // Phase 7.53: when embedded in a retailer iframe, the parent can override
   // the garment via postMessage `virtualfit:set-garment`. We seed null and
   // let the message listener (below) flip it. `?garment=none` is still the
@@ -351,7 +360,13 @@ function MirrorContent() {
             setEmbedGarmentOverride(null);
           }
           break;
-        // virtualfit:set-theme — deferred (no theme system yet)
+        // virtualfit:set-theme — Phase 7.57: apply retailer brand colour
+        // mid-session. Sanitize the same way the URL param is sanitized.
+        case 'virtualfit:set-theme':
+          if (data.theme && typeof data.theme.primaryColor === 'string' && HEX_RE.test(data.theme.primaryColor)) {
+            setThemePrimaryColor(data.theme.primaryColor);
+          }
+          break;
         default:
           break;
       }
@@ -3850,7 +3865,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             width: 44,
             height: 44,
             borderRadius: 22,
-            border: '1px solid rgba(255,255,255,0.25)',
+            border: `1px solid ${themePrimaryColor}59`,
             background: 'rgba(0,0,0,0.55)',
             color: '#fff',
             fontSize: 20,
@@ -3899,7 +3914,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             padding: '0 24px',
             borderRadius: 24,
             border: 'none',
-            background: addToCartFlash ? '#10b981' : '#6C5CE7',
+            background: addToCartFlash ? '#10b981' : themePrimaryColor,
             color: '#fff',
             fontSize: 16,
             fontWeight: 600,

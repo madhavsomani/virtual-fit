@@ -140,3 +140,41 @@ test("public/embed.js still handles virtualfit:add-to-cart from the iframe (cros
     "embed.js must still handle 'virtualfit:add-to-cart' from the iframe.",
   );
 });
+
+test("mirror page reads ?primaryColor and handles virtualfit:set-theme (Phase 7.57)", () => {
+  // Pre-7.57 the iframe ignored both the URL param and the postMessage
+  // and rendered every embed CTA in VirtualFit purple. Brands care
+  // intensely about colour matching their site.
+  assert.match(
+    MIRROR,
+    /searchParams\.get\(['"]primaryColor['"]\)/,
+    "app/mirror/page.tsx must read ?primaryColor= so the embed CTAs use the retailer's brand colour.",
+  );
+  assert.match(
+    MIRROR,
+    /'virtualfit:set-theme'/,
+    "app/mirror/page.tsx must handle 'virtualfit:set-theme' (was deferred in Phase 7.53; real in 7.57).",
+  );
+});
+
+test("mirror page does NOT hardcode #6C5CE7 in the embed add-to-cart CTA (regression hammer)", () => {
+  // Phase 7.57: the embed-mode add-to-cart CTA must use themePrimaryColor.
+  // Forbid hardcoded '#6C5CE7' inside the add-to-cart JSX block. The rest
+  // of mirror/page.tsx still uses #6C5CE7 freely for non-embed UI — that
+  // is intentional and out of scope for Phase 7.57 (separate item).
+  const lines = MIRROR.split("\n");
+  const startIdx = lines.findIndex(l => l.includes('aria-label="Add to cart"'));
+  assert.ok(startIdx >= 0, "add-to-cart aria-label not found");
+  // Scan forward up to 60 lines for the closing of the button JSX.
+  const slice = lines.slice(startIdx, startIdx + 60).join("\n");
+  assert.doesNotMatch(
+    slice,
+    /'#6C5CE7'/,
+    "add-to-cart CTA must not hardcode '#6C5CE7' — use themePrimaryColor so retailer brand colour wins.",
+  );
+  assert.match(
+    slice,
+    /themePrimaryColor/,
+    "add-to-cart CTA must reference themePrimaryColor.",
+  );
+});

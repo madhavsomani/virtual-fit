@@ -37,10 +37,15 @@ test("dead `frameTime` stays gone, and no perma-zero perf metric reappears", () 
   assert.doesNotMatch(src, /\bsetFrameTime\b/);
 });
 
-test("dead `primaryColor` + `themeColors` stay gone", () => {
+test("dead `themeColors` stays gone (Phase 7.33); `primaryColor` is now Phase 7.57's theme prop", () => {
   const src = strip(readFileSync(MIRROR, "utf8"));
-  assert.doesNotMatch(src, /\bprimaryColor\b/, "Resurrected `primaryColor` — derived value had zero readers.");
-  assert.doesNotMatch(src, /\bthemeColors\b/, "Resurrected `themeColors` — its only reader was the dead `primaryColor`.");
+  // Phase 7.33 deleted the dead derived `primaryColor` value + its source
+  // `themeColors`. Phase 7.57 reintroduced `primaryColor` as the embed
+  // theme prop name (URL: ?primaryColor=, postMessage: data.theme.primaryColor)
+  // — BUT the dead React state and themeColors map MUST stay gone. Guard
+  // the surviving anti-patterns directly.
+  assert.doesNotMatch(src, /\bthemeColors\b/, "Resurrected `themeColors` — its only reader was the dead `primaryColor` derived value.");
+  assert.doesNotMatch(src, /const\s+primaryColor\s*=/, "Resurrected the dead derived `primaryColor` const — use Phase 7.57's `themePrimaryColor` state instead.");
 });
 
 test("the perf overlay no longer renders a `⚡ Frame: …ms` row pinned to 0", () => {
