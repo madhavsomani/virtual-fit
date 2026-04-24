@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { smoothScalar } from "./smoothing-utils";
+import { estimateSizeFromShoulderRatio } from "./size-from-shoulder-width";
 import { computeBodyPitch } from "./body-metrics.js";
 // Phase 7.26: removed `track` import — lib/telemetry.ts deleted entirely
 // (5 call sites here were the module's only callers; getAll/session/clear
@@ -949,18 +950,10 @@ function MirrorContent() {
       model3D.visible = showGarment;
     }
 
-    // Estimate garment size based on shoulder width ratio
-    // Shoulder width as fraction of frame width (typical range 0.2-0.5)
-    const shoulderRatio = shoulderW / vw;
-    // Map to clothing sizes (rough estimates based on average webcam framing)
-    // These ratios assume user is ~1-2m from camera, shoulders fill 25-45% of frame
-    let size: string;
-    if (shoulderRatio < 0.22) size = "XS";
-    else if (shoulderRatio < 0.27) size = "S";
-    else if (shoulderRatio < 0.32) size = "M";
-    else if (shoulderRatio < 0.38) size = "L";
-    else if (shoulderRatio < 0.45) size = "XL";
-    else size = "XXL";
+    // Phase 7.31: shoulder-ratio → size mapping moved to size-from-shoulder-width.ts
+    // Lives outside the render loop so the thresholds (`0.22, 0.27, 0.32, 0.38, 0.45`)
+    // can be tested + tuned without touching pose-tracking code.
+    const size = estimateSizeFromShoulderRatio(shoulderW / vw);
     setEstimatedSize(size);
 
     // Track hand visibility (wrist landmarks 15=left, 16=right)
