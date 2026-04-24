@@ -4,10 +4,27 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { safeLoadJson } from "../lib/safe-storage";
 
+// Phase 7.49: codes.json now ships SHA-256 hashes (`h`), not plaintext
+// codes. Anyone who curl'd https://virtualfit.app/codes.json before could
+// see — and use — every promo code without ever entering one. Plaintext
+// promo codes shipped to a public CDN is a revenue/trust hole regardless
+// of whether redemption itself is client-side. Hashed lookup means the
+// user must already KNOW the code; the JSON only tells us what tier+days
+// it grants.
 interface Code {
-  code: string;
+  h: string;
   tier: string;
   days: number;
+}
+
+// SHA-256(input) → lowercase hex, via WebCrypto (available in browsers and
+// modern Node). Used to compare a typed code against the hashed manifest.
+async function sha256Hex(input: string): Promise<string> {
+  const enc = new TextEncoder().encode(input);
+  const buf = await crypto.subtle.digest("SHA-256", enc);
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 interface Redemption {
@@ -47,10 +64,13 @@ export default function RedeemPage() {
     setLoading(true);
 
     const normalizedCode = code.trim().toUpperCase();
-    
-    // Check if code is valid
+
+    // Check if code is valid by hashing the user input and matching
+    // against the manifest. Phase 7.49: pre-hash, codes.json shipped
+    // plaintext codes — anyone could fetch the JSON and grab them.
     const codes = Array.isArray(validCodes) ? validCodes : [];
-    const validCode = codes.find((c) => c.code === normalizedCode);
+    const codeHash = await sha256Hex(normalizedCode);
+    const validCode = codes.find((c) => c.h === codeHash);
     if (!validCode) {
       setError("Invalid code. Please check and try again.");
       setLoading(false);
