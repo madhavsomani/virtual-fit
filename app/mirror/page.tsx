@@ -230,11 +230,13 @@ function MirrorContent() {
   const [showAspectBadge, setShowAspectBadge] = useState(false);
   const [uiTheme, setUiTheme] = useState<'purple' | 'blue' | 'green' | 'pink'>('purple');
   const [compactMode, setCompactMode] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [autoSaveSettings, setAutoSaveSettings] = useState(true);
+  // Phase 7.33: removed dead `autoSaveSettings` state — setter never called,
+  // value pinned to `true` forever, gate `if (!autoSaveSettings) return;`
+  // was dead-equivalent to "always continue".
   const [showPerformance, setShowPerformance] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [frameTime, setFrameTime] = useState(0);
+  // Phase 7.33: removed dead `frameTime` state — setter never called, but the
+  // perf-overlay rendered `⚡ Frame: 0.0ms` forever. Same UX-lie pattern as
+  // Phase 7.32's sound-toggle. Real per-frame timing belongs in one shared hook.
   const [showDeviceInfo, setShowDeviceInfo] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
@@ -481,7 +483,8 @@ function MirrorContent() {
   
   // Auto-save UI preferences
   useEffect(() => {
-    if (!autoSaveSettings) return;
+    // Phase 7.33: removed `if (!autoSaveSettings) return;` gate — the state
+    // had no writer, was pinned to `true`, so the gate never fired.
     try {
       localStorage.setItem("virtualfit-ui-prefs", JSON.stringify({
         uiTheme,
@@ -495,7 +498,7 @@ function MirrorContent() {
     } catch {
       // Ignore
     }
-  }, [uiTheme, compactMode, nightMode, batterySaver, hapticEnabled, touchSensitivity, autoSaveSettings]);
+  }, [uiTheme, compactMode, nightMode, batterySaver, hapticEnabled, touchSensitivity]);
 
   // Toggle favorite status for a garment
   const toggleFavorite = useCallback((index: number) => {
@@ -697,15 +700,9 @@ function MirrorContent() {
     lastAdjustmentsRef.current = null;
   }, []);
 
-  // Theme colors
-  const themeColors = {
-    purple: '#6C5CE7',
-    blue: '#0984E3',
-    green: '#00B894',
-    pink: '#E84393',
-  };
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const primaryColor = themeColors[uiTheme];
+  // Phase 7.33: deleted `themeColors` + `primaryColor` — themeColors had
+  // exactly one reader (primaryColor) and primaryColor itself had zero readers.
+  // Both died together. `uiTheme` is still used 10× elsewhere for real styles.
   
   // Garment gallery
   const GARMENTS = [
@@ -6024,7 +6021,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             zIndex: 150,
             minWidth: 150,
           }}>
-            <div>⚡ Frame: {frameTime.toFixed(1)}ms</div>
+            {/* Phase 7.33: removed `⚡ Frame: {frameTime.toFixed(1)}ms` row — frameTime had no writer, was pinned to 0, so the overlay showed `⚡ Frame: 0.0ms` forever. Real per-frame timing belongs in one shared hook. */}
             <div>🎮 FPS: {currentFps}</div>
             <div>💾 Memory: {(performance as Performance & { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize ? Math.round(((performance as Performance & { memory?: { usedJSHeapSize: number } }).memory?.usedJSHeapSize || 0) / 1024 / 1024) : '?'}MB</div>
             <div>📱 Device: {typeof navigator !== 'undefined' && navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} cores` : '?'}</div>
