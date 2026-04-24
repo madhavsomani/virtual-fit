@@ -1,5 +1,19 @@
 // Azure SWA Function: Waitlist signup handler
-// Data is logged to Application Insights and sent via FormSubmit email
+// Data is logged to Application Insights, appended to a JSONL file for the
+// stats endpoint, and emailed via FormSubmit.
+//
+// Phase 7.40: added the missing `fs` require + `logPath` constant + the
+// `fs.appendFileSync(logPath, ...)` call. Pre-7.40 the milestone webhook
+// block referenced `fs.readFileSync(logPath, ...)` with neither symbol
+// defined, so every real signup hit a ReferenceError swallowed by the
+// inner warn — the milestone webhook had never fired in production.
+// Worse, `api/waitlist-stats` reads the same `logPath` to compute count
+// / recentSignups / wtpBreakdown / revenueBreakdown, but no one was ever
+// appending — so the "live retailer count" was permanently 0.
+const fs = require('fs');
+
+const logPath = '/tmp/virtualfit-waitlist.jsonl';
+
 module.exports = async function (context, req) {
   // CORS preflight
   if (req.method === 'OPTIONS') {
@@ -44,6 +58,19 @@ module.exports = async function (context, req) {
     // Log entry — differentiate test vs real
     const logTag = isTest ? 'WAITLIST_TEST_ENTRY' : 'WAITLIST_ENTRY';
     context.log.info(`${logTag}: ${JSON.stringify(entry)}`);
+
+    // Phase 7.40: persist to JSONL so /api/waitlist-stats can compute real
+    // counts AND so the milestone webhook below has a file to count from.
+    // Pre-7.40 nobody wrote here, so stats said `count: 0` forever and the
+    // milestone block crashed on `fs is not defined`. We append BOTH real
+    // and test entries (the `isTest` field is preserved so the stats
+    // endpoint and milestone block can filter test traffic out).
+    // Defensive: if /tmp is unwritable we still ship the 200 response.
+    try {
+      fs.appendFileSync(logPath, JSON.stringify(entry) + '\n');
+    } catch (writeErr) {
+      context.log.warn('Waitlist JSONL append failed:', writeErr.message);
+    }
 
     // Send email notification via fetch to a simple email service
     // Using a free service like formsubmit.co or just logging for now
