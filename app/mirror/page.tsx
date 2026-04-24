@@ -216,7 +216,9 @@ function MirrorContent() {
   const frameSkipRef = useRef(0);
   const lastClickTimeRef = useRef(0);
   const [showGarmentPreview, setShowGarmentPreview] = useState(true);
-  const [soundEnabled, setSoundEnabled] = useState(false);
+  // Phase 7.32: removed `soundEnabled` state — the only function it gated
+  // (`playSound`) had zero callers and the Alt+M toggle was a UX lie
+  // (status banner said "🔊 Sound on" but no sound ever played).
   const [hapticEnabled, setHapticEnabled] = useState(true);
   const [touchSensitivity, setTouchSensitivity] = useState<'low' | 'medium' | 'high'>('medium');
   const [nightMode, setNightMode] = useState(false);
@@ -352,7 +354,7 @@ function MirrorContent() {
         if (prefs.compactMode !== undefined) setCompactMode(prefs.compactMode);
         if (prefs.nightMode !== undefined) setNightMode(prefs.nightMode);
         if (prefs.batterySaver !== undefined) setBatterySaver(prefs.batterySaver);
-        if (prefs.soundEnabled !== undefined) setSoundEnabled(prefs.soundEnabled);
+        // Phase 7.32: removed `prefs.soundEnabled` rehydrate — state deleted.
         if (prefs.hapticEnabled !== undefined) setHapticEnabled(prefs.hapticEnabled);
         if (prefs.touchSensitivity) setTouchSensitivity(prefs.touchSensitivity);
       }
@@ -486,14 +488,14 @@ function MirrorContent() {
         compactMode,
         nightMode,
         batterySaver,
-        soundEnabled,
+        // Phase 7.32: `soundEnabled` removed.
         hapticEnabled,
         touchSensitivity,
       }));
     } catch {
       // Ignore
     }
-  }, [uiTheme, compactMode, nightMode, batterySaver, soundEnabled, hapticEnabled, touchSensitivity, autoSaveSettings]);
+  }, [uiTheme, compactMode, nightMode, batterySaver, hapticEnabled, touchSensitivity, autoSaveSettings]);
 
   // Toggle favorite status for a garment
   const toggleFavorite = useCallback((index: number) => {
@@ -631,26 +633,10 @@ function MirrorContent() {
     }
   }, [hapticEnabled]);
   
-  // Sound effect helper
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const playSound = useCallback((type: 'click' | 'success' | 'error' = 'click') => {
-    if (!soundEnabled) return;
-    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    gain.gain.value = 0.1;
-    if (type === 'success') {
-      osc.frequency.value = 880;
-    } else if (type === 'error') {
-      osc.frequency.value = 220;
-    } else {
-      osc.frequency.value = 440;
-    }
-    osc.start();
-    osc.stop(ctx.currentTime + 0.05);
-  }, [soundEnabled]);
+  // Phase 7.32: deleted `playSound` (was eslint-disable-no-unused-vars; zero
+  // callers; built an AudioContext per call) and `soundEnabled` state. Six
+  // months of Alt+M toggling produced zero audible feedback. If sound design
+  // ever becomes a real feature, wire one global hook — don't resurrect this.
 
   // Save current adjustments to history (for undo)
   const saveAdjustmentState = useCallback(() => {
@@ -3284,13 +3270,9 @@ function MirrorContent() {
         vibrate(10);
       }
       
-      // Alt+M for sound effects toggle
-      if ((e.key === 'm' || e.key === 'M') && e.altKey) {
-        e.preventDefault();
-        setSoundEnabled(prev => !prev);
-        setStatus(soundEnabled ? '🔇 Sound off' : '🔊 Sound on');
-        vibrate(10);
-      }
+      // Phase 7.32: deleted Alt+M sound-toggle handler — it set state that
+      // gated a function with zero callers, producing no audible effect.
+
       
       // Alt+D for night mode toggle
       if ((e.key === 'd' || e.key === 'D') && e.altKey) {
@@ -3470,7 +3452,7 @@ function MirrorContent() {
           version: '2.6.0',
           exportedAt: new Date().toISOString(),
           garment: { scale: garmentScale, scaleY: garmentScaleY, xOffset: garmentXOffset, yOffset: garmentYOffset, rotation: garmentRotation, opacity: garmentOpacity, brightness: garmentBrightness, hue: garmentHue, flipped: garmentFlipped },
-          ui: { uiTheme, compactMode, nightMode, batterySaver, soundEnabled, autoLighting, smoothMode },
+          ui: { uiTheme, compactMode, nightMode, batterySaver, autoLighting, smoothMode },
           favorites: favoriteGarments,
           presets: savedPresets,
         };
@@ -3554,7 +3536,7 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("keydown", handleKeyIndicator);
     };
-  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, soundEnabled, nightMode, privacyMode, selfieCountdown, uiTheme, compactMode, showPerformance]);
+  }, [cameraOn, selectedGarment, isFullscreen, showHelp, toggleFullscreen, captureScreenshot, copyToClipboard, switchGarment, GARMENTS.length, saveAdjustmentsForUndo, undoAdjustments, adjustmentsLocked, vibrate, showHistory, screenshotHistory.length, showSilhouette, autoLighting, showGarmentGrid, showShadow, shadowAngle, savedPresets, savePreset, loadPreset, edgeFeather, tintMode, showFitGuide, showColorPicker, showRecentPanel, comparisonMode, garmentScale, garmentScaleY, garmentXOffset, garmentYOffset, garmentRotation, garmentBrightness, garmentHue, garmentFlipped, garmentOpacity, showGarmentInfo, viewportAspect, zoomLevel, showFps, batterySaver, showGarmentPreview, nightMode, privacyMode, selfieCountdown, uiTheme, compactMode, showPerformance]);
 
   // Multi-tap handler for mobile (double-tap = toggle garment, triple-tap = switch camera)
   const handleMultiTap = useCallback(() => {
