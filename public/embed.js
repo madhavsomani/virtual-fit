@@ -2,7 +2,7 @@
  * VirtualFit Embed Widget v2 — drop-in virtual try-on for any website.
  * 
  * Usage:
- *   <script src="https://wonderful-sky-0513a3610.7.azurestaticapps.net/embed.js"
+ *   <script src="https://virtualfit.app/embed.js"
  *     data-shop-id="my-store-123"
  *     data-retailer="YourStoreName"
  *     data-position="bottom-right"
@@ -26,7 +26,7 @@
 (function() {
   'use strict';
 
-  var BASE_URL = 'https://wonderful-sky-0513a3610.7.azurestaticapps.net';
+  var BASE_URL = 'https://virtualfit.app';
   var WIDGET_ID = 'virtualfit-widget';
   var VERSION = '2.0.0';
   

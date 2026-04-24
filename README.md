@@ -2,13 +2,13 @@
 
 > Virtual try-on for the web — try on clothes using your camera, no app required.
 
-[![Tests](https://img.shields.io/badge/tests-325%20unit%20%2B%2013%20e2e-brightgreen)](https://github.com/madhavsomani/virtual-fit/actions)
-[![Deploy](https://img.shields.io/badge/deploy-Azure%20SWA-blue)](https://wonderful-sky-0513a3610.7.azurestaticapps.net)
+[![Tests](https://img.shields.io/badge/tests-328%20unit%20%2B%2013%20e2e-brightgreen)](https://github.com/madhavsomani/virtual-fit/actions)
+[![Deploy](https://img.shields.io/badge/deploy-Azure%20SWA-blue)](https://virtualfit.app)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ## Live Demo
 
-**[Try it now →](https://wonderful-sky-0513a3610.7.azurestaticapps.net)**
+**[Try it now →](https://virtualfit.app)**
 
 ## Features
 

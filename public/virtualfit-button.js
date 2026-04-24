@@ -58,7 +58,7 @@
           window.VirtualFit.open();
         } else {
           // Fallback: open mirror in new tab
-          var base = 'https://wonderful-sky-0513a3610.7.azurestaticapps.net';
+          var base = 'https://virtualfit.app';
           var params = new URLSearchParams();
           params.set('embed', 'true');
           if (shopId) params.set('shopId', shopId);

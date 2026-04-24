@@ -126,7 +126,7 @@ export default function RetailerPage() {
                 lineHeight: 1.6,
               }}>
 {`<script
-  src="${typeof window !== 'undefined' ? window.location.origin : 'https://wonderful-sky-0513a3610.7.azurestaticapps.net'}/embed.js"
+  src="${typeof window !== 'undefined' ? window.location.origin : 'https://virtualfit.app'}/embed.js"
   data-retailer="${shopName}"
   data-position="bottom-right"
   data-color="#6C5CE7">

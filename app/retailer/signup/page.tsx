@@ -67,7 +67,7 @@ export default function RetailerSignupPage() {
     setStep(2);
   };
 
-  const embedOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://wonderful-sky-0513a3610.7.azurestaticapps.net';
+  const embedOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://virtualfit.app';
   const embedSnippet = `<script
   src="${embedOrigin}/embed.js"
   data-shop-id="${shopId}"
