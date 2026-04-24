@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
+  // Phase 7.47: metadataBase resolves all relative meta URLs (og:image,
+  // twitter:image, canonical, etc.) to fully-qualified https://virtualfit.app
+  // URLs in the rendered HTML. Some scrapers refuse relative paths.
+  metadataBase: new URL("https://virtualfit.app"),
   title: "VirtualFit - Virtual Try-On",
   description: "Try on clothes virtually with AI-powered 3D body tracking",
   manifest: "/manifest.json",

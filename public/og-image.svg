@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Phase 7.47: OG share card. 1200x630 (Twitter summary_large_image,
+  Facebook/LinkedIn/Discord/Slack standard). Dark bg matches the live
+  site (#0c0c0e). Brand purple #6C5CE7. Source-of-truth SVG; the
+  shipped PNG is rasterized from this file.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0c0c0e"/>
+      <stop offset="100%" stop-color="#18181b"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#6C5CE7"/>
+      <stop offset="100%" stop-color="#A78BFA"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.85" cy="0.5" r="0.55">
+      <stop offset="0%" stop-color="#6C5CE7" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#6C5CE7" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- Brand mark -->
+  <g transform="translate(80,90)">
+    <rect width="56" height="56" rx="12" fill="url(#accent)"/>
+    <text x="76" y="38" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="700" fill="#fff">VirtualFit</text>
+  </g>
+
+  <!-- Headline -->
+  <text x="80" y="280" font-family="Inter, system-ui, sans-serif" font-size="84" font-weight="800" fill="#fff" letter-spacing="-2">
+    Virtual Try-On
+  </text>
+  <text x="80" y="370" font-family="Inter, system-ui, sans-serif" font-size="84" font-weight="800" fill="url(#accent)" letter-spacing="-2">
+    in 3D.
+  </text>
+
+  <!-- Subline -->
+  <text x="80" y="450" font-family="Inter, system-ui, sans-serif" font-size="32" font-weight="500" fill="#a1a1aa">
+    Photo → 3D garment → overlay on you.
+  </text>
+  <text x="80" y="494" font-family="Inter, system-ui, sans-serif" font-size="32" font-weight="500" fill="#a1a1aa">
+    Tracks rotation in real time.
+  </text>
+
+  <!-- Footer -->
+  <text x="80" y="580" font-family="Inter, system-ui, sans-serif" font-size="24" font-weight="600" fill="#71717a">
+    virtualfit.app
+  </text>
+
+  <!-- Decorative 3D-mesh glyph on the right -->
+  <g transform="translate(900,200)" stroke="#6C5CE7" stroke-width="2" fill="none" opacity="0.55">
+    <polygon points="120,0 240,80 240,200 120,280 0,200 0,80"/>
+    <polygon points="120,40 200,90 200,190 120,240 40,190 40,90"/>
+    <line x1="120" y1="0" x2="120" y2="280"/>
+    <line x1="0" y1="80" x2="240" y2="200"/>
+    <line x1="240" y1="80" x2="0" y2="200"/>
+  </g>
+</svg>
