@@ -1,0 +1,13 @@
+{
+  "name": "virtualfit-api",
+  "version": "1.0.0",
+  "description": "VirtualFit Azure Static Web Apps Functions (waitlist + waitlist-stats).",
+  "main": "index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "echo \"no api-side tests\" && exit 0"
+  },
+  "private": true
+}
