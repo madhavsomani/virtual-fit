@@ -62,13 +62,30 @@ test("no localhost/127.0.0.1 URL in shipped app/* source", () => {
   );
 });
 
-test("/generate-3d page has no Tailscale fallback in API_URL", () => {
+test("/generate-3d page no longer reads NEXT_PUBLIC_TRIPOSR_URL (Phase 7.43)", () => {
   const src = readFileSync(resolve(APP, "generate-3d/page.tsx"), "utf8");
-  // The fallback `||  "https://...ts.net..."` pattern must be gone.
-  assert.doesNotMatch(src, /\|\|[\s\S]{0,80}\.ts\.net/);
-  // Mandatory env: empty-string fallback only, then a runtime guard.
-  assert.match(src, /process\.env\.NEXT_PUBLIC_TRIPOSR_URL/);
-  assert.match(src, /NEXT_PUBLIC_TRIPOSR_URL is not configured/);
+  // Strip line + block comments — our 7.43 migration note documents the
+  // removed env var by name on purpose.
+  const code = src
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .split("\n")
+    .map((l) => l.replace(/\/\/.*$/, ""))
+    .join("\n");
+  // No Tailscale fallback (still belongs to the original Phase 7.8 guarantee).
+  assert.doesNotMatch(code, /\|\|[\s\S]{0,80}\.ts\.net/);
+  // Phase 7.43: the env var is gone from live code; keep this guard so a
+  // future agent can't accidentally reintroduce the broken self-hosted path.
+  assert.doesNotMatch(
+    code,
+    /process\.env\.NEXT_PUBLIC_TRIPOSR_URL/,
+    "NEXT_PUBLIC_TRIPOSR_URL was removed in Phase 7.43 in favor of the canonical imageToGlbPipeline",
+  );
+  // Page must use the canonical pipeline.
+  assert.match(
+    code,
+    /imageToGlbPipeline/,
+    "/generate-3d must use imageToGlbPipeline (TRELLIS HF Space) like /mirror",
+  );
 });
 
 test("/generate-3d no longer links to ?garmentTexture= (dead since Phase 7.2)", () => {

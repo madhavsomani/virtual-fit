@@ -2,13 +2,17 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
+import { imageToGlbPipeline, type PipelineProgress } from "../lib/image-to-glb";
 
-// Phase 7.8: Tailscale URL fallback removed (HARD RULE: no Tailscale URLs in
-// client code). `NEXT_PUBLIC_TRIPOSR_URL` is now mandatory; if unset, the page
-// renders a clear configuration error instead of silently calling a personal
-// dev machine.
-const API_URL =
-  (typeof process !== "undefined" && process.env.NEXT_PUBLIC_TRIPOSR_URL) || "";
+// Phase 7.43: rewired to the canonical `imageToGlbPipeline` (segformer/RMBG
+// → microsoft/TRELLIS HF Space) used by /mirror's upload path. Pre-7.43 this
+// page POSTed multipart/form-data to `NEXT_PUBLIC_TRIPOSR_URL`, which in
+// production was unset (page rendered "❌ not configured") and locally
+// pointed at `http://127.0.0.1:7860/generate3d` (a personal home machine
+// that's offline most of the time). The landing page has always promoted
+// /generate-3d, so every real visitor hit a broken page — same brand-trust
+// class as Phases 7.32 / 7.33 / 7.40. Both /mirror and /generate-3d now
+// share one canonical TRELLIS path.
 
 interface GenerationState {
   status: "idle" | "uploading" | "processing" | "done" | "error";
@@ -40,50 +44,47 @@ export default function Generate3DPage() {
     setState({ status: "uploading", progress: 10 });
 
     try {
-      if (!API_URL) {
-        throw new Error(
-          "NEXT_PUBLIC_TRIPOSR_URL is not configured. Set it to your TRELLIS / Hunyuan3D-2 endpoint URL before using this page.",
-        );
-      }
-      // Send the file directly as multipart/form-data to our self-hosted service
-      const fd = new FormData();
-      fd.append("image", file);
-      fd.append("mode", "Turbo");
+      // Phase 7.43: canonical TRELLIS pipeline. No env URL, no self-hosted
+      // service — hits the public microsoft/TRELLIS HF Space directly.
+      const { glbUrl: remoteGlbUrl, method } = await imageToGlbPipeline(file, {
+        onProgress: (p: PipelineProgress) => {
+          if (p.stage === "segmenting") {
+            setState({ status: "processing", progress: 20, provider: "trellis" });
+          } else if (p.stage === "trellis") {
+            // fraction is 0..1; map to 25..95.
+            const pct = 25 + Math.round((p.fraction ?? 0) * 70);
+            setState({ status: "processing", progress: pct, provider: "trellis" });
+          }
+        },
+      });
 
-      setState({ status: "processing", progress: 25, provider: "hunyuan3d-2" });
-
-      const res = await fetch(API_URL, { method: "POST", body: fd });
-
-      if (!res.ok) {
-        const txt = await res.text().catch(() => res.statusText);
-        throw new Error(`3D service error ${res.status}: ${txt.slice(0, 200)}`);
-      }
-
-      // Service returns the GLB binary directly. Convert to a blob URL we can load in Three.js.
-      const glbBlob = await res.blob();
+      // Fetch the GLB bytes (TRELLIS returns a remote URL we can pull).
+      const resp = await fetch(remoteGlbUrl);
+      if (!resp.ok) throw new Error(`GLB fetch ${resp.status}`);
+      const glbBlob = await resp.blob();
       const glbUrl = URL.createObjectURL(glbBlob);
-      const provider = res.headers.get("X-Provider") || "hunyuan3d-2";
-      const cache = res.headers.get("X-Cache") || "MISS";
+      const provider = `trellis+${method}`;
 
-      // Persist GLB to localStorage so it survives navigation to /mirror
+      // Persist GLB to localStorage so it survives navigation to /mirror.
+      // Same keys /mirror reads in its load-from-storage branch.
       try {
         const reader = new FileReader();
         reader.onload = () => {
-          const base64 = (reader.result as string).split(',')[1]; // strip data: prefix
-          localStorage.setItem('virtualfit-glb-data', base64);
-          localStorage.setItem('virtualfit-glb-provider', provider);
-          localStorage.setItem('virtualfit-glb-ts', new Date().toISOString());
+          const base64 = (reader.result as string).split(",")[1];
+          localStorage.setItem("virtualfit-glb-data", base64);
+          localStorage.setItem("virtualfit-glb-provider", provider);
+          localStorage.setItem("virtualfit-glb-ts", new Date().toISOString());
         };
         reader.readAsDataURL(glbBlob);
       } catch (e) {
-        console.warn('Failed to persist GLB to localStorage:', e);
+        console.warn("Failed to persist GLB to localStorage:", e);
       }
 
       setState({
         status: "done",
         progress: 100,
         resultUrl: glbUrl,
-        provider: `${provider} (${cache})`,
+        provider,
       });
       return;
     } catch (err) {
@@ -100,9 +101,9 @@ export default function Generate3DPage() {
     // `return;` so JS control flow never reached it. It hard-coded a
     // Meshy/Replicate polling pattern (HARD RULE #2: no paid APIs) and
     // revived the `data.isMock` 2D-texture path Phase 7.8 already rejected
-    // (HARD RULE #1). The live HF/Hunyuan3D-2 multipart path above is the
-    // single supported flow — no fallback, no "reuse this for the next
-    // provider."
+    // (HARD RULE #1).
+    // Phase 7.43: the multipart Hunyuan3D-2 self-hosted call is gone too;
+    // the pipeline above is the single supported flow.
   };
 
   const reset = () => {
@@ -171,8 +172,8 @@ export default function Generate3DPage() {
             border: "1px solid #0369a1",
           }}
         >
-          🟢 Real 3D mesh generation powered by <strong>Hunyuan3D-2</strong> (Tencent).
-          Typical generation: 5–15 sec. Note: this requires the home service to be online.
+          🟢 Real 3D mesh generation powered by <strong>microsoft/TRELLIS</strong> via
+          HuggingFace Space (free ZeroGPU tier). Typical generation: 30–60 sec.
         </div>
 
         {/* Upload area */}
