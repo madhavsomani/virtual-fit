@@ -26,10 +26,21 @@ const SOURCE_FILES = walk(APP).filter((p) =>
 );
 
 test("no Tailscale URL anywhere in app/* source", () => {
+  // Tighten the regex from Phase 7.8: the original `tail[a-z0-9]+\.`
+  // false-matched any English word containing 'tail' followed by
+  // alphanumerics and a period — e.g. 'retailers.' in JSDoc. Phase 7.59
+  // worked around this by rewording 2 comments in app/retailer/signup;
+  // this guard tightens the pattern itself.
+  //
+  // Tailscale magic-DNS hostnames always end in `.ts.net` (or rarely
+  // `.tsnet`). Tailnet device names are arbitrary so we can't enumerate
+  // them, but we CAN require the `.ts.net` suffix in any URL we'd care
+  // about leaking. The `tail367e9e` literal stays as a belt-and-suspenders
+  // catch for the specific tailnet that was leaking pre-7.8.
   const offenders = [];
   for (const p of SOURCE_FILES) {
     const txt = readFileSync(p, "utf8");
-    if (/tail367e9e|\.ts\.net|tail[a-z0-9]+\./.test(txt)) offenders.push(p);
+    if (/\btail367e9e\b|\.ts\.net\b/.test(txt)) offenders.push(p);
   }
   assert.deepEqual(
     offenders,
@@ -98,4 +109,21 @@ test("/generate-3d no longer links to ?garmentTexture= (dead since Phase 7.2)", 
   assert.doesNotMatch(code, /\?garmentTexture=/);
   // The "isMock flat-overlay" success branch is gone; only the throw remains.
   assert.doesNotMatch(code, /Image Ready \(Flat Overlay\)/);
+});
+
+test("Phase 7.60: tightened tailscale regex catches real leaks AND ignores 'retailers.' in prose", () => {
+  // Synthetic fixtures — the regex itself, not the file walk.
+  const RE = /\btail367e9e\b|\.ts\.net\b/;
+  // Real leaks must still trip:
+  assert.match("https://my-mac.tail367e9e.ts.net/api", RE, "must catch a literal Tailscale magic-DNS URL");
+  assert.match("const URL = 'https://x.ts.net'", RE, "must catch a bare .ts.net hostname");
+  assert.match("see tail367e9e for context", RE, "must catch the legacy tailnet literal");
+  // Prose must NOT trip:
+  assert.doesNotMatch(
+    "the most valuable embed knobs are invisible to retailers.",
+    RE,
+    "must NOT false-match plain English 'retailers.' (the bug Phase 7.59 worked around)",
+  );
+  assert.doesNotMatch("// detail.com is fine", RE, "must NOT false-match 'detail.com'");
+  assert.doesNotMatch("the cocktail.bar example", RE, "must NOT false-match 'cocktail.bar'");
 });

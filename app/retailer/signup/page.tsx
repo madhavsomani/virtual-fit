@@ -13,7 +13,7 @@ export default function RetailerSignupPage() {
   const [retailerCount, setRetailerCount] = useState(0);
   // Phase 7.59: brand colour picker (Phase 7.57 wiring) + per-product
   // snippet builder (Phase 7.56 + 7.58 wiring). Without this UI the
-  // most valuable embed knobs are invisible to retailers without it.
+  // most valuable embed knobs are invisible to retailers.
   const [brandColor, setBrandColor] = useState("#6C5CE7");
   const [pdpProductId, setPdpProductId] = useState("");
   const [pdpGarmentImage, setPdpGarmentImage] = useState("");
@@ -333,7 +333,7 @@ export default function RetailerSignupPage() {
 
             {/* Phase 7.59: per-product snippet — surfaces data-product-id
                 + data-garment-image (Phase 7.56 + 7.58 wiring). Without this
-                UI the most valuable embed knobs are invisible to retailers without it. */}
+                UI the most valuable embed knobs are invisible to retailers. */}
             <div style={cardStyle}>
               <h3 style={{ margin: "0 0 8px", fontSize: 16, fontWeight: 600 }}>
                 Per-product snippet (recommended on PDPs)
