@@ -56,6 +56,19 @@ function MirrorContent() {
     return v && HEX_RE.test(v) ? v : null;
   })();
   const [themePrimaryColor, setThemePrimaryColor] = useState<string>(urlPrimaryColor || '#6C5CE7');
+  // Phase 7.58: ?garmentImage=<retailer product image URL>. Sanitize:
+  // only http(s) URLs that the URL constructor accepts. Pipelined
+  // through segformer→TRELLIS via handleUpload3D when user clicks the
+  // "Try this product on" CTA (NOT auto-fire — 30–90s + HF quota).
+  const embedGarmentImageUrl = (() => {
+    const v = searchParams.get('garmentImage');
+    if (!v) return null;
+    try {
+      const u = new URL(v);
+      return (u.protocol === 'http:' || u.protocol === 'https:') ? v : null;
+    } catch { return null; }
+  })();
+  const [embedGarmentLoading, setEmbedGarmentLoading] = useState(false);
   // Phase 7.53: when embedded in a retailer iframe, the parent can override
   // the garment via postMessage `virtualfit:set-garment`. We seed null and
   // let the message listener (below) flip it. `?garment=none` is still the
@@ -3880,6 +3893,66 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           }}
         >
           ×
+        </button>
+      )}
+      {/* Phase 7.58: embed-mode "Try this product on" CTA. Only when
+          isEmbedded AND embed.js passed ?garmentImage=<url> AND the
+          garment is NOT already loaded (no point swapping a loaded
+          garment for the same one). Top-center banner, brand-themed.
+          User-initiated (NOT auto-fire) — TRELLIS run is 30–90s and
+          burns HF Spaces quota; we don't want every embedded page
+          view to fire one. */}
+      {isEmbedded && embedGarmentImageUrl && garment3DStatus !== 'loaded' && (
+        <button
+          type="button"
+          aria-label="Try this product on"
+          disabled={embedGarmentLoading || uploading}
+          onClick={async () => {
+            setEmbedGarmentLoading(true);
+            try {
+              const resp = await fetch(embedGarmentImageUrl, { mode: 'cors' });
+              if (!resp.ok) throw new Error(`fetch ${resp.status}`);
+              const blob = await resp.blob();
+              const file = new File([blob], 'product.jpg', { type: blob.type || 'image/jpeg' });
+              await handleUpload3D(file);
+            } catch (e) {
+              setStatus('⚠️ Could not load product image (CORS or network). Try uploading manually.');
+              console.warn('[embed] garmentImage fetch failed', e);
+            } finally {
+              setEmbedGarmentLoading(false);
+            }
+          }}
+          style={{
+            position: 'fixed',
+            top: 12,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            height: 44,
+            padding: '0 16px',
+            borderRadius: 22,
+            border: `1px solid ${themePrimaryColor}59`,
+            background: 'rgba(0,0,0,0.65)',
+            backdropFilter: 'blur(8px)',
+            color: '#fff',
+            fontSize: 14,
+            fontWeight: 600,
+            cursor: (embedGarmentLoading || uploading) ? 'wait' : 'pointer',
+            zIndex: 2147483645,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.35)',
+          }}
+        >
+          <img
+            src={embedGarmentImageUrl}
+            alt=""
+            width={28}
+            height={28}
+            style={{ borderRadius: 6, objectFit: 'cover', background: '#222' }}
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+          {embedGarmentLoading ? 'Loading…' : 'Try this product on'}
         </button>
       )}
       {/* Phase 7.56: embed-mode add-to-cart CTA. Only when isEmbedded AND

@@ -178,3 +178,30 @@ test("mirror page does NOT hardcode #6C5CE7 in the embed add-to-cart CTA (regres
     "add-to-cart CTA must reference themePrimaryColor.",
   );
 });
+
+test("mirror page reads ?garmentImage and renders the 'Try this product on' CTA (Phase 7.58)", () => {
+  // Pre-7.58 the iframe ignored ?garmentImage entirely — the embed showed
+  // the demo t-shirt instead of the retailer's actual product. The whole
+  // purchase-funnel premise of the embed widget was broken.
+  assert.match(
+    MIRROR,
+    /searchParams\.get\(['"]garmentImage['"]\)/,
+    "app/mirror/page.tsx must read ?garmentImage so the embed pipelines the retailer's product image, not the demo t-shirt.",
+  );
+  assert.match(
+    MIRROR,
+    /Try this product on/,
+    "app/mirror/page.tsx must render a 'Try this product on' CTA so embedded users can pipeline the retailer's product image.",
+  );
+});
+
+test("Phase 7.58 garmentImage CTA never auto-fires (must be user-initiated, behind a button)", () => {
+  // Auto-firing would burn HF Spaces quota on every embedded page view
+  // (TRELLIS run is 30–90s). Guard: handleUpload3D(...) must not appear
+  // inside any useEffect that depends on embedGarmentImageUrl.
+  assert.doesNotMatch(
+    MIRROR,
+    /useEffect\([^)]*\)[\s\S]{0,500}?handleUpload3D[\s\S]{0,500}?\[[^\]]*embedGarmentImageUrl/,
+    "Phase 7.58 garmentImage must NOT auto-fire handleUpload3D from a useEffect — TRELLIS quota.",
+  );
+});
