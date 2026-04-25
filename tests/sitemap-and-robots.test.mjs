@@ -27,7 +27,11 @@ const CANONICAL = "https://virtualfit.app";
 // be in the sitemap).
 const NON_ROUTE = new Set(["lib", "api", "components"]);
 // Routes intentionally omitted from the sitemap (post-purchase pages, etc.).
-const OMITTED_ROUTES = new Set(["/checkout/success/"]);
+// Phase 7.76: /retailer/ added to opt-outs because /retailer/page.tsx
+// is now a permanent redirect to /retailer/signup (Phase 7.61) — listing
+// the redirect source in the sitemap wastes crawl budget and confuses
+// canonical signal.
+const OMITTED_ROUTES = new Set(["/checkout/success/", "/retailer/"]);
 
 function discoverRoutes() {
   // Walk app/ and yield every directory that has a page.tsx in it. We treat

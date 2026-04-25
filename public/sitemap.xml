@@ -7,54 +7,54 @@
     broadcast a throwaway hostname as canonical.
   - Every directory under app/ with a routable page.tsx is listed.
     /checkout/success/ is intentionally omitted (post-purchase thank-you,
-    not for indexing).
+    not for indexing — Phase 7.75 also gave it a robots: noindex,nofollow
+    meta tag for defense in depth).
+  - Phase 7.76: dropped /retailer/ from the sitemap entirely. Phase 7.61
+    permanently redirects it to /retailer/signup; listing the redirect
+    source AND the redirect target wasted crawl budget and confused
+    canonical signal. Only /retailer/signup/ remains. Also bumped
+    lastmod to 2026-04-25 across the board.
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://virtualfit.app/</loc>
-    <lastmod>2026-04-24</lastmod>
+    <lastmod>2026-04-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://virtualfit.app/mirror/</loc>
-    <lastmod>2026-04-24</lastmod>
+    <lastmod>2026-04-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://virtualfit.app/generate-3d/</loc>
-    <lastmod>2026-04-24</lastmod>
+    <lastmod>2026-04-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://virtualfit.app/pricing/</loc>
-    <lastmod>2026-04-24</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://virtualfit.app/retailer/</loc>
-    <lastmod>2026-04-24</lastmod>
+    <lastmod>2026-04-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://virtualfit.app/retailer/signup/</loc>
-    <lastmod>2026-04-24</lastmod>
+    <lastmod>2026-04-25</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
     <loc>https://virtualfit.app/build-in-public/</loc>
-    <lastmod>2026-04-24</lastmod>
+    <lastmod>2026-04-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
     <loc>https://virtualfit.app/redeem/</loc>
-    <lastmod>2026-04-24</lastmod>
+    <lastmod>2026-04-25</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
