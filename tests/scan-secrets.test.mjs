@@ -242,16 +242,25 @@ test("scanner exits 0 (no-op) when out/ does not exist", () => {
 });
 
 test("CI workflow runs scan:secrets between Build and Deploy", () => {
+  // The active CI workflow lives at app/.github/workflows/deploy.yml
+  // (the git repo's toplevel IS app/ — the outer
+  // virtual-tryon-v2/.github is untracked junk that misled five prior
+  // phases into editing the wrong file). __dirname is app/tests, so
+  // the workflow is at __dirname/../.github/workflows/deploy.yml.
   const wf = require("node:fs").readFileSync(
-    resolve(__dirname, "..", "..", ".github", "workflows", "deploy.yml"),
+    resolve(__dirname, "..", ".github", "workflows", "deploy.yml"),
     "utf8",
   );
   // Order matters: scan must be AFTER build (otherwise out/ doesn't
-  // exist) and BEFORE deploy (otherwise the leak ships first).
-  const buildIdx = wf.indexOf("pnpm run build");
+  // exist) and BEFORE deploy (otherwise the leak ships first). The
+  // active workflow uses `pnpm build` (no `run`) and `Deploy to Azure
+  // Static Web Apps` step name.
+  const buildIdx = wf.indexOf("pnpm build");
   const scanIdx = wf.indexOf("scan:secrets");
-  const deployIdx = wf.indexOf("Deploy to Azure SWA");
-  assert.ok(buildIdx > 0, "workflow must run pnpm run build");
+  // Use the deploy STEP name (`- name: Deploy ...`) not the workflow
+  // top-level `name:` which appears at line 1 before everything else.
+  const deployIdx = wf.indexOf("- name: Deploy to Azure Static Web Apps");
+  assert.ok(buildIdx > 0, "workflow must run pnpm build");
   assert.ok(scanIdx > 0, "workflow must run scan:secrets");
   assert.ok(deployIdx > 0, "workflow must have a Deploy step");
   assert.ok(

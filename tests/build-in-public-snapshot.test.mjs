@@ -25,6 +25,23 @@ test("/build-in-public publicMetrics.commits is within 50 of the real git log co
   try {
     const gitDir = resolve(REPO_ROOT, ".git");
     if (existsSync(gitDir)) {
+      // Detect shallow clone (CI checkout@v4 default fetch-depth=1).
+      // A shallow clone reports 1 commit while local repos report
+      // hundreds — forcing a hardcoded mismatch into CI failure for
+      // the entire pipeline. Skip the assertion when shallow.
+      let isShallow = false;
+      try {
+        isShallow = execSync("git rev-parse --is-shallow-repository", {
+          cwd: REPO_ROOT,
+          encoding: "utf8",
+        }).trim() === "true";
+      } catch { /* old git without the flag; treat as not-shallow */ }
+      if (isShallow) {
+        // CI environment with fetch-depth: 1 (the default for
+        // actions/checkout@v4). Real commit count is unknowable here;
+        // the local-dev assertion is the authoritative one. Skip.
+        return;
+      }
       actual = parseInt(
         execSync("git log --oneline | wc -l", {
           cwd: REPO_ROOT,
