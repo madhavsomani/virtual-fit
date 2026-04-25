@@ -34,6 +34,23 @@ const ROUTES = [
     titleMustContain: "Pricing",
     descriptionMustContain: "Retailer",
   },
+  // Phase 7.75: extended the per-route metadata pattern to /redeem,
+  // /checkout/success, and /generate-3d.
+  {
+    layout: resolve(APP, "redeem/layout.tsx"),
+    titleMustContain: "Redeem",
+    descriptionMustContain: "code",
+  },
+  {
+    layout: resolve(APP, "checkout/success/layout.tsx"),
+    titleMustContain: "Checkout Complete",
+    descriptionMustContain: "subscription",
+  },
+  {
+    layout: resolve(APP, "generate-3d/layout.tsx"),
+    titleMustContain: "3D",
+    descriptionMustContain: "TRELLIS",
+  },
 ];
 
 for (const route of ROUTES) {
@@ -108,6 +125,9 @@ test("client pages remain marked 'use client' (layouts handle metadata, not the 
     resolve(APP, "retailer/signup/page.tsx"),
     resolve(APP, "build-in-public/page.tsx"),
     resolve(APP, "pricing/page.tsx"),
+    resolve(APP, "redeem/page.tsx"),
+    resolve(APP, "checkout/success/page.tsx"),
+    resolve(APP, "generate-3d/page.tsx"),
   ];
   for (const page of PAGES) {
     const body = readFileSync(page, "utf8");
@@ -117,4 +137,21 @@ test("client pages remain marked 'use client' (layouts handle metadata, not the 
       `${page.replace(APP, "app")} must remain "use client" (the page does interactive work; metadata moved to the sibling layout.tsx)`,
     );
   }
+});
+
+test("/checkout/success layout.tsx sets robots: noindex,nofollow (Stripe session_id leak guard)", () => {
+  // Phase 7.75: this page receives ?session_id=cs_live_XXXX in the URL
+  // from Stripe redirects. If a search-engine crawler ever indexes one
+  // of those URLs (someone accidentally pastes it in a forum, a blog
+  // post, etc.), the user-specific session id ends up in SERPs forever.
+  // The robots meta tag is the cheapest possible mitigation.
+  const body = readFileSync(
+    resolve(APP, "checkout/success/layout.tsx"),
+    "utf8",
+  );
+  assert.match(
+    body,
+    /robots:\s*["']noindex,?\s*nofollow["']/,
+    "checkout/success metadata must set robots: 'noindex, nofollow' to prevent Stripe session_id leaks into search engines",
+  );
 });
