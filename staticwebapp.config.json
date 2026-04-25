@@ -7,6 +7,24 @@
     {
       "route": "/api/*",
       "allowedRoles": ["anonymous"]
+    },
+    {
+      "_comment": "Phase 7.80: /mirror/ is the embeddable try-on widget — retailers iframe it from their own origin (shop.example.com → virtualfit.app/mirror). The global X-Frame-Options: SAMEORIGIN would block that, breaking the entire retailer revenue path. Override here: drop X-Frame-Options entirely (the legacy header has no allow-from value modern browsers respect) and rely on a permissive frame-ancestors CSP. Permissions-Policy still allows camera (self) — when /mirror is iframed, 'self' refers to the embedded document's origin (virtualfit.app), so the camera grant survives. Cross-Origin-Opener-Policy is dropped because COOP same-origin breaks legitimate cross-origin iframe parent communication.",
+      "route": "/mirror/*",
+      "headers": {
+        "X-Frame-Options": "",
+        "Content-Security-Policy": "frame-ancestors *",
+        "Cross-Origin-Opener-Policy": ""
+      }
+    },
+    {
+      "_comment": "Phase 7.80: same as above but for the trailing-slashless /mirror entry. SWA matches paths literally, so we need both /mirror and /mirror/* to cover edge-case retailer iframe srcs.",
+      "route": "/mirror",
+      "headers": {
+        "X-Frame-Options": "",
+        "Content-Security-Policy": "frame-ancestors *",
+        "Cross-Origin-Opener-Policy": ""
+      }
     }
   ],
   "responseOverrides": {
