@@ -101,25 +101,39 @@ module.exports = async function (context, req) {
     // Send email notification via fetch to a simple email service
     // Using a free service like formsubmit.co or just logging for now
     const emailTo = 'madhavsomani007@gmail.com';
-    
-    // Try sending via FormSubmit (free, no signup needed)
-    try {
-      await fetch(`https://formsubmit.co/ajax/${emailTo}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          _subject: `🎯 VirtualFit Waitlist: ${entry.email}`,
-          email: entry.email,
-          revenue: entry.revenue,
-          would_pay_49: entry.wouldPay,
-          killer_feature: entry.killerFeature,
-          timestamp: entry.timestamp,
-          source: entry.source,
-        }),
-      });
-    } catch (emailErr) {
-      // Email send failed — not critical, data is logged
-      context.log.warn('Email notification failed:', emailErr.message);
+
+    // Phase 7.81: gate the formsubmit.co email send on !isTest. Pre-7.81
+    // the `isTest` flag was computed (line 43) and used to differentiate
+    // log tags + filter the milestone webhook count, but the email send
+    // ALWAYS fired — so every E2E run, every Playwright test, every
+    // smoke check that POSTed {source:'e2e-test'} or {isTest:true} sent
+    // a real "🎯 VirtualFit Waitlist: e2e+...@example.com" email to
+    // madhavsomani007@gmail.com. Inbox-flooding bug — the same class as
+    // the 7.66 telemetry-via-formsubmit flood (telemetry was already
+    // short-circuited above; this closes the second leak).
+    // Real signups (website, retailer-signup) still email as before.
+    if (!isTest) {
+      // Try sending via FormSubmit (free, no signup needed)
+      try {
+        await fetch(`https://formsubmit.co/ajax/${emailTo}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify({
+            _subject: `🎯 VirtualFit Waitlist: ${entry.email}`,
+            email: entry.email,
+            revenue: entry.revenue,
+            would_pay_49: entry.wouldPay,
+            killer_feature: entry.killerFeature,
+            timestamp: entry.timestamp,
+            source: entry.source,
+          }),
+        });
+      } catch (emailErr) {
+        // Email send failed — not critical, data is logged
+        context.log.warn('Email notification failed:', emailErr.message);
+      }
+    } else {
+      context.log.info(`Skipped formsubmit email for test entry: ${entry.email} (source=${entry.source})`);
     }
 
     context.res = {
