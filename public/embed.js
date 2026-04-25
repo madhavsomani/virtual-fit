@@ -25,7 +25,6 @@
 (function() {
   'use strict';
 
-  var BASE_URL = 'https://virtualfit.app';
   var WIDGET_ID = 'virtualfit-widget';
   var VERSION = '2.0.0';
   
@@ -33,6 +32,32 @@
   var script = document.currentScript || (function() {
     var scripts = document.getElementsByTagName('script');
     return scripts[scripts.length - 1];
+  })();
+
+  // Phase 7.67: derive BASE_URL from the script tag's own src so the
+  // widget works on staging/preview/alt domains AND localhost dev.
+  // Pre-7.67 BASE_URL was hardcoded to https://virtualfit.app, which:
+  //   (a) made the dev loop broken (loading /embed.js from localhost:3000
+  //       opened an iframe to https://virtualfit.app/mirror — wrong
+  //       origin, wrong code, no way to test changes locally);
+  //   (b) blocked any Azure SWA preview deploy from loading its OWN
+  //       /mirror/ — the widget always cross-pointed back to prod;
+  //   (c) any retailer who proxies our embed.js through their own CDN
+  //       (a perfectly reasonable thing to do for cache control) would
+  //       end up with a cross-origin iframe back to virtualfit.app,
+  //       defeating the proxy.
+  // The script tag's `src` is always set when loaded via <script src=...>,
+  // and document.currentScript reliably resolves it. Override only when
+  // we can't determine it (defensive fallback to the prod default).
+  var BASE_URL = (function() {
+    try {
+      var src = script && script.src;
+      if (src) {
+        var u = new URL(src);
+        return u.origin;
+      }
+    } catch (e) { /* fall through */ }
+    return 'https://virtualfit.app';
   })();
 
   var config = {
