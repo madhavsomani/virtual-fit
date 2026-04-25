@@ -26,6 +26,7 @@ const NEEDLE = /azurestaticapps\.net|wonderful-sky-0513a3610/;
 const ALLOW = new Set([
   resolve(ROOT, "tests/no-azure-preview-hostname.test.mjs"),
   resolve(ROOT, "tests/sitemap-and-robots.test.mjs"),
+  resolve(ROOT, "tests/prod-deploy-divergence.test.mjs"),
   resolve(ROOT, "public/sitemap.xml"), // <!-- migration note inside XML comment -->
 ]);
 
