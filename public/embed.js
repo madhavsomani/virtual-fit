@@ -56,8 +56,6 @@
     if (config.shopId) params.set('shopId', config.shopId);
     if (config.retailer) params.set('retailer', config.retailer);
     if (config.color) params.set('primaryColor', config.color);
-    if (config.fontFamily) params.set('fontFamily', config.fontFamily);
-    if (config.buttonRadius) params.set('buttonRadius', config.buttonRadius);
     if (config.productId) params.set('productId', config.productId);
     if (config.garmentImage) params.set('garmentImage', config.garmentImage);
     return BASE_URL + '/mirror/?' + params.toString();
@@ -198,12 +196,12 @@
 
     switch (data.type) {
       case 'virtualfit:ready':
-        // Iframe is loaded and ready — send theme config
+        // Iframe is loaded and ready — send theme config. Phase 7.65:
+        // mirror only consumes primaryColor; fontFamily/buttonRadius/
+        // shopId postMessage fields were unread (mirror's set-theme
+        // handler reads only data.theme.primaryColor). Stripped.
         sendToIframe({ type: 'virtualfit:set-theme', theme: {
           primaryColor: config.color,
-          fontFamily: config.fontFamily,
-          buttonRadius: config.buttonRadius,
-          shopId: config.shopId,
         }});
         dispatchCustomEvent('virtualfit:ready', {});
         break;
