@@ -8,8 +8,7 @@
  *     data-position="bottom-right"
  *     data-color="#6C5CE7"
  *     data-font-family="system-ui"
- *     data-button-radius="50"
- *     data-garment-set="summer-2026">
+ *     data-button-radius="50">
  *   </script>
  * 
  * Or manual init:
@@ -46,7 +45,6 @@
     buttonRadius: script.getAttribute('data-button-radius') || '50',
     width: script.getAttribute('data-width') || '400',
     height: script.getAttribute('data-height') || '650',
-    garmentSet: script.getAttribute('data-garment-set') || '',
     productId: script.getAttribute('data-product-id') || '',
     garmentImage: script.getAttribute('data-garment-image') || '',
   };
@@ -60,7 +58,6 @@
     if (config.color) params.set('primaryColor', config.color);
     if (config.fontFamily) params.set('fontFamily', config.fontFamily);
     if (config.buttonRadius) params.set('buttonRadius', config.buttonRadius);
-    if (config.garmentSet) params.set('garmentSet', config.garmentSet);
     if (config.productId) params.set('productId', config.productId);
     if (config.garmentImage) params.set('garmentImage', config.garmentImage);
     return BASE_URL + '/mirror/?' + params.toString();
