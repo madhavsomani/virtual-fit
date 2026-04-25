@@ -57,6 +57,39 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="preconnect" href="https://cdn.jsdelivr.net" />
         <link rel="preconnect" href="https://storage.googleapis.com" />
+        {/* Phase 7.77: JSON-LD structured data for rich results.
+            SoftwareApplication is the right schema for a webcam-based
+            try-on app — not WebPage / Product. Google's rich-result
+            tester accepts SoftwareApplication for browser-based tools
+            and surfaces ratings + price in SERPs when both are present.
+            Price is "0" because the free tier is the actual product;
+            paid tiers live on /pricing and would warrant their own
+            Product/Offer JSON-LD if/when conversion data justifies. */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "VirtualFit",
+              description:
+                "Webcam-based virtual try-on with 3D body tracking. Upload any clothing photo and see it on you in real-time.",
+              applicationCategory: "LifestyleApplication",
+              operatingSystem: "Web Browser",
+              url: "https://virtualfit.app",
+              offers: {
+                "@type": "Offer",
+                price: "0",
+                priceCurrency: "USD",
+              },
+              creator: {
+                "@type": "Organization",
+                name: "VirtualFit",
+                url: "https://virtualfit.app",
+              },
+            }),
+          }}
+        />
         <style>{`
           /* Skip link for accessibility */
           .skip-link {
