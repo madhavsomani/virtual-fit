@@ -69,7 +69,7 @@
 <body>
 
 <div class="announce">
-  ✨ New: Try clothes on virtually before you buy — <a href="#" onclick="VirtualFit.open(); return false;">Try it now</a>
+  ✨ Click any product card → try it on with your camera in 30 seconds — <a href="#" onclick="VirtualFit.open(); return false;">or open the widget</a>
 </div>
 
 <header>
@@ -93,7 +93,7 @@
 <p class="section-sub">Try any item on virtually — click the 👕 button in the corner</p>
 
 <div class="product-grid">
-  <div class="product-card">
+  <div class="product-card" onclick="VirtualFit.tryOnProduct({garmentImage:'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=680&fit=crop', productId:'essential-crew-tee'})">
     <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&h=680&fit=crop" alt="White T-Shirt" loading="lazy">
     <div class="info">
       <h3>Essential Crew Tee</h3>
@@ -106,11 +106,11 @@
         </div>
         <span style="font-size:12px;color:#888">XS–XXL</span>
       </div>
-      <div class="try-on-badge">👕 Try On Available</div>
+      <div class="try-on-badge">👕 Click to try on</div>
     </div>
   </div>
 
-  <div class="product-card">
+  <div class="product-card" onclick="VirtualFit.tryOnProduct({garmentImage:'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&h=680&fit=crop', productId:'classic-denim-jacket'})">
     <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&h=680&fit=crop" alt="Denim Jacket" loading="lazy">
     <div class="info">
       <h3>Classic Denim Jacket</h3>
@@ -122,11 +122,11 @@
         </div>
         <span style="font-size:12px;color:#888">S–XL</span>
       </div>
-      <div class="try-on-badge">👕 Try On Available</div>
+      <div class="try-on-badge">👕 Click to try on</div>
     </div>
   </div>
 
-  <div class="product-card">
+  <div class="product-card" onclick="VirtualFit.tryOnProduct({garmentImage:'https://images.unsplash.com/photo-1434389677669-e08b4cda3a0a?w=500&h=680&fit=crop', productId:'brushed-flannel-shirt'})">
     <img src="https://images.unsplash.com/photo-1434389677669-e08b4cda3a0a?w=500&h=680&fit=crop" alt="Flannel Shirt" loading="lazy">
     <div class="info">
       <h3>Brushed Flannel Shirt</h3>
@@ -139,11 +139,11 @@
         </div>
         <span style="font-size:12px;color:#888">S–XXL</span>
       </div>
-      <div class="try-on-badge">👕 Try On Available</div>
+      <div class="try-on-badge">👕 Click to try on</div>
     </div>
   </div>
 
-  <div class="product-card">
+  <div class="product-card" onclick="VirtualFit.tryOnProduct({garmentImage:'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=500&h=680&fit=crop', productId:'heavyweight-pullover-hoodie'})">
     <img src="https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=500&h=680&fit=crop" alt="Hoodie" loading="lazy">
     <div class="info">
       <h3>Heavyweight Pullover Hoodie</h3>
@@ -156,7 +156,7 @@
         </div>
         <span style="font-size:12px;color:#888">M–XXL</span>
       </div>
-      <div class="try-on-badge">👕 Try On Available</div>
+      <div class="try-on-badge">👕 Click to try on</div>
     </div>
   </div>
 </div>

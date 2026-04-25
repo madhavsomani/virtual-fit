@@ -294,6 +294,24 @@
     setGarment: function(garmentUrl) {
       sendToIframe({ type: 'virtualfit:set-garment', garmentUrl: garmentUrl });
     },
+    // Phase 7.62: per-product try-on. Updates config.garmentImage +
+    // config.productId, rebuilds the iframe URL (only if garmentImage
+    // changed — a re-load triggers another segformer→TRELLIS pipeline
+    // run, 30-90s, HF Spaces quota), then opens the panel. Wire your
+    // product cards' onclick to this for a real per-PDP try-on flow.
+    tryOnProduct: function(opts) {
+      opts = opts || {};
+      var newImg = opts.garmentImage || '';
+      var newPid = opts.productId || '';
+      var changed = newImg && newImg !== config.garmentImage;
+      config.garmentImage = newImg;
+      config.productId = newPid;
+      if (changed && iframeEl) {
+        iframeEl.src = buildIframeUrl();
+      }
+      openPanel();
+      trackEvent('try_on_product', { productId: newPid, garmentImage: newImg });
+    },
     setTheme: function(theme) {
       sendToIframe({ type: 'virtualfit:set-theme', theme: theme });
     },
