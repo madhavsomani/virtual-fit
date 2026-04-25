@@ -15,11 +15,12 @@ export default function BuildInPublicPage() {
   // Days computed live from a fixed start date; commits + lines snapshot
   // bumped at each meaningful build-progress refactor.
   const publicMetrics = {
-    commits: 495,
+    commits: 542,
     daysBuilding: Math.floor(
       (Date.now() - new Date("2026-04-01").getTime()) / (1000 * 60 * 60 * 24),
     ),
-    linesOfCode: "16K+",
+    linesOfCode: "18K+",
+    tests: 388,
     techStack: ["Next.js", "MediaPipe", "Three.js", "TypeScript"],
   };
 
@@ -112,6 +113,12 @@ export default function BuildInPublicPage() {
                 {publicMetrics.linesOfCode}
               </div>
               <div style={{ fontSize: 12, color: "#71717a" }}>Lines of Code</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: "#6C5CE7" }}>
+                {publicMetrics.tests}
+              </div>
+              <div style={{ fontSize: 12, color: "#71717a" }}>Tests</div>
             </div>
           </div>
           <div style={{ marginTop: 16, display: "flex", gap: 8, flexWrap: "wrap" }}>
