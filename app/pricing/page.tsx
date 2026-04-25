@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { PRICING_FAQ } from "./faq-data";
 
 const plans = [
   {
@@ -285,32 +286,7 @@ export default function PricingPage() {
               textAlign: "left",
             }}
           >
-            {[
-              {
-                q: "Is my video private?",
-                a: "100% private. All processing happens in your browser. We never see, store, or transmit your camera feed.",
-              },
-              {
-                q: "Can I cancel anytime?",
-                a: "Yes! Cancel your subscription at any time, no questions asked. You'll keep access until the end of your billing period.",
-              },
-              {
-                q: "Do you store my photos?",
-                a: "No. Garment images you upload are processed locally. We don't store your photos on our servers.",
-              },
-              {
-                q: "What payment methods do you accept?",
-                a: "We accept all major credit cards (Visa, Mastercard, Amex) via Stripe.",
-              },
-              {
-                q: "Is there a free trial?",
-                a: "Yes! Try the free tier with 3 try-ons/month, or get a 7-day trial on Creator.",
-              },
-              {
-                q: "Can I embed this in my Shopify store?",
-                a: "Absolutely! The Retailer plan ($49/mo) includes an embeddable widget with your branding.",
-              },
-            ].map((faq) => (
+            {PRICING_FAQ.map((faq) => (
               <div
                 key={faq.q}
                 style={{
