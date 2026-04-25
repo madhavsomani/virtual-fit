@@ -98,7 +98,7 @@ export default function RetailerSignupPage() {
   const iframeExtras = (pdpProductId ? `&productId=${encodeURIComponent(pdpProductId)}` : '')
     + (pdpGarmentImage ? `&garmentImage=${encodeURIComponent(pdpGarmentImage)}` : '');
   const iframeSnippet = `<iframe
-  src="${embedOrigin}/mirror/?embed=true&shopId=${encodeURIComponent(shopId)}&retailer=${encodeURIComponent(form.shopName)}&primaryColor=${encodeURIComponent(brandColor)}${iframeExtras}"
+  src="${embedOrigin}/mirror/?embed=true&primaryColor=${encodeURIComponent(brandColor)}${iframeExtras}"
   width="100%" height="600"
   frameborder="0" allow="camera"
 />`;
