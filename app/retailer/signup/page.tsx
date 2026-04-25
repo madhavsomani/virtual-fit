@@ -379,7 +379,7 @@ export default function RetailerSignupPage() {
                 See the try-on experience your customers will get:
               </p>
               <a
-                href={`/mirror/?embed=true&shopId=${encodeURIComponent(shopId)}&retailer=${encodeURIComponent(form.shopName)}`}
+                href={`/mirror/?embed=true&primaryColor=${encodeURIComponent(brandColor)}`}
                 target="_blank"
                 rel="noopener"
                 style={{
