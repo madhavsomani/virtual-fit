@@ -51,14 +51,54 @@
       ].join('\n');
 
       this.shadowRoot.querySelector('button').addEventListener('click', function() {
+        // Phase 7.68: prefer the per-product API (tryOnProduct) when
+        // available. Pre-7.68 the click did setGarment(garmentImage)
+        // then open() — two separate operations, no productId
+        // tracking, and the per-PDP analytics event from 7.62
+        // (try_on_product) never fired. With multiple buttons on a
+        // Shopify collection grid this also raced (setGarment from
+        // button A, then setGarment from button B, then open() from
+        // button A — wrong garment shown). tryOnProduct atomically
+        // updates BOTH garmentImage + productId on config, rebuilds
+        // the iframe src once, and opens. Falls back to the legacy
+        // setGarment+open path on older embed.js versions that don't
+        // expose tryOnProduct yet.
+        if (window.VirtualFit && typeof window.VirtualFit.tryOnProduct === 'function') {
+          window.VirtualFit.tryOnProduct({
+            garmentImage: garmentImage,
+            productId: productId,
+          });
+          return;
+        }
         if (window.VirtualFit) {
           if (garmentImage) {
             window.VirtualFit.setGarment(garmentImage);
           }
           window.VirtualFit.open();
         } else {
-          // Fallback: open mirror in new tab
-          var base = 'https://virtualfit.app';
+          // Fallback: open mirror in new tab. Phase 7.68: derive base
+          // from the document's loading <script src=...> origin so dev
+          // (localhost), Azure SWA preview, and retailer-CDN-proxied
+          // bundles work. Pre-7.68 this was hardcoded to the prod URL
+          // which made the web component cross-origin in every other
+          // environment (same bug as 7.67 fixed in embed.js).
+          var base = (function() {
+            try {
+              var s = document.currentScript;
+              if (!s) {
+                var all = document.getElementsByTagName('script');
+                for (var i = all.length - 1; i >= 0; i--) {
+                  var src = all[i].src || '';
+                  if (src.indexOf('virtualfit-button') !== -1 || src.indexOf('embed.js') !== -1) {
+                    s = all[i];
+                    break;
+                  }
+                }
+              }
+              if (s && s.src) return new URL(s.src).origin;
+            } catch (e) { /* fall through */ }
+            return 'https://virtualfit.app';
+          })();
           var params = new URLSearchParams();
           params.set('embed', 'true');
           if (shopId) params.set('shopId', shopId);
