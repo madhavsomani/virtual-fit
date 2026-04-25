@@ -83,7 +83,7 @@ export default function PricingPage() {
     alert(
       `Checkout for ${plan} is not yet enabled.\n\n` +
       `Set NEXT_PUBLIC_STRIPE_${plan.toUpperCase()}_LINK in environment to activate.\n\n` +
-      `Meanwhile, join the waitlist on /mirror to be notified when ${plan} goes live.`
+      `Meanwhile, join the waitlist on the home page to be notified when ${plan} goes live.`
     );
     window.location.href = "/?waitlist=1";
   };

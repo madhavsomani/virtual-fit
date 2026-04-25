@@ -24,6 +24,30 @@ export default function Home() {
     if (Array.isArray(waitlist)) setWaitlistCount(waitlist.length);
   }, []);
 
+  // Phase 7.73: honour ?waitlist=1 from /pricing's "checkout not yet
+  // enabled" redirect. Pre-7.73 the pricing page sent users to
+  // /?waitlist=1 expecting the home page to scroll to + focus the
+  // waitlist email input — but app/page.tsx never read any search
+  // params, so the user landed on the hero and was expected to scroll
+  // and find the form themselves. Dead-API-surface bug exactly like
+  // 7.64/7.70/7.71 but cross-page: the producer (pricing redirect)
+  // emitted a contract the consumer (home page) never honoured.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("waitlist") !== "1") return;
+    // Defer to next tick so the DOM is fully painted, then scroll +
+    // focus. Use requestAnimationFrame for jank-free scroll.
+    requestAnimationFrame(function() {
+      const el = document.getElementById("waitlist-email");
+      if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      // Focus after the smooth-scroll starts so iOS keyboards don't
+      // interrupt the animation.
+      setTimeout(function() { (el as HTMLInputElement).focus(); }, 350);
+    });
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
@@ -137,6 +161,7 @@ export default function Home() {
               </div>
               <form onSubmit={handleSubmit} style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" }}>
                 <input
+                  id="waitlist-email"
                   type="email"
                   placeholder="Enter your email"
                   value={email}
