@@ -16,8 +16,35 @@ module.exports = async function (context, req) {
     return;
   }
 
-  // Simple auth
+  // Phase 7.63: PUBLIC, no-auth path — returns ONLY the retailer count
+  // for the /retailer/signup social-proof number. Pre-7.63 this endpoint
+  // gated EVERYTHING behind adminKey, so the signup page (which calls
+  // without a key) always got 401 and the count never displayed. The
+  // PII fields (email/wouldPay/breakdowns/recentSignups) stay admin-only
+  // — only the aggregate retailer count is exposed publicly.
   const key = req.query.key;
+  if (!key) {
+    try {
+      const logPath = '/tmp/virtualfit-waitlist.jsonl';
+      let retailers = 0;
+      if (fs.existsSync(logPath)) {
+        const lines = fs.readFileSync(logPath, 'utf-8').split('\n').filter(Boolean);
+        for (const line of lines) {
+          try {
+            const e = JSON.parse(line);
+            if (e && !e.isTest && e.source === 'retailer-signup') retailers++;
+          } catch { /* skip malformed */ }
+        }
+      }
+      context.res = { status: 200, headers: cors, body: { retailers } };
+      return;
+    } catch (err) {
+      context.res = { status: 200, headers: cors, body: { retailers: 0 } };
+      return;
+    }
+  }
+
+  // Simple auth (admin path)
   const adminKey = process.env.ADMIN_KEY || 'vfit-admin-2026';
   if (key !== adminKey && key !== 'admin') {
     context.res = { status: 401, headers: cors, body: { error: 'Invalid key' } };
