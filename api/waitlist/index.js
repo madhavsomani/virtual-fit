@@ -59,6 +59,32 @@ module.exports = async function (context, req) {
     const logTag = isTest ? 'WAITLIST_TEST_ENTRY' : 'WAITLIST_ENTRY';
     context.log.info(`${logTag}: ${JSON.stringify(entry)}`);
 
+    // Phase 7.66: telemetry short-circuit. The embed widget POSTs every
+    // widget_opened / widget_closed / garment_changed / add_to_cart /
+    // try_on_product event to THIS endpoint with source='embed-widget'
+    // (legacy: it was the cheapest pre-existing route). Pre-7.66 each
+    // event silently flowed through the SAME pipeline as a real signup:
+    //   (a) appended to /tmp/virtualfit-waitlist.jsonl (bloating the file
+    //       /api/waitlist-stats reads from — admin-side filters strip
+    //       embed-widget rows but the file still grows unbounded);
+    //   (b) sent a `formsubmit.co` email to madhavsomani007@gmail.com
+    //       for EVERY interaction (Madhav's inbox flooded with
+    //       "VirtualFit Waitlist: event@shopId" notifications);
+    //   (c) read the entire JSONL and re-evaluated milestones on every
+    //       request — a hot-path file scan triggered by retailer button
+    //       clicks.
+    // Telemetry is server-log-only from here. Real signups (website,
+    // retailer-signup, test) keep the full pipeline.
+    if (entry.source === 'embed-widget') {
+      context.log.info(`TELEMETRY_EVENT: ${entry.revenue || 'unknown'} from ${entry.killerFeature || 'no-meta'}`);
+      context.res = {
+        status: 200,
+        headers: cors,
+        body: { success: true, telemetry: true },
+      };
+      return;
+    }
+
     // Phase 7.40: persist to JSONL so /api/waitlist-stats can compute real
     // counts AND so the milestone webhook below has a file to count from.
     // Pre-7.40 nobody wrote here, so stats said `count: 0` forever and the
