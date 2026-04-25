@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { safeLoadJson } from "./lib/safe-storage";
+import { HOME_FAQ } from "./home-faq-data";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -99,6 +100,32 @@ export default function Home() {
   };
 
   return (
+    <>
+      {/* Phase 7.79: schema.org/FAQPage JSON-LD for the homepage FAQ
+          accordion. Co-located with the visible <details> elements
+          rendered below from the same HOME_FAQ source so schema text
+          matches DOM text verbatim (Google FAQ rich-result requirement).
+          Lives in page.tsx (not layout.tsx) because layout.tsx is
+          shared across ALL routes — emitting FAQPage on /pricing,
+          /retailer/signup, etc. where the FAQ DOM doesn't exist would
+          earn a Google penalty for schema-without-matching-content. */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: HOME_FAQ.map((faq) => ({
+              "@type": "Question",
+              name: faq.q,
+              acceptedAnswer: {
+                "@type": "Answer",
+                text: faq.a,
+              },
+            })),
+          }),
+        }}
+      />
     <main style={{
       minHeight: "100vh",
       background: "#0c0c0e",
@@ -196,32 +223,29 @@ export default function Home() {
                 </button>
               </form>
               
-              {/* FAQ Accordion */}
+              {/* FAQ Accordion — data lives in app/home-faq-data.ts
+                  so app/layout.tsx can render parity-matched FAQPage
+                  JSON-LD (Phase 7.79). DO NOT inline here; schema text
+                  MUST match visible text verbatim or Google ignores
+                  the FAQ rich result. */}
               <div style={{ marginTop: 24, textAlign: "left", maxWidth: 400, margin: "24px auto 0" }}>
-                <details style={{ marginBottom: 8, borderBottom: "1px solid #27272a", paddingBottom: 8 }}>
-                  <summary style={{ fontSize: 13, color: "#a1a1aa", cursor: "pointer" }}>
-                    📅 When does it launch?
-                  </summary>
-                  <p style={{ fontSize: 12, color: "#71717a", margin: "8px 0 0 16px" }}>
-                    Public beta: Q2 2026. Founding members get early access + lifetime discount.
-                  </p>
-                </details>
-                <details style={{ marginBottom: 8, borderBottom: "1px solid #27272a", paddingBottom: 8 }}>
-                  <summary style={{ fontSize: 13, color: "#a1a1aa", cursor: "pointer" }}>
-                    💰 How much will it cost?
-                  </summary>
-                  <p style={{ fontSize: 12, color: "#71717a", margin: "8px 0 0 16px" }}>
-                    $19-$49/mo depending on usage. Design partners: first 6 months free.
-                  </p>
-                </details>
-                <details style={{ marginBottom: 8 }}>
-                  <summary style={{ fontSize: 13, color: "#a1a1aa", cursor: "pointer" }}>
-                    🔒 Will my data be private?
-                  </summary>
-                  <p style={{ fontSize: 12, color: "#71717a", margin: "8px 0 0 16px" }}>
-                    Yes. Camera processing happens in-browser. We never see customer photos.
-                  </p>
-                </details>
+                {HOME_FAQ.map((faq, i) => (
+                  <details
+                    key={faq.q}
+                    style={
+                      i < HOME_FAQ.length - 1
+                        ? { marginBottom: 8, borderBottom: "1px solid #27272a", paddingBottom: 8 }
+                        : { marginBottom: 8 }
+                    }
+                  >
+                    <summary style={{ fontSize: 13, color: "#a1a1aa", cursor: "pointer" }}>
+                      {faq.emoji} {faq.q}
+                    </summary>
+                    <p style={{ fontSize: 12, color: "#71717a", margin: "8px 0 0 16px" }}>
+                      {faq.a}
+                    </p>
+                  </details>
+                ))}
               </div>
             </>
           ) : (
@@ -489,5 +513,6 @@ export default function Home() {
         </p>
       </div>
     </main>
+    </>
   );
 }
