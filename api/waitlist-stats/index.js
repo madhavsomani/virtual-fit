@@ -45,8 +45,45 @@ module.exports = async function (context, req) {
   }
 
   // Simple auth (admin path)
-  const adminKey = process.env.ADMIN_KEY || 'vfit-admin-2026';
-  if (key !== adminKey && key !== 'admin') {
+  // Phase 7.82: PII leak fix.
+  // Pre-7.82 admin auth had two critical leaks:
+  //   (1) `process.env.ADMIN_KEY || 'vfit-admin-2026'` — if the env var
+  //       is unset (e.g. fresh Azure SWA deploy where the secret was
+  //       never wired), the literal 'vfit-admin-2026' became a valid
+  //       key. The fallback string is in this open-source repo.
+  //   (2) `if (key !== adminKey && key !== 'admin')` — the literal
+  //       string 'admin' was a hardcoded backdoor. Anyone visiting
+  //       /api/waitlist-stats?key=admin received full PII for EVERY
+  //       real waitlist signup: email, revenue intent, killer-feature
+  //       answer, exact UTC timestamp, the last 10 emails verbatim.
+  // Both gates are removed. If ADMIN_KEY is unset we now hard-fail
+  // with 503 (misconfigured) instead of silently accepting the
+  // hardcoded fallback. The compare is timing-safe via crypto to
+  // avoid trivial brute-force timing attacks on a short shared key.
+  const adminKey = process.env.ADMIN_KEY;
+  if (!adminKey) {
+    context.log.error('waitlist-stats: ADMIN_KEY env var is not configured — admin path disabled.');
+    context.res = {
+      status: 503,
+      headers: cors,
+      body: { error: 'Admin endpoint is not configured.' },
+    };
+    return;
+  }
+  // Timing-safe equality. crypto.timingSafeEqual requires equal-length
+  // buffers, so we wrap with a length check first — mismatched length
+  // is the common case (random query-string guesses) and short-circuits
+  // before we allocate buffers.
+  let authorized = false;
+  try {
+    const provided = Buffer.from(String(key), 'utf8');
+    const expected = Buffer.from(adminKey, 'utf8');
+    if (provided.length === expected.length) {
+      const crypto = require('crypto');
+      authorized = crypto.timingSafeEqual(provided, expected);
+    }
+  } catch { /* fall through to 401 */ }
+  if (!authorized) {
     context.res = { status: 401, headers: cors, body: { error: 'Invalid key' } };
     return;
   }
