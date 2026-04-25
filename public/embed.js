@@ -78,8 +78,14 @@
   function buildIframeUrl() {
     var params = new URLSearchParams();
     params.set('embed', 'true');
-    if (config.shopId) params.set('shopId', config.shopId);
-    if (config.retailer) params.set('retailer', config.retailer);
+    // Phase 7.70: do NOT forward shopId/retailer to the iframe URL.
+    // mirror/page.tsx never calls searchParams.get('shopId') or
+    // searchParams.get('retailer') — the values arrive and are silently
+    // dropped on receive. Same dead-API-surface bug class as Phases 7.64 and 7.65.
+    // shopId/retailer are still legitimately used CLIENT-SIDE on this
+    // embed.js for telemetry attribution (see trackEvent), and were
+    // ALSO included in the virtualfit:set-theme postMessage payload
+    // pre-7.65 — the postMessage was already cleaned in 7.65.
     if (config.color) params.set('primaryColor', config.color);
     if (config.productId) params.set('productId', config.productId);
     if (config.garmentImage) params.set('garmentImage', config.garmentImage);
