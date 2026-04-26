@@ -20,6 +20,7 @@ import { detectLeftSwipeIntent, detectRightSwipeIntent, detectGestureCooldownWin
 // duplicating the existing avg-vis gate 80 lines below the import.
 import { imageToGlbPipeline } from "../lib/image-to-glb";
 import { humanizePipelineError } from "../lib/humanize-pipeline-error";
+import { planAutoRetry, MAX_AUTO_RETRY_ATTEMPTS } from "../lib/auto-retry";
 import { normalizeGlb } from "../lib/glb-normalize";
 
 type PoseResultLandmark = { x: number; y: number; z?: number; visibility?: number };
@@ -829,6 +830,15 @@ function MirrorContent() {
   const garment3DModelRef = useRef<THREE.Group | null>(null); // set when a GLB is loaded
   const uploadAbortRef = useRef<AbortController | null>(null);
   const lastUploadFileRef = useRef<File | null>(null);
+  // Phase 7.95: parity with /generate-3d 7.94 — auto-retry transient pipeline
+  // failures with a visible countdown in the mirror status banner.
+  const uploadAttemptsRef = useRef(0);
+  const uploadRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const uploadCountdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const clearUploadRetryTimers = useCallback(() => {
+    if (uploadRetryTimerRef.current) { clearTimeout(uploadRetryTimerRef.current); uploadRetryTimerRef.current = null; }
+    if (uploadCountdownTimerRef.current) { clearInterval(uploadCountdownTimerRef.current); uploadCountdownTimerRef.current = null; }
+  }, []);
 
   // Pose refs
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1556,6 +1566,9 @@ function MirrorContent() {
       setGarment3DGeneratedAt(new Date().toISOString());
       setUploadProgress(100);
       setStatus(`✨ 3D mesh ready! Move around to see it follow you.`);
+      // Phase 7.95: reset auto-retry budget on success.
+      uploadAttemptsRef.current = 0;
+      clearUploadRetryTimers();
       // Phase 7.26: removed `track('upload_succeeded', {...})` — telemetry deleted.
 
       // Save to gallery
@@ -1567,14 +1580,34 @@ function MirrorContent() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       console.error('3D upload failed:', msg);
-      // Phase 7.93: humanize the error so the upload status banner reads as plain English
-      // rather than "TRELLIS queue_full: {...}" or "HF proxy 413: payload too large".
-      // Same humanizer as /generate-3d (Phase 7.92). Mirror's status banner is a single
-      // line, so we render: "❌ <title> — <action>". Raw msg is still in console.error
-      // for support debugging.
+      // Phase 7.93: humanize the error so the upload status banner reads as plain English.
       const human = humanizePipelineError(err);
-      setStatus(`❌ ${human.title} — ${human.action}`);
       setGarment3DStatus('error');
+
+      // Phase 7.95: schedule auto-retry for retryable transient failures (parity with /generate-3d 7.94).
+      const plan = planAutoRetry(human, uploadAttemptsRef.current);
+      if (plan) {
+        uploadAttemptsRef.current = plan.attempt;
+        let remaining = Math.round(plan.delayMs / 1000);
+        setStatus(`⏳ ${human.title} — auto-retrying in ${remaining}s… (attempt ${plan.attempt} of ${MAX_AUTO_RETRY_ATTEMPTS})`);
+        uploadCountdownTimerRef.current = setInterval(() => {
+          remaining -= 1;
+          if (remaining <= 0) {
+            if (uploadCountdownTimerRef.current) { clearInterval(uploadCountdownTimerRef.current); uploadCountdownTimerRef.current = null; }
+            return;
+          }
+          setStatus(`⏳ ${human.title} — auto-retrying in ${remaining}s… (attempt ${plan.attempt} of ${MAX_AUTO_RETRY_ATTEMPTS})`);
+        }, 1000);
+        uploadRetryTimerRef.current = setTimeout(() => {
+          clearUploadRetryTimers();
+          void handleUpload3D(file);
+        }, plan.delayMs);
+      } else {
+        // No auto-retry: manual recovery (non-retryable, Cancelled, or budget exhausted).
+        uploadAttemptsRef.current = 0;
+        clearUploadRetryTimers();
+        setStatus(`❌ ${human.title} — ${human.action}`);
+      }
       // No 2D fallback — Phase1.2 strip
     } finally {
       setUploading(false);
