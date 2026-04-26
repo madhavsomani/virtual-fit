@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { smoothScalar } from "./smoothing-utils";
 import { estimateSizeFromShoulderRatio } from "./size-from-shoulder-width";
-import { computeBodyPitch, computeBodyYaw } from "./body-metrics.js";
+import { computeBodyPitch, computeBodyYaw, computeDepthScaleStrict } from "./body-metrics.js";
 // Phase 7.26: removed `track` import — lib/telemetry.ts deleted entirely
 // (5 call sites here were the module's only callers; getAll/session/clear
 // had zero readers anywhere). When real telemetry is needed, wire to one
@@ -953,12 +953,14 @@ function MirrorContent() {
     const shoulderDeltaX = Math.abs(rs.x - ls.x) * vw;
     const tiltAngle = Math.atan2(shoulderDeltaY, shoulderDeltaX); // radians
     
-    // Calculate depth scale from Z-coordinates (closer = bigger, further = smaller)
-    // MediaPipe Z is relative to hip center, negative = closer to camera
-    const avgShoulderZ = ((ls.z ?? 0) + (rs.z ?? 0)) / 2;
-    // Map Z to a scale factor: Z around -0.5 to 0.5, map to 0.8 to 1.2
-    const depthScale = 1.0 - (avgShoulderZ * 0.4); // closer (negative Z) = larger
-    const clampedDepth = Math.max(0.7, Math.min(1.3, depthScale));
+    // Phase 7.89: depth scale (closer→bigger garment) — returns null on missing/zero z so
+    // the smoother holds the last good scale instead of fabricating 1.0 ("neutral distance").
+    // Pre-7.89 the inline `?? 0` collapsed avgShoulderZ to 0 on z-confidence dips, making the
+    // garment shrink toward neutral and rubber-band when z recovered ("breathing" effect).
+    const clampedDepth = computeDepthScaleStrict({
+      leftShoulder:  { x: ls.x, y: ls.y, z: ls.z, visibility: ls.visibility },
+      rightShoulder: { x: rs.x, y: rs.y, z: rs.z, visibility: rs.visibility },
+    });
 
     // Phase 7.88: yaw (Y-axis rotation) from shoulder Z-delta — Iron Man suit rotation effect.
     // Returns null on missing/zero z or degenerate shoulder X-spacing — DON'T smooth in null,
@@ -984,16 +986,19 @@ function MirrorContent() {
     const depthAlpha = smoothMode ? 0.1 : 0.2;
     
     if (!smoothPos.current.ready) {
-      // First frame seed. If yaw is null (low confidence) seed at 0; the
-      // smoother will then update only when a real yaw arrives.
-      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, depth: clampedDepth, yaw: yawAngle ?? 0, pitch: pitchAngle, ready: true };
+      // First frame seed. yaw + depth may be null on first frame; seed at safe defaults.
+      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, depth: clampedDepth ?? 1.0, yaw: yawAngle ?? 0, pitch: pitchAngle, ready: true };
     } else {
       smoothPos.current.x = smoothScalar(smoothPos.current.x, shoulderCX, { alpha }) ?? shoulderCX;
       smoothPos.current.y = smoothScalar(smoothPos.current.y, shoulderCY, { alpha }) ?? shoulderCY;
       smoothPos.current.w = smoothScalar(smoothPos.current.w, shoulderW, { alpha, min: 50 }) ?? shoulderW;
       smoothPos.current.h = smoothScalar(smoothPos.current.h, torsoH, { alpha, min: 50 }) ?? torsoH;
       smoothPos.current.tilt = smoothScalar(smoothPos.current.tilt, tiltAngle, { alpha: tiltAlpha }) ?? tiltAngle;
-      smoothPos.current.depth = smoothScalar(smoothPos.current.depth, clampedDepth, { alpha: depthAlpha, min: 0.7, max: 1.3 }) ?? clampedDepth;
+      // Phase 7.89: depth freezes (skips smoother update) when computeDepthScaleStrict returns null.
+      // Garment holds its last size through brief z-confidence dips instead of breathing.
+      if (clampedDepth !== null) {
+        smoothPos.current.depth = smoothScalar(smoothPos.current.depth, clampedDepth, { alpha: depthAlpha, min: 0.7, max: 1.3 }) ?? clampedDepth;
+      }
       // Phase 7.88: yaw freezes (skips smoother update) when computeBodyYaw returns null.
       // The garment holds its last orientation through brief z-confidence dips instead
       // of snapping back to facing-camera and rubber-banding when z recovers.

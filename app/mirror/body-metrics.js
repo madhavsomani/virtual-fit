@@ -436,3 +436,66 @@ export function computeBodyYaw(input) {
   // and a 3D garment rotated past 90° hits self-occlusion ugliness.
   return clamp(raw, -Math.PI / 2, Math.PI / 2);
 }
+
+
+/**
+ * Phase 7.89 — STRICT depth scale (closer→bigger garment).
+ *
+ * Sibling fix to Phase 7.88's computeBodyYaw. The original `computeDepthScale`
+ * (Phase 2.4, above) returns 1.0 on missing/zero z — convenient for unit
+ * tests but a LIE in the real-time pipeline. Pre-7.89 the inline mirror code
+ * was:
+ *   const avgShoulderZ = ((ls.z ?? 0) + (rs.z ?? 0)) / 2;
+ *   const depthScale = 1.0 - (avgShoulderZ * 0.4);
+ *   smoothPos.current.depth = smoothScalar(prev, depthScale, ...);
+ * Same `?? 0` lie pattern: when MediaPipe z confidence dips, avgZ collapses
+ * to 0, depthScale collapses to 1.0 ("neutral distance"), and the smoother
+ * integrates that. Visible failure: user steps closer, garment grows
+ * correctly, then z dips once → garment SHRINKS toward neutral → rubber-bands
+ * larger when z recovers. The garment "breathes."
+ *
+ * The strict variant returns null when the inputs can't yield a real
+ * estimate — caller is expected to skip the smoothing update on null and
+ * hold the last good depth, so the garment freezes briefly instead of lying.
+ *
+ * Returns null when:
+ * - shoulders missing
+ * - either shoulder visibility < minVisibility (default 0.5)
+ * - either z is non-finite (NaN/Infinity)
+ * - both z values are exactly 0 (MediaPipe sentinel)
+ *
+ * The 0.4 multiplier and ±0.3-around-1.0 clamp are kept as defaults but
+ * configurable so callers can tune sensitivity without re-implementing.
+ *
+ * @param {{
+ *   leftShoulder?: LandmarkPoint|null,
+ *   rightShoulder?: LandmarkPoint|null,
+ *   minVisibility?: number,
+ *   sensitivity?: number,
+ *   minScale?: number,
+ *   maxScale?: number,
+ * }} input
+ * @returns {number|null} unitless scale factor (1.0 = neutral); null when unreliable
+ */
+export function computeDepthScaleStrict(input) {
+  const ls = input?.leftShoulder;
+  const rs = input?.rightShoulder;
+  if (!ls || !rs) return null;
+
+  const minV = Number.isFinite(input?.minVisibility) ? input.minVisibility : 0.5;
+  const lsv = Number.isFinite(ls.visibility) ? ls.visibility : 1;
+  const rsv = Number.isFinite(rs.visibility) ? rs.visibility : 1;
+  if (lsv < minV || rsv < minV) return null;
+
+  if (!Number.isFinite(ls.z) || !Number.isFinite(rs.z)) return null;
+  if (ls.z === 0 && rs.z === 0) return null;
+
+  const sensitivity = Number.isFinite(input?.sensitivity) ? input.sensitivity : 0.4;
+  const minScale = Number.isFinite(input?.minScale) ? input.minScale : 0.7;
+  const maxScale = Number.isFinite(input?.maxScale) ? input.maxScale : 1.3;
+
+  const avgZ = (ls.z + rs.z) / 2;
+  // MediaPipe Z: negative = closer to camera. closer → larger scale.
+  const raw = 1.0 - avgZ * sensitivity;
+  return clamp(raw, minScale, maxScale);
+}
