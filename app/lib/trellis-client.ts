@@ -35,12 +35,31 @@ export type TrellisProgress = {
   message?: string;
 };
 
-function getToken(opts?: TrellisOptions): string {
-  const t = opts?.token || process.env.NEXT_PUBLIC_HF_TOKEN;
-  if (!t) {
-    throw new Error("NEXT_PUBLIC_HF_TOKEN is required for TRELLIS image→3D");
-  }
-  return t;
+// Phase 7.87 — token is OPTIONAL. The microsoft/TRELLIS HF Space is
+// public and accepts anonymous Gradio requests (verified: GET /info,
+// POST /upload, queue/join all return 200 without Authorization).
+// Pre-7.87 this threw "NEXT_PUBLIC_HF_TOKEN is required for TRELLIS
+// image→3D" the instant a user tried to convert a garment to a mesh,
+// which on production (where the token is intentionally never inlined
+// to client bundles — see Phase 7.83/7.86) meant the entire
+// Photo→mesh→overlay vision was dead at the third stage.
+//
+// If the operator DOES set NEXT_PUBLIC_HF_TOKEN locally (.env), we
+// still send the Authorization header — a real read token gets a
+// higher anonymous rate-limit budget on the Space's ZeroGPU queue.
+// But missing token is no longer a hard error.
+//
+// (Building a server-side proxy for TRELLIS — the symmetric solution
+// to Phase 7.86's hf-proxy — is a Phase 7.88 candidate IF anonymous
+// rate-limits actually become a problem for real users. Azure SWA
+// Functions can stream SSE but the queue/join+session_hash dance is
+// a non-trivial proxy to write correctly. Defer until pain.)
+function getToken(opts?: TrellisOptions): string | undefined {
+  return opts?.token || (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_HF_TOKEN : undefined);
+}
+
+function authHeaders(token: string | undefined): Record<string, string> {
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 function makeSessionHash(): string {
@@ -49,7 +68,7 @@ function makeSessionHash(): string {
 
 async function uploadFile(
   base: string,
-  token: string,
+  token: string | undefined,
   file: Blob,
   signal?: AbortSignal,
 ): Promise<string> {
@@ -59,7 +78,7 @@ async function uploadFile(
   fd.append("files", named);
   const res = await fetch(`${base}/upload`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeaders(token),
     body: fd,
     signal,
   });
@@ -105,7 +124,7 @@ export async function generateGlbFromImage(
   const joinRes = await fetch(`${base}/queue/join`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${token}`,
+      ...authHeaders(token),
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -144,13 +163,13 @@ const infoCache = new Map<string, SpaceInfo>();
 
 async function fetchSpaceInfo(
   base: string,
-  token: string,
+  token: string | undefined,
   signal?: AbortSignal,
 ): Promise<SpaceInfo> {
   const cached = infoCache.get(base);
   if (cached) return cached;
   const res = await fetch(`${base}/info`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeaders(token),
     signal,
   });
   if (!res.ok) {
@@ -178,7 +197,7 @@ async function fetchSpaceInfo(
 
 async function streamUntilGlb(
   base: string,
-  token: string,
+  token: string | undefined,
   sessionHash: string,
   onProgress: ((p: TrellisProgress) => void) | undefined,
   signal: AbortSignal | undefined,
@@ -192,7 +211,7 @@ async function streamUntilGlb(
   }
   try {
     const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${token}`, Accept: "text/event-stream" },
+      headers: { ...authHeaders(token), Accept: "text/event-stream" },
       signal: ac.signal,
     });
     if (!res.ok || !res.body) {
