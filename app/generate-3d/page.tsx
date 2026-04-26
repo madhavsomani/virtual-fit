@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import Link from "next/link";
 import { imageToGlbPipeline, type PipelineProgress } from "../lib/image-to-glb";
+import { humanizePipelineError, type HumanError } from "../lib/humanize-pipeline-error";
 
 // Phase 7.43: rewired to the canonical `imageToGlbPipeline` (segformer/RMBG
 // → microsoft/TRELLIS HF Space) used by /mirror's upload path. Pre-7.43 this
@@ -18,6 +19,9 @@ interface GenerationState {
   status: "idle" | "uploading" | "processing" | "done" | "error";
   progress: number;
   error?: string;
+  // Phase 7.92: humanized error surface so the UI can render title/body/action
+  // separately + decide whether to show "Try Again" vs "Pick a different photo".
+  humanError?: HumanError;
   resultUrl?: string;
   provider?: string;
   // Phase 7.8: `isMock`/`textureUrl`/`mockMessage` removed — they powered a 2D
@@ -88,10 +92,13 @@ export default function Generate3DPage() {
       });
       return;
     } catch (err) {
+      // Phase 7.92: humanize for the UI; keep raw .message in `error` for dev consoles.
+      const humanError = humanizePipelineError(err);
       setState({
         status: "error",
         progress: 0,
         error: err instanceof Error ? err.message : "Generation failed",
+        humanError,
       });
       return;
     }
@@ -353,16 +360,25 @@ export default function Generate3DPage() {
               ✕
             </div>
             <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>
-              Generation Failed
+              {state.humanError?.title ?? "Generation Failed"}
             </h2>
             <p
               style={{
-                color: "#ef4444",
+                color: "#e4e4e7",
                 fontSize: 14,
+                marginBottom: 8,
+              }}
+            >
+              {state.humanError?.body ?? state.error}
+            </p>
+            <p
+              style={{
+                color: "#a1a1aa",
+                fontSize: 13,
                 marginBottom: 24,
               }}
             >
-              {state.error}
+              {state.humanError?.action ?? ""}
             </p>
             <button
               onClick={reset}
@@ -376,8 +392,14 @@ export default function Generate3DPage() {
                 fontSize: 15,
               }}
             >
-              Try Again
+              {state.humanError?.retryable === false ? "Pick a different photo" : "Try Again"}
             </button>
+            {state.error && (
+              <details style={{ marginTop: 16, fontSize: 12, color: "#71717a" }}>
+                <summary style={{ cursor: "pointer" }}>Show technical details</summary>
+                <pre style={{ whiteSpace: "pre-wrap", marginTop: 8, textAlign: "left" }}>{state.error}</pre>
+              </details>
+            )}
           </div>
         )}
       </div>
