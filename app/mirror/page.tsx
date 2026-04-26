@@ -961,23 +961,22 @@ function MirrorContent() {
     const hipCY = ((lh.y + rh.y) / 2) * vh;
     const shoulderW = Math.abs(rs.x - ls.x) * vw;
     const torsoH = hipCY - shoulderCY;
-    
-    // Calculate shoulder tilt angle from Y-difference
-    // Note: camera is mirrored, so we flip the calculation
-    const shoulderDeltaY = (rs.y - ls.y) * vh; // positive = right shoulder lower
-    const shoulderDeltaX = Math.abs(rs.x - ls.x) * vw;
+
     // Phase 7.98: roll (Z-axis side-tilt) from shoulder Y-delta vs X-spacing.
     // Strict-null on missing visibility / degenerate horizontal spacing — the
     // smoother HOLDS the last good roll on bad frames instead of fabricating
     // tiltAngle=0 ("perfectly upright") when both shoulders snap to (0,0).
     // Same lurking-lie pattern 7.88 closed for yaw and 7.91 for pitch; roll
     // was the third Euler axis still using inline Math.atan2.
+    // Phase 7.100: deleted the dead `const tiltAngle = Math.atan2(...)` and
+    // its shoulderDeltaY/shoulderDeltaX scaffolding. tiltAngle was unused after
+    // 7.98 wired rollAngle through both seed-init and steady-state branches;
+    // keeping the inline atan2 was dead code that re-tempted the lurking lie
+    // pattern ("oh, we already have tiltAngle, just use it").
     const rollAngle = computeBodyRoll({
       leftShoulder:  { x: ls.x, y: ls.y, visibility: ls.visibility },
       rightShoulder: { x: rs.x, y: rs.y, visibility: rs.visibility },
     });
-    // Pre-7.98 inline tiltAngle (preserved as fallback for the seed-frame init).
-    const tiltAngle = Math.atan2(shoulderDeltaY, shoulderDeltaX); // radians
     
     // Phase 7.89: depth scale (closer→bigger garment) — returns null on missing/zero z so
     // the smoother holds the last good scale instead of fabricating 1.0 ("neutral distance").
