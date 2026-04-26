@@ -12,21 +12,35 @@
 // typed forwarder so the coverage-threshold logic isn't maintained twice.
 import { isolateGarmentImpl } from "./isolate-garment.mjs";
 
-const HF_RMBG_URL = "https://api-inference.huggingface.co/models/briaai/RMBG-1.4";
+const HF_RMBG_PATH = "briaai/RMBG-1.4";
+const HF_RMBG_DIRECT_URL = `https://api-inference.huggingface.co/models/${HF_RMBG_PATH}`;
+const HF_RMBG_PROXY_URL = `/api/hf-proxy/${HF_RMBG_PATH}`;
 
 export type RemoveBackgroundOptions = {
   token?: string;
   signal?: AbortSignal;
 };
 
-function getToken(opts?: RemoveBackgroundOptions): string {
-  const t = opts?.token || process.env.NEXT_PUBLIC_HF_TOKEN;
-  if (!t) {
-    throw new Error(
-      "NEXT_PUBLIC_HF_TOKEN is not configured. Set it in .env to use HF background removal.",
-    );
+// Phase 7.86 — same proxy-by-default pattern as garment-segment.ts.
+function resolveEndpoint(opts?: RemoveBackgroundOptions): { url: string; headers: Record<string, string> } {
+  const explicit = opts?.token || (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_HF_TOKEN : undefined);
+  if (explicit) {
+    return {
+      url: HF_RMBG_DIRECT_URL,
+      headers: {
+        Authorization: `Bearer ${explicit}`,
+        "Content-Type": "application/octet-stream",
+        Accept: "image/png",
+      },
+    };
   }
-  return t;
+  return {
+    url: HF_RMBG_PROXY_URL,
+    headers: {
+      "Content-Type": "application/octet-stream",
+      Accept: "image/png",
+    },
+  };
 }
 
 /**
@@ -38,16 +52,12 @@ export async function removeBackground(
   input: Blob | File,
   opts?: RemoveBackgroundOptions,
 ): Promise<Blob> {
-  const token = getToken(opts);
+  const { url, headers } = resolveEndpoint(opts);
   const bytes = await input.arrayBuffer();
 
-  const res = await fetch(HF_RMBG_URL, {
+  const res = await fetch(url, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/octet-stream",
-      Accept: "image/png",
-    },
+    headers,
     body: bytes,
     signal: opts?.signal,
   });

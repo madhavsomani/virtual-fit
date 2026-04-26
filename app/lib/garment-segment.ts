@@ -13,8 +13,14 @@ import {
   coverageFraction,
 } from "./garment-segment-helpers.mjs";
 
-const HF_MODEL_URL =
-  "https://api-inference.huggingface.co/models/mattmdjaga/segformer_b2_clothes";
+// Phase 7.86 — default route is the same-origin server-side proxy.
+// Server adds the HF token from process.env.HF_TOKEN (Azure SWA app
+// settings, NOT NEXT_PUBLIC_*). Client never sees the token. Direct-HF
+// is still supported for tests + local dev that pass `opts.token`
+// explicitly (e.g. node:test fixtures).
+const HF_MODEL_PATH = "mattmdjaga/segformer_b2_clothes";
+const HF_DIRECT_URL = `https://api-inference.huggingface.co/models/${HF_MODEL_PATH}`;
+const HF_PROXY_URL = `/api/hf-proxy/${HF_MODEL_PATH}`;
 
 export type SegmentResult = {
   /** PNG blob of the garment-only image (alpha = mask). Same dims as input. */
@@ -32,14 +38,26 @@ export type SegmentOptions = {
   signal?: AbortSignal;
 };
 
-function getToken(opts?: SegmentOptions): string {
-  const t = opts?.token || process.env.NEXT_PUBLIC_HF_TOKEN;
-  if (!t) {
-    throw new Error(
-      "NEXT_PUBLIC_HF_TOKEN is not configured. Set it in .env to use HF segmentation.",
-    );
+/**
+ * Phase 7.86 — return the request URL + headers for the next HF call.
+ * If `opts.token` is provided, use direct HF (test path, local dev).
+ * Otherwise route through the same-origin proxy at /api/hf-proxy/.
+ */
+function resolveEndpoint(opts?: SegmentOptions): { url: string; headers: Record<string, string> } {
+  const explicit = opts?.token || (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_HF_TOKEN : undefined);
+  if (explicit) {
+    return {
+      url: HF_DIRECT_URL,
+      headers: {
+        Authorization: `Bearer ${explicit}`,
+        "Content-Type": "application/octet-stream",
+      },
+    };
   }
-  return t;
+  return {
+    url: HF_PROXY_URL,
+    headers: { "Content-Type": "application/octet-stream" },
+  };
 }
 
 async function fileToBytes(input: Blob | File | ArrayBuffer): Promise<ArrayBuffer> {
@@ -67,15 +85,12 @@ export async function segmentGarment(
   input: Blob | File,
   opts?: SegmentOptions,
 ): Promise<SegmentResult> {
-  const token = getToken(opts);
+  const { url, headers } = resolveEndpoint(opts);
   const bytes = await fileToBytes(input);
 
-  const res = await fetch(HF_MODEL_URL, {
+  const res = await fetch(url, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/octet-stream",
-    },
+    headers,
     body: bytes,
     signal: opts?.signal,
   });
