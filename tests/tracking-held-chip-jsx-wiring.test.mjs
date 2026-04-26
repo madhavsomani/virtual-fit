@@ -105,7 +105,15 @@ test("chip is gated on the trackingHeldChip state (not a raw ref read)", () => {
     .map((l) => l.replace(/\/\/.*$/, ""))
     .join("\n");
   const matches = stripped.match(/trackingTelemetry\.current\.snapshot\(\)/g) ?? [];
-  assert.equal(matches.length, 1, `expected exactly one snapshot() read, got ${matches.length}`);
+  // Allow up to 2 snapshot() reads in source: (1) the polling effect that
+  // drives the HUD chip, (2) the Phase 7.106 stopCamera capture into the
+  // session-summary log. Both are non-render reads. The chip render branch
+  // itself MUST stay state-gated (verified by the {trackingHeldChip && (} check
+  // above) — this count cap just prevents drift from a third surprise reader.
+  assert.ok(
+    matches.length >= 1 && matches.length <= 2,
+    `expected 1 or 2 snapshot() reads (polling effect + opt-in stop capture), got ${matches.length}`,
+  );
 });
 
 test("chip uses pointerEvents:none so it never blocks camera-viewport gestures", () => {

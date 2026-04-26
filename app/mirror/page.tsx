@@ -9,6 +9,8 @@ import { estimateSizeFromShoulderRatio } from "./size-from-shoulder-width";
 import { computeBodyPitch, computeBodyRoll, computeBodyYaw, computeDepthScaleStrict } from "./body-metrics.js";
 import { createTrackingTelemetry } from "./tracking-telemetry.js";
 import { deriveTrackingHeldChip } from "./tracking-held-chip.js";
+import { buildSessionSummary } from "./session-summary.js";
+import { appendSessionSummary } from "./session-summary-log.js";
 // Phase 7.26: removed `track` import — lib/telemetry.ts deleted entirely
 // (5 call sites here were the module's only callers; getAll/session/clear
 // had zero readers anywhere). When real telemetry is needed, wire to one
@@ -857,6 +859,13 @@ function MirrorContent() {
   // Pure module — no React render coupling. See tracking-telemetry.js.
   const trackingTelemetry = useRef(createTrackingTelemetry());
 
+  // Phase 7.106: session-summary persistence is OPT-IN behind ?debugTelemetry=1.
+  // Set on startCamera, read+cleared on stopCamera. The ref pattern (not state)
+  // is intentional: rendering doesn't depend on this; recreating it would
+  // re-fire the polling effects above. Stays null when the camera isn't running
+  // so a stop without a start is a no-op (defensive against unmount races).
+  const sessionStartedAtRef = useRef<number | null>(null);
+
   // Phase 7.102: derived state for the visible "tracking held" HUD chip.
   // Polled at ~5 Hz via setInterval (NOT rAF) — the inner loop runs at 60fps;
   // re-rendering the React tree at that rate would burn frame budget for a
@@ -1397,6 +1406,9 @@ function MirrorContent() {
       poseLandmarkerRef.current = poseLandmarker;
 
       setCameraOn(true);
+      // Phase 7.106: mark session start for the opt-in summary log.
+      sessionStartedAtRef.current = Date.now();
+      trackingTelemetry.current.reset();
       setLoadingProgress(100);
       setIsLoading(false);
       setStatus("Ready — try uploading a garment!");
@@ -3951,6 +3963,30 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
     setEstimatedSize(null);
     setHandsVisible({ left: false, right: false });
     setStatus("Camera stopped. Click Start to begin again.");
+
+    // Phase 7.106: opt-in session-summary capture. Gated on ?debugTelemetry=1.
+    // The gate is a URL flag (not localStorage) so it's deliberate per-visit
+    // and impossible to silently inherit across origins. Persistence is
+    // local-only (zero network, locked by the 7.105 grep test). Wrap in
+    // try/catch — telemetry must NEVER break the stop path.
+    try {
+      if (typeof window !== "undefined" && sessionStartedAtRef.current !== null) {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("debugTelemetry") === "1") {
+          const summary = buildSessionSummary({
+            snapshot: trackingTelemetry.current.snapshot(),
+            // No PII: opaque random id; no user/device identifier.
+            sessionId: `s_${sessionStartedAtRef.current.toString(36)}`,
+            startedAtMs: sessionStartedAtRef.current,
+            endedAtMs: Date.now(),
+          });
+          appendSessionSummary(summary);
+        }
+      }
+    } catch {
+      // Swallow — observability must never break the app it observes.
+    }
+    sessionStartedAtRef.current = null;
   }, []);
 
   // Flip between front and back camera
