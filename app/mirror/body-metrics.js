@@ -351,8 +351,13 @@ export function computeBodyPitch(input) {
   const rsv = Number.isFinite(rs.visibility) ? rs.visibility : 1;
   if (lsv < minV || rsv < minV) return null;
 
-  const shoulderZ = ((Number.isFinite(ls.z) ? ls.z : 0) + (Number.isFinite(rs.z) ? rs.z : 0)) / 2;
-  const shoulderY = ((Number.isFinite(ls.y) ? ls.y : 0) + (Number.isFinite(rs.y) ? rs.y : 0)) / 2;
+  if (!Number.isFinite(ls.z) || !Number.isFinite(rs.z)) return null;
+  // Both-zero is the MediaPipe "no depth signal" sentinel — don't pretend
+  // we have a real shoulderZ to compare against hipZ. Hold last good pitch.
+  if (ls.z === 0 && rs.z === 0) return null;
+  if (!Number.isFinite(ls.y) || !Number.isFinite(rs.y)) return null;
+  const shoulderZ = (ls.z + rs.z) / 2;
+  const shoulderY = (ls.y + rs.y) / 2;
 
   const lh = input?.leftHip;
   const rh = input?.rightHip;
@@ -362,8 +367,11 @@ export function computeBodyPitch(input) {
   const rhv = Number.isFinite(rh.visibility) ? rh.visibility : 1;
   if (lhv < minV || rhv < minV) return 0;
 
-  const hipZ = ((Number.isFinite(lh.z) ? lh.z : 0) + (Number.isFinite(rh.z) ? rh.z : 0)) / 2;
-  const hipY = ((Number.isFinite(lh.y) ? lh.y : 0) + (Number.isFinite(rh.y) ? rh.y : 0)) / 2;
+  if (!Number.isFinite(lh.z) || !Number.isFinite(rh.z)) return 0;
+  if (lh.z === 0 && rh.z === 0) return 0;
+  if (!Number.isFinite(lh.y) || !Number.isFinite(rh.y)) return 0;
+  const hipZ = (lh.z + rh.z) / 2;
+  const hipY = (lh.y + rh.y) / 2;
 
   // Shoulder closer to camera (more negative Z) than hips → leaning forward → +pitch.
   const zDelta = hipZ - shoulderZ; // > 0 when leaning forward

@@ -11,14 +11,17 @@ import { computeBodyPitch } from "../app/mirror/body-metrics.js";
 const FRAMES = 30;
 
 function frame(t, leanAmount) {
-  // Shoulders translate from upright (z=0) → leaned forward (z=-leanAmount).
+  // Shoulders translate from upright (z≈ 0) → leaned forward (z=-leanAmount).
   // Hips stay put. Y values constant so torso length is stable.
-  const sz = -t * leanAmount;
+  // Phase 7.91: shoulders & hips share the same baseline z (-0.05) so frame-0
+  // reads as upright (zDelta=0 → pitch=0). Lean adds to shoulder z— negative
+  // for forward, positive for back.
+  const sz = -0.05 - t * leanAmount;
   return {
     leftShoulder:  { x: 0.4, y: 0.30, z: sz, visibility: 0.9 },
     rightShoulder: { x: 0.6, y: 0.30, z: sz, visibility: 0.9 },
-    leftHip:  { x: 0.42, y: 0.60, z: 0, visibility: 0.9 },
-    rightHip: { x: 0.58, y: 0.60, z: 0, visibility: 0.9 },
+    leftHip:  { x: 0.42, y: 0.60, z: -0.05, visibility: 0.9 },
+    rightHip: { x: 0.58, y: 0.60, z: -0.05, visibility: 0.9 },
   };
 }
 
@@ -59,8 +62,8 @@ test("mock-camera: pitch never exceeds ±π/3 clamp across full sweep", () => {
     const f = {
       leftShoulder:  { x: 0.4, y: 0.30, z: -t * 5,  visibility: 0.9 },
       rightShoulder: { x: 0.6, y: 0.30, z: -t * 5,  visibility: 0.9 },
-      leftHip:  { x: 0.42, y: 0.305, z: 0, visibility: 0.9 },
-      rightHip: { x: 0.58, y: 0.305, z: 0, visibility: 0.9 },
+      leftHip:  { x: 0.42, y: 0.305, z: -0.05, visibility: 0.9 },
+      rightHip: { x: 0.58, y: 0.305, z: -0.05, visibility: 0.9 },
     };
     const p = computeBodyPitch(f);
     assert.ok(Math.abs(p) <= Math.PI / 3 + 1e-6, `frame ${i} exceeded clamp: ${p}`);

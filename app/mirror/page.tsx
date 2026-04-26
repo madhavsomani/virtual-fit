@@ -993,7 +993,7 @@ function MirrorContent() {
       // clean frame arrived — exactly the rubber-banding we tried to fix. Hide the
       // mesh for one extra frame instead. (`vis < 0.4` already hides on bad frames
       // earlier; one more wait is invisible.)
-      if (yawAngle === null || clampedDepth === null) {
+      if (yawAngle === null || clampedDepth === null || pitchAngle === null) {
         mesh.visible = false;
         return;
       }
@@ -1015,7 +1015,13 @@ function MirrorContent() {
       if (yawAngle !== null) {
         smoothPos.current.yaw = smoothScalar(smoothPos.current.yaw, yawAngle, { alpha: tiltAlpha }) ?? yawAngle;
       }
-      smoothPos.current.pitch = smoothScalar(smoothPos.current.pitch, pitchAngle, { alpha: tiltAlpha }) ?? pitchAngle;
+      // Phase 7.91: pitch freezes (skips smoother update) when computeBodyPitch returns null.
+      // Pre-7.91 computeBodyPitch internally fell back z→ 0 / y→ 0 on missing landmarks,
+      // smuggling fabricated upright-posture lies into the smoother. Now strict-null;
+      // garment holds its last lean through brief z-confidence dips instead of snapping upright.
+      if (pitchAngle !== null) {
+        smoothPos.current.pitch = smoothScalar(smoothPos.current.pitch, pitchAngle, { alpha: tiltAlpha }) ?? pitchAngle;
+      }
     }
 
     const sp = smoothPos.current;

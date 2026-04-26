@@ -1,12 +1,14 @@
-// Phase 6.1 — computeBodyPitch unit tests.
+// Phase 6.1 — computeBodyPitch unit tests. Updated by Phase 7.91 to use
+// realistic non-zero z values: post-7.91 both-z-exactly-0 is the MediaPipe
+// "no signal" sentinel and returns null (matching 7.88 yaw + 7.89 depth).
 import assert from "node:assert/strict";
 import test from "node:test";
 import { computeBodyPitch } from "../app/mirror/body-metrics.js";
 
-const SHOULDER_L = { x: 0.4, y: 0.30, z: 0,    visibility: 0.9 };
-const SHOULDER_R = { x: 0.6, y: 0.30, z: 0,    visibility: 0.9 };
-const HIP_L      = { x: 0.42, y: 0.60, z: 0,   visibility: 0.9 };
-const HIP_R      = { x: 0.58, y: 0.60, z: 0,   visibility: 0.9 };
+const SHOULDER_L = { x: 0.4, y: 0.30, z: -0.05, visibility: 0.9 };
+const SHOULDER_R = { x: 0.6, y: 0.30, z: -0.05, visibility: 0.9 };
+const HIP_L      = { x: 0.42, y: 0.60, z: -0.05, visibility: 0.9 };
+const HIP_R      = { x: 0.58, y: 0.60, z: -0.05, visibility: 0.9 };
 
 test("upright: pitch ≈ 0", () => {
   const p = computeBodyPitch({
@@ -41,6 +43,25 @@ test("missing hips: graceful 0 fallback (no crash)", () => {
     rightShoulder: { ...SHOULDER_R, z: -0.2 },
   });
   assert.equal(p, 0);
+});
+
+// Phase 7.91 regression-locks: shoulder both-z-exactly-0 is MediaPipe sentinel.
+test("Phase 7.91: both shoulders z=0 (MediaPipe sentinel) returns null", () => {
+  const p = computeBodyPitch({
+    leftShoulder:  { x: 0.4, y: 0.30, z: 0, visibility: 0.9 },
+    rightShoulder: { x: 0.6, y: 0.30, z: 0, visibility: 0.9 },
+    leftHip: HIP_L, rightHip: HIP_R,
+  });
+  assert.equal(p, null);
+});
+
+test("Phase 7.91: non-finite shoulder z returns null", () => {
+  const p = computeBodyPitch({
+    leftShoulder:  { x: 0.4, y: 0.30, z: NaN, visibility: 0.9 },
+    rightShoulder: { x: 0.6, y: 0.30, z: -0.1, visibility: 0.9 },
+    leftHip: HIP_L, rightHip: HIP_R,
+  });
+  assert.equal(p, null);
 });
 
 test("low-visibility shoulders → null", () => {
