@@ -8,6 +8,7 @@ import { smoothScalar } from "./smoothing-utils";
 import { estimateSizeFromShoulderRatio } from "./size-from-shoulder-width";
 import { computeBodyPitch, computeBodyRoll, computeBodyYaw, computeDepthScaleStrict } from "./body-metrics.js";
 import { createTrackingTelemetry } from "./tracking-telemetry.js";
+import { deriveTrackingHeldChip } from "./tracking-held-chip.js";
 // Phase 7.26: removed `track` import — lib/telemetry.ts deleted entirely
 // (5 call sites here were the module's only callers; getAll/session/clear
 // had zero readers anywhere). When real telemetry is needed, wire to one
@@ -855,6 +856,39 @@ function MirrorContent() {
   // can read smoothPos-adjacent state via trackingTelemetry.current.snapshot().
   // Pure module — no React render coupling. See tracking-telemetry.js.
   const trackingTelemetry = useRef(createTrackingTelemetry());
+
+  // Phase 7.102: derived state for the visible "tracking held" HUD chip.
+  // Polled at ~5 Hz via setInterval (NOT rAF) — the inner loop runs at 60fps;
+  // re-rendering the React tree at that rate would burn frame budget for a
+  // debounce-style indicator nobody can read faster than 200ms anyway. Below
+  // the chip-derivation threshold (default 6 frames ≈ 100ms) the snapshot is
+  // simply ignored, so the polling rate just affects how quickly the chip
+  // appears AFTER the contract "hold" already started.
+  const [trackingHeldChip, setTrackingHeldChip] = useState<
+    ReturnType<typeof deriveTrackingHeldChip>
+  >(null);
+
+  // Phase 7.102: poll telemetry at ~5 Hz and update the HUD chip state.
+  // shallow-equal in the setter so we don't re-render when nothing changed.
+  useEffect(() => {
+    const id = setInterval(() => {
+      const next = deriveTrackingHeldChip({ snapshot: trackingTelemetry.current.snapshot() });
+      setTrackingHeldChip((prev) => {
+        if (prev === next) return prev;
+        if (!prev && !next) return prev;
+        if (!!prev !== !!next) return next;
+        if (
+          prev && next &&
+          prev.primaryAxis === next.primaryAxis &&
+          prev.since === next.since &&
+          prev.axes.length === next.axes.length &&
+          prev.axes.every((a, i) => a === next.axes[i])
+        ) return prev;
+        return next;
+      });
+    }, 200);
+    return () => clearInterval(id);
+  }, []);
 
   // Phase 7.28: removed `useBodyAnchor` hook — the Phase 1.3 "parallel signal
   // source" experiment never replaced the smoothPos positioner, and only its
@@ -4652,6 +4686,48 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
           playsInline
           muted
         />
+
+        {/* Phase 7.102: tracking-held HUD chip. Surfaces "the smoother is holding
+            because axis X is unreliable" so users see WHY the garment didn't
+            move on a head-turn / lighting dip, instead of staring at a still
+            mesh and wondering if the app froze. Observable trust beats hidden
+            truth. Threshold (default 6 frames ≈ 100ms) keeps it from flickering
+            on micro-dips that 7.88+ already absorb invisibly. */}
+        {trackingHeldChip && (
+          <div
+            data-testid="tracking-held-chip"
+            data-axis={trackingHeldChip.primaryAxis}
+            style={{
+              position: "absolute",
+              top: 16,
+              left: "50%",
+              transform: "translateX(-50%)",
+              padding: "6px 12px",
+              borderRadius: 999,
+              background: "rgba(245, 158, 11, 0.92)",
+              color: "#1a1a1a",
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: 0.2,
+              boxShadow: "0 2px 8px rgba(0,0,0,0.35)",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              pointerEvents: "none",
+              zIndex: 30,
+              userSelect: "none",
+            }}
+          >
+            <span aria-hidden style={{ fontSize: 14 }}>⚠</span>
+            <span>{trackingHeldChip.label}</span>
+            {trackingHeldChip.axes.length > 1 && (
+              <span style={{ opacity: 0.7, fontWeight: 500 }}>
+                +{trackingHeldChip.axes.length - 1}
+              </span>
+            )}
+          </div>
+        )}
+
         <canvas
           ref={threeCanvasRef}
           style={{
