@@ -998,12 +998,17 @@ function MirrorContent() {
     });
 
     // Phase 6.1: pitch (X-axis lean) from shoulder→hip Z-delta along torso vector.
+    // Phase 7.99: dropped the trailing `?? 0` that silently DEFEATED 7.91's strict-null
+    // contract. Pre-7.99 the coalesce coerced null → 0 here, so the downstream
+    // `if (pitchAngle !== null)` smoother gate always passed and the smoother got fed
+    // fabricated upright-posture 0 on every bad-z frame — exactly the lie 7.91 added
+    // strict-null to prevent. Now pitchAngle is genuinely `number | null`.
     const pitchAngle = computeBodyPitch({
       leftShoulder:  { x: ls.x, y: ls.y, z: ls.z, visibility: ls.visibility },
       rightShoulder: { x: rs.x, y: rs.y, z: rs.z, visibility: rs.visibility },
       leftHip:  { x: lh.x, y: lh.y, z: lh.z, visibility: lh.visibility },
       rightHip: { x: rh.x, y: rh.y, z: rh.z, visibility: rh.visibility },
-    }) ?? 0;
+    });
 
     // Smooth position using smoothing-utils
     // Use higher smoothing in smooth mode
