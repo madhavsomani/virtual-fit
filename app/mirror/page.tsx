@@ -830,14 +830,18 @@ function MirrorContent() {
   const garment3DModelRef = useRef<THREE.Group | null>(null); // set when a GLB is loaded
   const uploadAbortRef = useRef<AbortController | null>(null);
   const lastUploadFileRef = useRef<File | null>(null);
-  // Phase 7.95: parity with /generate-3d 7.94 — auto-retry transient pipeline
-  // failures with a visible countdown in the mirror status banner.
+  // Phase 7.95/7.96: parity with /generate-3d 7.94 — auto-retry transient pipeline
+  // failures with a visible countdown, AND a cancel button that's visible DURING
+  // the countdown (the regular Cancel button is gated on `uploading` which is
+  // false between attempts).
   const uploadAttemptsRef = useRef(0);
   const uploadRetryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const uploadCountdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [retryCountdown, setRetryCountdown] = useState<{ sec: number; attempt: number; reason: string } | null>(null);
   const clearUploadRetryTimers = useCallback(() => {
     if (uploadRetryTimerRef.current) { clearTimeout(uploadRetryTimerRef.current); uploadRetryTimerRef.current = null; }
     if (uploadCountdownTimerRef.current) { clearInterval(uploadCountdownTimerRef.current); uploadCountdownTimerRef.current = null; }
+    setRetryCountdown(null);
   }, []);
 
   // Pose refs
@@ -1589,6 +1593,7 @@ function MirrorContent() {
       if (plan) {
         uploadAttemptsRef.current = plan.attempt;
         let remaining = Math.round(plan.delayMs / 1000);
+        setRetryCountdown({ sec: remaining, attempt: plan.attempt, reason: human.title });
         setStatus(`⏳ ${human.title} — auto-retrying in ${remaining}s… (attempt ${plan.attempt} of ${MAX_AUTO_RETRY_ATTEMPTS})`);
         uploadCountdownTimerRef.current = setInterval(() => {
           remaining -= 1;
@@ -1596,6 +1601,7 @@ function MirrorContent() {
             if (uploadCountdownTimerRef.current) { clearInterval(uploadCountdownTimerRef.current); uploadCountdownTimerRef.current = null; }
             return;
           }
+          setRetryCountdown({ sec: remaining, attempt: plan.attempt, reason: human.title });
           setStatus(`⏳ ${human.title} — auto-retrying in ${remaining}s… (attempt ${plan.attempt} of ${MAX_AUTO_RETRY_ATTEMPTS})`);
         }, 1000);
         uploadRetryTimerRef.current = setTimeout(() => {
@@ -7087,6 +7093,28 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
               }}
             />
           </label>
+
+          {/* Phase 7.96: Cancel queued auto-retry. Visible only during the countdown window
+              (uploading=false here — finally already cleared it; the next attempt will set it
+              back to true). Without this button, users had no way to abort a queued retry once
+              the countdown started. */}
+          {!uploading && retryCountdown && retryCountdown.sec > 0 && (
+            <button
+              onClick={() => {
+                clearUploadRetryTimers();
+                uploadAttemptsRef.current = 0;
+                setStatus('Cancelled. Upload again to retry.');
+                cancel3DCountRef.current++;
+              }}
+              style={{
+                padding: "10px 18px", fontSize: 13, fontWeight: 600,
+                background: "#ef4444", color: "#fff", border: "none",
+                borderRadius: 8, cursor: "pointer",
+              }}
+            >
+              ✕ Cancel auto-retry ({retryCountdown.sec}s)
+            </button>
+          )}
 
           {/* Cancel 3D generation */}
           {uploading && uploadAbortRef.current && (
