@@ -507,3 +507,52 @@ export function computeDepthScaleStrict(input) {
   const raw = 1.0 - avgZ * sensitivity;
   return clamp(raw, minScale, maxScale);
 }
+
+/**
+ * Phase 7.98: compute body ROLL (Z-axis rotation, "side-tilt") in radians from
+ * shoulder Y-delta vs X-spacing. Returns null when:
+ *   - either shoulder missing or non-finite x/y
+ *   - either shoulder visibility < minVisibility (default 0.4)
+ *   - shoulders horizontally degenerate (|dx| < 1e-6) — Math.atan2(dy, ~0)
+ *     becomes ±π/2 from numerical noise, NOT a real near-vertical roll
+ *
+ * Pre-7.98 mirror/page.tsx computed roll inline as
+ *     const tiltAngle = Math.atan2(shoulderDeltaY, shoulderDeltaX)
+ * which silently fabricated tiltAngle=0 ("perfectly upright") when both
+ * shoulders dropped to (0,0) sentinel coords. Same lurking-lie pattern as
+ * 7.88 (yaw) and 7.91 (pitch); roll is the third Euler axis. Strict-null
+ * lets the smoother HOLD the last good roll instead of snapping upright.
+ *
+ * Mirror flag: caller is responsible for the camera-mirror sign convention.
+ * This function returns the raw shoulder-line angle; mirror applies (rs.y - ls.y)
+ * with abs(dx) which the original inline call also did, so roll already had
+ * the right sign convention. We preserve it.
+ *
+ * @param {{
+ *   leftShoulder?: LandmarkPoint|null,
+ *   rightShoulder?: LandmarkPoint|null,
+ *   minVisibility?: number,
+ * }} input
+ * @returns {number|null} radians, ~[-π/2, π/2]; null when unreliable
+ */
+export function computeBodyRoll(input) {
+  const ls = input?.leftShoulder;
+  const rs = input?.rightShoulder;
+  if (!ls || !rs) return null;
+  if (
+    !Number.isFinite(ls.x) || !Number.isFinite(ls.y) ||
+    !Number.isFinite(rs.x) || !Number.isFinite(rs.y)
+  ) return null;
+
+  const minV = Number.isFinite(input?.minVisibility) ? input.minVisibility : 0.4;
+  const lsv = Number.isFinite(ls.visibility) ? ls.visibility : 1;
+  const rsv = Number.isFinite(rs.visibility) ? rs.visibility : 1;
+  if (lsv < minV || rsv < minV) return null;
+
+  // Mirror does abs(rs.x - ls.x); reproduce so caller swap is a no-op.
+  const dx = Math.abs(rs.x - ls.x);
+  const dy = rs.y - ls.y;
+  if (dx < 1e-6) return null; // degenerate — atan2 noise
+
+  return Math.atan2(dy, dx);
+}

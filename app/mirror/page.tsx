@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { smoothScalar } from "./smoothing-utils";
 import { estimateSizeFromShoulderRatio } from "./size-from-shoulder-width";
-import { computeBodyPitch, computeBodyYaw, computeDepthScaleStrict } from "./body-metrics.js";
+import { computeBodyPitch, computeBodyRoll, computeBodyYaw, computeDepthScaleStrict } from "./body-metrics.js";
 // Phase 7.26: removed `track` import — lib/telemetry.ts deleted entirely
 // (5 call sites here were the module's only callers; getAll/session/clear
 // had zero readers anywhere). When real telemetry is needed, wire to one
@@ -966,6 +966,17 @@ function MirrorContent() {
     // Note: camera is mirrored, so we flip the calculation
     const shoulderDeltaY = (rs.y - ls.y) * vh; // positive = right shoulder lower
     const shoulderDeltaX = Math.abs(rs.x - ls.x) * vw;
+    // Phase 7.98: roll (Z-axis side-tilt) from shoulder Y-delta vs X-spacing.
+    // Strict-null on missing visibility / degenerate horizontal spacing — the
+    // smoother HOLDS the last good roll on bad frames instead of fabricating
+    // tiltAngle=0 ("perfectly upright") when both shoulders snap to (0,0).
+    // Same lurking-lie pattern 7.88 closed for yaw and 7.91 for pitch; roll
+    // was the third Euler axis still using inline Math.atan2.
+    const rollAngle = computeBodyRoll({
+      leftShoulder:  { x: ls.x, y: ls.y, visibility: ls.visibility },
+      rightShoulder: { x: rs.x, y: rs.y, visibility: rs.visibility },
+    });
+    // Pre-7.98 inline tiltAngle (preserved as fallback for the seed-frame init).
     const tiltAngle = Math.atan2(shoulderDeltaY, shoulderDeltaX); // radians
     
     // Phase 7.89: depth scale (closer→bigger garment) — returns null on missing/zero z so
@@ -1008,17 +1019,23 @@ function MirrorContent() {
       // clean frame arrived — exactly the rubber-banding we tried to fix. Hide the
       // mesh for one extra frame instead. (`vis < 0.4` already hides on bad frames
       // earlier; one more wait is invisible.)
-      if (yawAngle === null || clampedDepth === null || pitchAngle === null) {
+      if (yawAngle === null || clampedDepth === null || pitchAngle === null || rollAngle === null) {
         mesh.visible = false;
         return;
       }
-      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, depth: clampedDepth, yaw: yawAngle, pitch: pitchAngle, ready: true };
+      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: rollAngle, depth: clampedDepth, yaw: yawAngle, pitch: pitchAngle, ready: true };
     } else {
       smoothPos.current.x = smoothScalar(smoothPos.current.x, shoulderCX, { alpha }) ?? shoulderCX;
       smoothPos.current.y = smoothScalar(smoothPos.current.y, shoulderCY, { alpha }) ?? shoulderCY;
       smoothPos.current.w = smoothScalar(smoothPos.current.w, shoulderW, { alpha, min: 50 }) ?? shoulderW;
       smoothPos.current.h = smoothScalar(smoothPos.current.h, torsoH, { alpha, min: 50 }) ?? torsoH;
-      smoothPos.current.tilt = smoothScalar(smoothPos.current.tilt, tiltAngle, { alpha: tiltAlpha }) ?? tiltAngle;
+      // Phase 7.98: roll ("tilt") freezes when computeBodyRoll returns null.
+      // Pre-7.98 inline Math.atan2 fabricated upright on bad-vis frames and the
+      // garment snapped vertical, then rubber-banded back when the user's real
+      // side-lean re-registered. Now we hold the last real roll.
+      if (rollAngle !== null) {
+        smoothPos.current.tilt = smoothScalar(smoothPos.current.tilt, rollAngle, { alpha: tiltAlpha }) ?? rollAngle;
+      }
       // Phase 7.89: depth freezes (skips smoother update) when computeDepthScaleStrict returns null.
       // Garment holds its last size through brief z-confidence dips instead of breathing.
       if (clampedDepth !== null) {
