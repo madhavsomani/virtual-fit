@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { imageToGlbPipeline, type PipelineProgress } from "../lib/image-to-glb";
 import { humanizePipelineError, type HumanError } from "../lib/humanize-pipeline-error";
+import { planAutoRetry, MAX_AUTO_RETRY_ATTEMPTS } from "../lib/auto-retry";
 
 // Phase 7.43: rewired to the canonical `imageToGlbPipeline` (segformer/RMBG
 // → microsoft/TRELLIS HF Space) used by /mirror's upload path. Pre-7.43 this
@@ -24,6 +25,10 @@ interface GenerationState {
   humanError?: HumanError;
   resultUrl?: string;
   provider?: string;
+  // Phase 7.94: countdown UI for queued auto-retry. countdownSec ticks down
+  // each second; when it hits 0 the handler reruns the pipeline.
+  retryCountdownSec?: number;
+  retryAttempt?: number; // 1-indexed
   // Phase 7.8: `isMock`/`textureUrl`/`mockMessage` removed — they powered a 2D
   // flat-overlay fallback that violated HARD RULE #1 (no 2D garment rendering).
 }
@@ -35,15 +40,19 @@ export default function Generate3DPage() {
   });
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Phase 7.94: track auto-retry attempts + last file + countdown timer so
+  // retries can run from setTimeout without losing context.
+  const fileRef = useRef<File | null>(null);
+  const attemptsRef = useRef(0);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const clearRetryTimers = () => {
+    if (retryTimerRef.current) { clearTimeout(retryTimerRef.current); retryTimerRef.current = null; }
+    if (countdownTimerRef.current) { clearInterval(countdownTimerRef.current); countdownTimerRef.current = null; }
+  };
 
-    // Show preview
-    const preview = URL.createObjectURL(file);
-    setPreviewUrl(preview);
-
+  const runPipeline = async (file: File) => {
     // Start generation
     setState({ status: "uploading", progress: 10 });
 
@@ -84,36 +93,83 @@ export default function Generate3DPage() {
         console.warn("Failed to persist GLB to localStorage:", e);
       }
 
+      // Success: clear retry state.
+      attemptsRef.current = 0;
+      clearRetryTimers();
       setState({
         status: "done",
         progress: 100,
         resultUrl: glbUrl,
         provider,
       });
-      return;
     } catch (err) {
       // Phase 7.92: humanize for the UI; keep raw .message in `error` for dev consoles.
       const humanError = humanizePipelineError(err);
+      const rawMsg = err instanceof Error ? err.message : "Generation failed";
+
+      // Phase 7.94: schedule auto-retry for retryable transient failures.
+      const plan = planAutoRetry(humanError, attemptsRef.current);
+      if (plan) {
+        attemptsRef.current = plan.attempt;
+        const totalSec = Math.round(plan.delayMs / 1000);
+        setState({
+          status: "error",
+          progress: 0,
+          error: rawMsg,
+          humanError,
+          retryCountdownSec: totalSec,
+          retryAttempt: plan.attempt,
+        });
+        // Tick the countdown each second so the UI shows "Auto-retry in 27s...".
+        let remaining = totalSec;
+        countdownTimerRef.current = setInterval(() => {
+          remaining -= 1;
+          if (remaining <= 0) {
+            if (countdownTimerRef.current) { clearInterval(countdownTimerRef.current); countdownTimerRef.current = null; }
+            return;
+          }
+          setState((s) => ({ ...s, retryCountdownSec: remaining }));
+        }, 1000);
+        retryTimerRef.current = setTimeout(() => {
+          clearRetryTimers();
+          void runPipeline(file);
+        }, plan.delayMs);
+        return;
+      }
+
+      // No auto-retry: manual recovery (retry count exhausted, non-retryable, or Cancelled).
+      attemptsRef.current = 0;
+      clearRetryTimers();
       setState({
         status: "error",
         progress: 0,
-        error: err instanceof Error ? err.message : "Generation failed",
+        error: rawMsg,
         humanError,
       });
-      return;
     }
 
-    // Phase 7.27: removed ~83 lines of unreachable "legacy multi-provider"
-    // code. The block was preserved "for reference" immediately after a
-    // `return;` so JS control flow never reached it. It hard-coded a
-    // Meshy/Replicate polling pattern (HARD RULE #2: no paid APIs) and
-    // revived the `data.isMock` 2D-texture path Phase 7.8 already rejected
-    // (HARD RULE #1).
-    // Phase 7.43: the multipart Hunyuan3D-2 self-hosted call is gone too;
-    // the pipeline above is the single supported flow.
+    // Phase 7.27/7.43: legacy multi-provider/Hunyuan3D dead code removed.
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Show preview
+    const preview = URL.createObjectURL(file);
+    setPreviewUrl(preview);
+
+    // Cancel any in-flight retry from a prior file, reset attempts.
+    clearRetryTimers();
+    attemptsRef.current = 0;
+    fileRef.current = file;
+    await runPipeline(file);
   };
 
   const reset = () => {
+    clearRetryTimers();
+    attemptsRef.current = 0;
+    fileRef.current = null;
     setState({ status: "idle", progress: 0 });
     setPreviewUrl(null);
     if (fileInputRef.current) {
@@ -380,6 +436,18 @@ export default function Generate3DPage() {
             >
               {state.humanError?.action ?? ""}
             </p>
+            {state.retryCountdownSec !== undefined && state.retryCountdownSec > 0 && (
+              <p
+                style={{
+                  color: "#fbbf24",
+                  fontSize: 14,
+                  marginBottom: 16,
+                  fontWeight: 600,
+                }}
+              >
+                Auto-retrying in {state.retryCountdownSec}s… (attempt {state.retryAttempt} of {MAX_AUTO_RETRY_ATTEMPTS})
+              </p>
+            )}
             <button
               onClick={reset}
               style={{
@@ -392,7 +460,7 @@ export default function Generate3DPage() {
                 fontSize: 15,
               }}
             >
-              {state.humanError?.retryable === false ? "Pick a different photo" : "Try Again"}
+              {state.humanError?.retryable === false ? "Pick a different photo" : (state.retryCountdownSec ? "Cancel auto-retry" : "Try Again")}
             </button>
             {state.error && (
               <details style={{ marginTop: 16, fontSize: 12, color: "#71717a" }}>
