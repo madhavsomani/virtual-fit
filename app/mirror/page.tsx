@@ -7,6 +7,7 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { smoothScalar } from "./smoothing-utils";
 import { estimateSizeFromShoulderRatio } from "./size-from-shoulder-width";
 import { computeBodyPitch, computeBodyRoll, computeBodyYaw, computeDepthScaleStrict } from "./body-metrics.js";
+import { createTrackingTelemetry } from "./tracking-telemetry.js";
 // Phase 7.26: removed `track` import — lib/telemetry.ts deleted entirely
 // (5 call sites here were the module's only callers; getAll/session/clear
 // had zero readers anywhere). When real telemetry is needed, wire to one
@@ -849,6 +850,11 @@ function MirrorContent() {
   const poseLandmarkerRef = useRef<any>(null);
   const animFrameRef = useRef<number>(0);
   const smoothPos = useRef({ x: 0, y: 0, w: 0, h: 0, tilt: 0, depth: 1, yaw: 0, pitch: 0, ready: false });
+  // Phase 7.101: per-axis null-hold telemetry. recordFrame() called every
+  // tracker frame with the four strict-null signals; HUDs / dashboards / tests
+  // can read smoothPos-adjacent state via trackingTelemetry.current.snapshot().
+  // Pure module — no React render coupling. See tracking-telemetry.js.
+  const trackingTelemetry = useRef(createTrackingTelemetry());
 
   // Phase 7.28: removed `useBodyAnchor` hook — the Phase 1.3 "parallel signal
   // source" experiment never replaced the smoothPos positioner, and only its
@@ -1014,7 +1020,18 @@ function MirrorContent() {
     const alpha = smoothMode ? 0.15 : 0.3;
     const tiltAlpha = smoothMode ? 0.1 : 0.25;
     const depthAlpha = smoothMode ? 0.1 : 0.2;
-    
+
+    // Phase 7.101: record per-axis null-hold counters BEFORE the smoother
+    // gates fire (and BEFORE the seed-frame bail-out, so the very first held
+    // frame is observable too). Telemetry must agree with the gate semantics
+    // (axis === null → held), so we feed it the raw strict-null outputs.
+    trackingTelemetry.current.recordFrame({
+      yaw: yawAngle,
+      pitch: pitchAngle,
+      roll: rollAngle,
+      depth: clampedDepth,
+    });
+
     if (!smoothPos.current.ready) {
       // Phase 7.90: defer ready=true until BOTH yaw and depth are non-null on the seed
       // frame. Otherwise we'd hard-default yaw=0 (facing camera) + depth=1.0 (neutral)
