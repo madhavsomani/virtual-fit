@@ -52,6 +52,17 @@ export default function Generate3DPage() {
     if (countdownTimerRef.current) { clearInterval(countdownTimerRef.current); countdownTimerRef.current = null; }
   };
 
+  // Phase 7.97: Cancel-only handler. Stops the queued auto-retry but keeps the
+  // humanError state visible so the user still sees "❌ <title> — <action>"
+  // and a manual "Try Again" button. reset() (used by the in-error "Try Again" /
+  // "Pick a different photo" path) clears the preview AND drops back to idle,
+  // which is wrong here — the user wanted to stop waiting, not start over.
+  const cancelAutoRetry = () => {
+    clearRetryTimers();
+    attemptsRef.current = 0;
+    setState((s) => ({ ...s, retryCountdownSec: undefined, retryAttempt: undefined }));
+  };
+
   const runPipeline = async (file: File) => {
     // Start generation
     setState({ status: "uploading", progress: 10 });
@@ -448,20 +459,42 @@ export default function Generate3DPage() {
                 Auto-retrying in {state.retryCountdownSec}s… (attempt {state.retryAttempt} of {MAX_AUTO_RETRY_ATTEMPTS})
               </p>
             )}
-            <button
-              onClick={reset}
-              style={{
-                padding: "12px 24px",
-                background: "#27272a",
-                border: "none",
-                borderRadius: 10,
-                color: "#a1a1aa",
-                cursor: "pointer",
-                fontSize: 15,
-              }}
-            >
-              {state.humanError?.retryable === false ? "Pick a different photo" : (state.retryCountdownSec ? "Cancel auto-retry" : "Try Again")}
-            </button>
+            {state.retryCountdownSec !== undefined && state.retryCountdownSec > 0 ? (
+              // Phase 7.97: dedicated red Cancel button during the countdown
+              // window, parity with mirror 7.96. Distinct from the gray
+              // Try Again / Pick-a-different-photo control so the user clearly
+              // sees the "stop waiting" affordance.
+              <button
+                onClick={cancelAutoRetry}
+                style={{
+                  padding: "12px 24px",
+                  background: "#ef4444",
+                  border: "none",
+                  borderRadius: 10,
+                  color: "#fff",
+                  cursor: "pointer",
+                  fontSize: 15,
+                  fontWeight: 600,
+                }}
+              >
+                ✕ Cancel auto-retry ({state.retryCountdownSec}s)
+              </button>
+            ) : (
+              <button
+                onClick={reset}
+                style={{
+                  padding: "12px 24px",
+                  background: "#27272a",
+                  border: "none",
+                  borderRadius: 10,
+                  color: "#a1a1aa",
+                  cursor: "pointer",
+                  fontSize: 15,
+                }}
+              >
+                {state.humanError?.retryable === false ? "Pick a different photo" : "Try Again"}
+              </button>
+            )}
             {state.error && (
               <details style={{ marginTop: 16, fontSize: 12, color: "#71717a" }}>
                 <summary style={{ cursor: "pointer" }}>Show technical details</summary>
