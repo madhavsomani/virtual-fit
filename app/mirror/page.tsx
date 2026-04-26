@@ -19,6 +19,7 @@ import { detectLeftSwipeIntent, detectRightSwipeIntent, detectGestureCooldownWin
 // had any caller, and only `confidence` of its 4-field return was read,
 // duplicating the existing avg-vis gate 80 lines below the import.
 import { imageToGlbPipeline } from "../lib/image-to-glb";
+import { humanizePipelineError } from "../lib/humanize-pipeline-error";
 import { normalizeGlb } from "../lib/glb-normalize";
 
 type PoseResultLandmark = { x: number; y: number; z?: number; visibility?: number };
@@ -1566,8 +1567,13 @@ function MirrorContent() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
       console.error('3D upload failed:', msg);
-      // Phase 7.26: removed `track('upload_failed', {...})` — telemetry deleted.
-      setStatus(`❌ 3D failed: ${msg}. Garment must be 3D — re-upload as GLB.`);
+      // Phase 7.93: humanize the error so the upload status banner reads as plain English
+      // rather than "TRELLIS queue_full: {...}" or "HF proxy 413: payload too large".
+      // Same humanizer as /generate-3d (Phase 7.92). Mirror's status banner is a single
+      // line, so we render: "❌ <title> — <action>". Raw msg is still in console.error
+      // for support debugging.
+      const human = humanizePipelineError(err);
+      setStatus(`❌ ${human.title} — ${human.action}`);
       setGarment3DStatus('error');
       // No 2D fallback — Phase1.2 strip
     } finally {
