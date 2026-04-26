@@ -986,8 +986,18 @@ function MirrorContent() {
     const depthAlpha = smoothMode ? 0.1 : 0.2;
     
     if (!smoothPos.current.ready) {
-      // First frame seed. yaw + depth may be null on first frame; seed at safe defaults.
-      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, depth: clampedDepth ?? 1.0, yaw: yawAngle ?? 0, pitch: pitchAngle, ready: true };
+      // Phase 7.90: defer ready=true until BOTH yaw and depth are non-null on the seed
+      // frame. Otherwise we'd hard-default yaw=0 (facing camera) + depth=1.0 (neutral)
+      // and the post-7.88/7.89 null-gates would then SKIP the smoother updates on
+      // every subsequent null frame, locking the garment at the wrong values until a
+      // clean frame arrived — exactly the rubber-banding we tried to fix. Hide the
+      // mesh for one extra frame instead. (`vis < 0.4` already hides on bad frames
+      // earlier; one more wait is invisible.)
+      if (yawAngle === null || clampedDepth === null) {
+        mesh.visible = false;
+        return;
+      }
+      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, depth: clampedDepth, yaw: yawAngle, pitch: pitchAngle, ready: true };
     } else {
       smoothPos.current.x = smoothScalar(smoothPos.current.x, shoulderCX, { alpha }) ?? shoulderCX;
       smoothPos.current.y = smoothScalar(smoothPos.current.y, shoulderCY, { alpha }) ?? shoulderCY;
