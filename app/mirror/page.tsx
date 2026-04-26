@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { smoothScalar } from "./smoothing-utils";
 import { estimateSizeFromShoulderRatio } from "./size-from-shoulder-width";
-import { computeBodyPitch } from "./body-metrics.js";
+import { computeBodyPitch, computeBodyYaw } from "./body-metrics.js";
 // Phase 7.26: removed `track` import — lib/telemetry.ts deleted entirely
 // (5 call sites here were the module's only callers; getAll/session/clear
 // had zero readers anywhere). When real telemetry is needed, wire to one
@@ -960,11 +960,14 @@ function MirrorContent() {
     const depthScale = 1.0 - (avgShoulderZ * 0.4); // closer (negative Z) = larger
     const clampedDepth = Math.max(0.7, Math.min(1.3, depthScale));
 
-    // Phase2.3: yaw (Y-axis rotation) from shoulder Z-delta — Iron Man suit rotation effect.
-    // When user turns left, left shoulder moves back (positive Z), right comes forward (negative Z).
-    const shoulderZDelta = (ls.z ?? 0) - (rs.z ?? 0);
-    // Mirror flip: visual left = anatomical right
-    const yawAngle = Math.atan2(shoulderZDelta, Math.max(0.05, Math.abs(rs.x - ls.x)));
+    // Phase 7.88: yaw (Y-axis rotation) from shoulder Z-delta — Iron Man suit rotation effect.
+    // Returns null on missing/zero z or degenerate shoulder X-spacing — DON'T smooth in null,
+    // hold the last good value instead. Pre-7.88 the inline `?? 0` fabricated yaw=0 ("facing
+    // camera") on bad-z frames and rubber-banded the garment when z recovered.
+    const yawAngle = computeBodyYaw({
+      leftShoulder:  { x: ls.x, y: ls.y, z: ls.z, visibility: ls.visibility },
+      rightShoulder: { x: rs.x, y: rs.y, z: rs.z, visibility: rs.visibility },
+    });
 
     // Phase 6.1: pitch (X-axis lean) from shoulder→hip Z-delta along torso vector.
     const pitchAngle = computeBodyPitch({
@@ -981,7 +984,9 @@ function MirrorContent() {
     const depthAlpha = smoothMode ? 0.1 : 0.2;
     
     if (!smoothPos.current.ready) {
-      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, depth: clampedDepth, yaw: yawAngle, pitch: pitchAngle, ready: true };
+      // First frame seed. If yaw is null (low confidence) seed at 0; the
+      // smoother will then update only when a real yaw arrives.
+      smoothPos.current = { x: shoulderCX, y: shoulderCY, w: shoulderW, h: torsoH, tilt: tiltAngle, depth: clampedDepth, yaw: yawAngle ?? 0, pitch: pitchAngle, ready: true };
     } else {
       smoothPos.current.x = smoothScalar(smoothPos.current.x, shoulderCX, { alpha }) ?? shoulderCX;
       smoothPos.current.y = smoothScalar(smoothPos.current.y, shoulderCY, { alpha }) ?? shoulderCY;
@@ -989,7 +994,12 @@ function MirrorContent() {
       smoothPos.current.h = smoothScalar(smoothPos.current.h, torsoH, { alpha, min: 50 }) ?? torsoH;
       smoothPos.current.tilt = smoothScalar(smoothPos.current.tilt, tiltAngle, { alpha: tiltAlpha }) ?? tiltAngle;
       smoothPos.current.depth = smoothScalar(smoothPos.current.depth, clampedDepth, { alpha: depthAlpha, min: 0.7, max: 1.3 }) ?? clampedDepth;
-      smoothPos.current.yaw = smoothScalar(smoothPos.current.yaw, yawAngle, { alpha: tiltAlpha }) ?? yawAngle;
+      // Phase 7.88: yaw freezes (skips smoother update) when computeBodyYaw returns null.
+      // The garment holds its last orientation through brief z-confidence dips instead
+      // of snapping back to facing-camera and rubber-banding when z recovers.
+      if (yawAngle !== null) {
+        smoothPos.current.yaw = smoothScalar(smoothPos.current.yaw, yawAngle, { alpha: tiltAlpha }) ?? yawAngle;
+      }
       smoothPos.current.pitch = smoothScalar(smoothPos.current.pitch, pitchAngle, { alpha: tiltAlpha }) ?? pitchAngle;
     }
 

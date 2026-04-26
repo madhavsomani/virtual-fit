@@ -373,3 +373,66 @@ export function computeBodyPitch(input) {
   const raw = Math.atan2(zDelta, torsoLengthY);
   return clamp(raw, -Math.PI / 3, Math.PI / 3);
 }
+
+/**
+ * Phase 7.88 — Compute Y-axis yaw (Iron Man rotation effect) from shoulder
+ * Z-delta. The VISION goal is "garment tracks rotation like Iron Man suit".
+ *
+ * Pre-7.88 the inline mirror code was:
+ *   const shoulderZDelta = (ls.z ?? 0) - (rs.z ?? 0);
+ *   const yawAngle = Math.atan2(shoulderZDelta, ...);
+ * That `?? 0` silently fabricates yaw=0 ("facing camera") whenever MediaPipe
+ * reports a missing/zero z, then the smoother integrates the lie. Result: when
+ * the user actually turns sideways but z confidence dips for a frame or two,
+ * the garment snaps back to facing-camera and then rubber-bands when z
+ * recovers. Breaks the suit illusion at exactly the moments rotation matters
+ * most.
+ *
+ * Fix: this function returns null whenever the inputs can't yield a real yaw
+ * estimate — caller is expected to skip the smoothing update on null and
+ * keep the last good yaw, so the garment freezes briefly instead of lying.
+ *
+ * Returns null when:
+ * - shoulders missing
+ * - either shoulder visibility < minVisibility (default 0.5)
+ * - either shoulder z is non-finite
+ * - both shoulder z values are exactly 0 (MediaPipe's "no depth signal" sentinel)
+ * - shoulder X-distance is degenerate (<0.02 normalized — user is profile-on
+ *   to camera and shoulders are stacked, which makes the atan2 angle wildly
+ *   noisy; skip the frame instead of producing a giant yaw spike)
+ *
+ * @param {{
+ *   leftShoulder?: LandmarkPoint|null,
+ *   rightShoulder?: LandmarkPoint|null,
+ *   minVisibility?: number,
+ * }} input
+ * @returns {number|null} radians; null when yaw estimate is unreliable
+ */
+export function computeBodyYaw(input) {
+  const ls = input?.leftShoulder;
+  const rs = input?.rightShoulder;
+  if (!ls || !rs) return null;
+
+  const minV = Number.isFinite(input?.minVisibility) ? input.minVisibility : 0.5;
+  const lsv = Number.isFinite(ls.visibility) ? ls.visibility : 1;
+  const rsv = Number.isFinite(rs.visibility) ? rs.visibility : 1;
+  if (lsv < minV || rsv < minV) return null;
+
+  // Z must be present AND not both exactly zero (MediaPipe sentinel).
+  if (!Number.isFinite(ls.z) || !Number.isFinite(rs.z)) return null;
+  if (ls.z === 0 && rs.z === 0) return null;
+
+  if (!Number.isFinite(ls.x) || !Number.isFinite(rs.x)) return null;
+  const xDist = Math.abs(rs.x - ls.x);
+  // Below 0.02 normalized (~2% of frame width) shoulders are essentially
+  // stacked — user is in profile, atan2 denominator collapses, output spikes.
+  // Skip the frame; smoother holds last value.
+  if (xDist < 0.02) return null;
+
+  const zDelta = ls.z - rs.z;
+  const raw = Math.atan2(zDelta, xDist);
+
+  // Clamp to ±90° (π/2). Beyond that MediaPipe z confidence is bad anyway
+  // and a 3D garment rotated past 90° hits self-occlusion ugliness.
+  return clamp(raw, -Math.PI / 2, Math.PI / 2);
+}
