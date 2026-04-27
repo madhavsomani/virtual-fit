@@ -14,6 +14,7 @@ import { createProactiveGuidanceTracker } from "./proactive-guidance-tracker.js"
 import { buildSessionSummary } from "./session-summary.js";
 import { appendSessionSummary } from "./session-summary-log.js";
 import { deriveSessionQuality } from "./session-quality.js";
+import { deriveCoachingTips } from "./coaching-tips.js";
 // Phase 7.26: removed `track` import — lib/telemetry.ts deleted entirely
 // (5 call sites here were the module's only callers; getAll/session/clear
 // had zero readers anywhere). When real telemetry is needed, wire to one
@@ -874,6 +875,14 @@ function MirrorContent() {
     ReturnType<typeof deriveSessionQuality>
   >(null);
 
+  // Phase 7.112: per-axis coaching tips. Same lifecycle as sessionQuality:
+  // set on stop, cleared by the same setTimeout/identity check, cleared on
+  // session start. Always derived (cheap), shown ONLY for fair/poor grades
+  // (success grades don't need coaching — the user is already doing it right).
+  const [coachingTips, setCoachingTips] = useState<
+    ReturnType<typeof deriveCoachingTips>
+  >([]);
+
   const sessionStartedAtRef = useRef<number | null>(null);
 
   // Phase 7.110: hysteresis/cooldown wrapper around 7.109's pure derivation.
@@ -1455,6 +1464,7 @@ function MirrorContent() {
       trackingTelemetry.current.reset();
       proactiveGuidanceTracker.current.reset();
       setSessionQuality(null);
+      setCoachingTips([]);
       setLoadingProgress(100);
       setIsLoading(false);
       setStatus("Ready — try uploading a garment!");
@@ -4028,13 +4038,18 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
         // the debugTelemetry URL flag — the badge IS the user-visible feedback
         // loop. The persistence layer below stays gated.
         const quality = deriveSessionQuality({ summary });
+        // Phase 7.112: derive tips from the SAME summary. Always derived;
+        // the render branch below decides when to surface them.
+        const tips = deriveCoachingTips({ summary });
         if (quality) {
           setSessionQuality(quality);
+          setCoachingTips(tips);
           // Auto-clear after 6s. Acknowledgment-window-style: long enough to
           // read, short enough that it doesn't outlive the user's attention
           // before they tap Start again.
           setTimeout(() => {
             setSessionQuality((prev) => (prev === quality ? null : prev));
+            setCoachingTips((prev) => (prev === tips ? [] : prev));
           }, 6000);
         }
         // Phase 7.106: opt-in session-summary persistence. Gated on
@@ -4900,6 +4915,37 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             <div style={{ fontSize: 12, marginTop: 6, opacity: 0.95, fontWeight: 500 }}>
               {sessionQuality.caption}
             </div>
+            {/* Phase 7.112: per-axis coaching tips. Only surfaced when grade
+                is warning/danger AND we have at least one tip; success-grade
+                sessions don't need coaching. Tips render as a compact bullet
+                list inside the badge so the user gets grade + actionable fix
+                in one glance, not two screens. */}
+            {(sessionQuality.tone === "warning" || sessionQuality.tone === "danger") &&
+              coachingTips.length > 0 && (
+              <ul
+                data-testid="session-quality-tips"
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: "10px 0 0 0",
+                  textAlign: "left",
+                  borderTop: "1px solid rgba(255,255,255,0.3)",
+                  paddingTop: 8,
+                }}
+              >
+                {coachingTips.map((tip) => (
+                  <li
+                    key={tip.axis}
+                    data-testid="session-quality-tip"
+                    data-axis={tip.axis}
+                    style={{ marginTop: 4, fontSize: 12, lineHeight: 1.35 }}
+                  >
+                    <span style={{ fontWeight: 700 }}>→ {tip.title}.</span>{" "}
+                    <span style={{ opacity: 0.92, fontWeight: 400 }}>{tip.detail}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
 

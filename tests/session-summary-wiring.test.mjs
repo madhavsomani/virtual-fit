@@ -104,9 +104,14 @@ test("sessionStartedAtRef is set on start AND cleared on stop", () => {
   assert.match(STRIPPED, /sessionStartedAtRef\.current\s*=\s*null/);
   // And the gate inside the capture site checks it's not null first
   // (defensive against unmount races / stop-without-start).
+  // Phase 7.111+7.112 inserted the user-facing quality badge + coaching
+  // tips derivation between the null guard and the persistence call. Both
+  // run inside the same try/null-guarded block, so widen the window from
+  // 800 → 2000 chars. The contract being verified is unchanged: persistence
+  // is reachable only when sessionStartedAtRef is non-null.
   assert.match(
     STRIPPED,
-    /sessionStartedAtRef\.current\s*!==\s*null[\s\S]{0,800}appendSessionSummary\(/,
+    /sessionStartedAtRef\.current\s*!==\s*null[\s\S]{0,2000}appendSessionSummary\(/,
   );
 });
 
