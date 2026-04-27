@@ -13,6 +13,7 @@ import { deriveProactiveGuidance } from "./proactive-guidance.js";
 import { createProactiveGuidanceTracker } from "./proactive-guidance-tracker.js";
 import { buildSessionSummary } from "./session-summary.js";
 import { appendSessionSummary } from "./session-summary-log.js";
+import { deriveSessionQuality } from "./session-quality.js";
 // Phase 7.26: removed `track` import — lib/telemetry.ts deleted entirely
 // (5 call sites here were the module's only callers; getAll/session/clear
 // had zero readers anywhere). When real telemetry is needed, wire to one
@@ -866,6 +867,13 @@ function MirrorContent() {
   // is intentional: rendering doesn't depend on this; recreating it would
   // re-fire the polling effects above. Stays null when the camera isn't running
   // so a stop without a start is a no-op (defensive against unmount races).
+  // Phase 7.111: end-of-session quality badge. Set on stopCamera, auto-cleared
+  // after a short visible window. Set to null on next session start so a fresh
+  // session never shows a stale grade.
+  const [sessionQuality, setSessionQuality] = useState<
+    ReturnType<typeof deriveSessionQuality>
+  >(null);
+
   const sessionStartedAtRef = useRef<number | null>(null);
 
   // Phase 7.110: hysteresis/cooldown wrapper around 7.109's pure derivation.
@@ -1446,6 +1454,7 @@ function MirrorContent() {
       sessionStartedAtRef.current = Date.now();
       trackingTelemetry.current.reset();
       proactiveGuidanceTracker.current.reset();
+      setSessionQuality(null);
       setLoadingProgress(100);
       setIsLoading(false);
       setStatus("Ready — try uploading a garment!");
@@ -4008,15 +4017,32 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
     // try/catch — telemetry must NEVER break the stop path.
     try {
       if (typeof window !== "undefined" && sessionStartedAtRef.current !== null) {
+        const summary = buildSessionSummary({
+          snapshot: trackingTelemetry.current.snapshot(),
+          // No PII: opaque random id; no user/device identifier.
+          sessionId: `s_${sessionStartedAtRef.current.toString(36)}`,
+          startedAtMs: sessionStartedAtRef.current,
+          endedAtMs: Date.now(),
+        });
+        // Phase 7.111: derive + show user-facing quality badge regardless of
+        // the debugTelemetry URL flag — the badge IS the user-visible feedback
+        // loop. The persistence layer below stays gated.
+        const quality = deriveSessionQuality({ summary });
+        if (quality) {
+          setSessionQuality(quality);
+          // Auto-clear after 6s. Acknowledgment-window-style: long enough to
+          // read, short enough that it doesn't outlive the user's attention
+          // before they tap Start again.
+          setTimeout(() => {
+            setSessionQuality((prev) => (prev === quality ? null : prev));
+          }, 6000);
+        }
+        // Phase 7.106: opt-in session-summary persistence. Gated on
+        // ?debugTelemetry=1. URL flag (not localStorage) so it's deliberate
+        // per-visit and impossible to silently inherit across origins.
+        // Zero network (locked by 7.105 grep test).
         const params = new URLSearchParams(window.location.search);
         if (params.get("debugTelemetry") === "1") {
-          const summary = buildSessionSummary({
-            snapshot: trackingTelemetry.current.snapshot(),
-            // No PII: opaque random id; no user/device identifier.
-            sessionId: `s_${sessionStartedAtRef.current.toString(36)}`,
-            startedAtMs: sessionStartedAtRef.current,
-            endedAtMs: Date.now(),
-          });
           appendSessionSummary(summary);
         }
       }
@@ -4833,6 +4859,47 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
             }}
           >
             {proactiveHint.label}
+          </div>
+        )}
+
+        {/* Phase 7.111: end-of-session quality badge. Centered overlay shown
+            briefly after Stop. Tone-driven background (success/warning/danger)
+            so the user reads it pre-attentively before reading the words.
+            pointerEvents:none — cannot block the underlying Start button. */}
+        {sessionQuality && (
+          <div
+            data-testid="session-quality-badge"
+            data-tier={sessionQuality.tier}
+            data-tone={sessionQuality.tone}
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              padding: "14px 22px",
+              borderRadius: 14,
+              background:
+                sessionQuality.tone === "success" ? "rgba(16, 185, 129, 0.94)"
+                : sessionQuality.tone === "warning" ? "rgba(245, 158, 11, 0.94)"
+                : "rgba(220, 38, 38, 0.94)",
+              color: "white",
+              boxShadow: "0 6px 24px rgba(0,0,0,0.45)",
+              pointerEvents: "none",
+              zIndex: 31,
+              userSelect: "none",
+              textAlign: "center",
+              maxWidth: "80%",
+            }}
+          >
+            <div style={{ fontSize: 11, opacity: 0.85, letterSpacing: 1.4, fontWeight: 600 }}>
+              TRACKING QUALITY
+            </div>
+            <div style={{ fontSize: 22, fontWeight: 800, marginTop: 2 }}>
+              {sessionQuality.label}
+            </div>
+            <div style={{ fontSize: 12, marginTop: 6, opacity: 0.95, fontWeight: 500 }}>
+              {sessionQuality.caption}
+            </div>
           </div>
         )}
 
