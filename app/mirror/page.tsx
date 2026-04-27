@@ -10,6 +10,7 @@ import { computeBodyPitch, computeBodyRoll, computeBodyYaw, computeDepthScaleStr
 import { createTrackingTelemetry } from "./tracking-telemetry.js";
 import { deriveTrackingHeldChip } from "./tracking-held-chip.js";
 import { deriveProactiveGuidance } from "./proactive-guidance.js";
+import { createProactiveGuidanceTracker } from "./proactive-guidance-tracker.js";
 import { buildSessionSummary } from "./session-summary.js";
 import { appendSessionSummary } from "./session-summary-log.js";
 // Phase 7.26: removed `track` import — lib/telemetry.ts deleted entirely
@@ -867,6 +868,11 @@ function MirrorContent() {
   // so a stop without a start is a no-op (defensive against unmount races).
   const sessionStartedAtRef = useRef<number | null>(null);
 
+  // Phase 7.110: hysteresis/cooldown wrapper around 7.109's pure derivation.
+  // Same lifetime as the telemetry instance — reset on session start so a
+  // new session doesn't inherit the previous session's cooldown state.
+  const proactiveGuidanceTracker = useRef(createProactiveGuidanceTracker());
+
   // Phase 7.102: derived state for the visible "tracking held" HUD chip.
   // Polled at ~5 Hz via setInterval (NOT rAF) — the inner loop runs at 60fps;
   // re-rendering the React tree at that rate would burn frame budget for a
@@ -910,7 +916,10 @@ function MirrorContent() {
   >(null);
   useEffect(() => {
     const id = setInterval(() => {
-      const next = deriveProactiveGuidance({ snapshot: trackingTelemetry.current.snapshot() });
+      const next = proactiveGuidanceTracker.current.evaluate(
+        trackingTelemetry.current.snapshot(),
+        Date.now(),
+      );
       setProactiveHint((prev) => {
         if (prev === next) return prev;
         if (!prev && !next) return prev;
@@ -1436,6 +1445,7 @@ function MirrorContent() {
       // Phase 7.106: mark session start for the opt-in summary log.
       sessionStartedAtRef.current = Date.now();
       trackingTelemetry.current.reset();
+      proactiveGuidanceTracker.current.reset();
       setLoadingProgress(100);
       setIsLoading(false);
       setStatus("Ready — try uploading a garment!");

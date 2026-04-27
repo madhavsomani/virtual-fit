@@ -33,13 +33,12 @@ test("uses useState typed by ReturnType<typeof deriveProactiveGuidance>", () => 
 });
 
 test("polls via setInterval at 1000ms (NOT rAF, NOT 200ms) — slow-changing aggregate", () => {
-  // Find the proactive useEffect block by anchor.
-  const idx = STRIPPED.indexOf("deriveProactiveGuidance({ snapshot:");
-  assert.ok(idx >= 0, "expected deriveProactiveGuidance call site");
-  // Walk back ~500 chars to find its setInterval.
+  // Phase 7.110 swapped the inline deriveProactiveGuidance() call for
+  // proactiveGuidanceTracker.current.evaluate(...). Use that as the anchor.
+  const idx = STRIPPED.indexOf("proactiveGuidanceTracker.current.evaluate(");
+  assert.ok(idx >= 0, "expected proactiveGuidanceTracker.evaluate call site");
   const window = STRIPPED.slice(Math.max(0, idx - 500), idx + 800);
   assert.match(window, /setInterval\(\s*\(\)\s*=>\s*\{[\s\S]*?\}\s*,\s*1000\s*\)/);
-  // And NOT requestAnimationFrame anywhere in that window.
   assert.doesNotMatch(window, /requestAnimationFrame\(/);
 });
 
@@ -79,7 +78,46 @@ test("pill label comes from derived state (not inlined here, contract lives in t
   assert.doesNotMatch(STRIPPED, /Try moving closer to the camera/);
 });
 
-test("exactly ONE deriveProactiveGuidance call site (no copy-paste drift)", () => {
-  const calls = STRIPPED.match(/deriveProactiveGuidance\(/g) ?? [];
-  assert.equal(calls.length, 1, `expected 1 call, got ${calls.length}`);
+test("exactly ONE proactive evaluate call site (no copy-paste drift, post-7.110 hysteresis tracker)", () => {
+  // Phase 7.110 replaced the direct deriveProactiveGuidance() call with the
+  // hysteresis tracker's evaluate(). Lock at exactly one tracker call site.
+  const calls = STRIPPED.match(/proactiveGuidanceTracker\.current\.evaluate\(/g) ?? [];
+  assert.equal(calls.length, 1, `expected 1 tracker.evaluate call, got ${calls.length}`);
+  // And the direct derivation function MUST NOT be called from the page —
+  // it lives behind the tracker now (the typeof reference for useState
+  // typing is OK; that's not a call expression).
+  const directCalls = STRIPPED.match(/\bderiveProactiveGuidance\s*\(/g) ?? [];
+  assert.equal(
+    directCalls.length,
+    0,
+    `direct deriveProactiveGuidance() calls must go through the tracker, found ${directCalls.length}`,
+  );
+});
+
+test("Phase 7.110: imports + instantiates createProactiveGuidanceTracker as a useRef", () => {
+  assert.match(
+    STRIPPED,
+    /import\s*\{\s*createProactiveGuidanceTracker\s*\}\s*from\s*["']\.\/proactive-guidance-tracker\.js["']/,
+  );
+  assert.match(
+    STRIPPED,
+    /const\s+proactiveGuidanceTracker\s*=\s*useRef\(\s*createProactiveGuidanceTracker\(\)\s*\)/,
+  );
+});
+
+test("Phase 7.110: tracker.evaluate is called with both snapshot AND Date.now() (clock injected, not embedded)", () => {
+  // The pure-with-time pattern: evaluate(snapshot, nowMs). Page must pass the
+  // current clock; tracker must NOT call Date.now() internally (verified
+  // separately in tests/proactive-guidance-tracker.test.mjs by deterministic
+  // time control, but lock the call shape here too).
+  assert.match(
+    STRIPPED,
+    /proactiveGuidanceTracker\.current\.evaluate\(\s*trackingTelemetry\.current\.snapshot\(\)\s*,\s*Date\.now\(\)\s*,?\s*\)/,
+  );
+});
+
+test("Phase 7.110: tracker.reset() is called on session start (matches trackingTelemetry.reset cadence)", () => {
+  // Without reset on session start, a fresh session would inherit the prior
+  // session's cooldown axis and silently suppress a real first-second hint.
+  assert.match(STRIPPED, /proactiveGuidanceTracker\.current\.reset\(\)/);
 });
