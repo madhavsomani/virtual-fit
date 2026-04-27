@@ -9,6 +9,7 @@ import { estimateSizeFromShoulderRatio } from "./size-from-shoulder-width";
 import { computeBodyPitch, computeBodyRoll, computeBodyYaw, computeDepthScaleStrict } from "./body-metrics.js";
 import { createTrackingTelemetry } from "./tracking-telemetry.js";
 import { deriveTrackingHeldChip } from "./tracking-held-chip.js";
+import { deriveProactiveGuidance } from "./proactive-guidance.js";
 import { buildSessionSummary } from "./session-summary.js";
 import { appendSessionSummary } from "./session-summary-log.js";
 // Phase 7.26: removed `track` import — lib/telemetry.ts deleted entirely
@@ -896,6 +897,32 @@ function MirrorContent() {
         return next;
       });
     }, 200);
+    return () => clearInterval(id);
+  }, []);
+
+  // Phase 7.109: proactive guidance — reads RUNNING totals (cumulative
+  // null-frame ratio per axis) instead of the last 6 frames, so we can
+  // nudge the user BEFORE the per-frame chip fires. Polled at ~1 Hz: this
+  // is a low-frequency aggregate hint, not a per-frame indicator. Same
+  // shallow-equal setter pattern as the chip above.
+  const [proactiveHint, setProactiveHint] = useState<
+    ReturnType<typeof deriveProactiveGuidance>
+  >(null);
+  useEffect(() => {
+    const id = setInterval(() => {
+      const next = deriveProactiveGuidance({ snapshot: trackingTelemetry.current.snapshot() });
+      setProactiveHint((prev) => {
+        if (prev === next) return prev;
+        if (!prev && !next) return prev;
+        if (!!prev !== !!next) return next;
+        if (
+          prev && next &&
+          prev.axis === next.axis &&
+          prev.severity === next.severity
+        ) return prev;
+        return next;
+      });
+    }, 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -4761,6 +4788,41 @@ Flipped: ${garmentFlipped ? 'Yes' : 'No'}`;
                 +{trackingHeldChip.axes.length - 1}
               </span>
             )}
+          </div>
+        )}
+
+        {/* Phase 7.109: PROACTIVE guidance pill. Lower than the reactive chip
+            (top 56 vs 16) so they stack cleanly when both are visible. The
+            derivation defers to the chip when held[axis]=true, so collisions
+            on a single axis are filtered there — but a soft hint on a
+            DIFFERENT axis can legitimately stack underneath the chip.
+            Lighter visuals (slate vs amber) mark it as advisory, not alert. */}
+        {proactiveHint && (
+          <div
+            data-testid="proactive-hint"
+            data-axis={proactiveHint.axis}
+            data-severity={proactiveHint.severity}
+            style={{
+              position: "absolute",
+              top: 56,
+              left: "50%",
+              transform: "translateX(-50%)",
+              padding: "4px 10px",
+              borderRadius: 999,
+              background: proactiveHint.severity === "firm"
+                ? "rgba(71, 85, 105, 0.92)"
+                : "rgba(100, 116, 139, 0.78)",
+              color: "white",
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: 0.2,
+              boxShadow: "0 2px 6px rgba(0,0,0,0.25)",
+              pointerEvents: "none",
+              zIndex: 29,
+              userSelect: "none",
+            }}
+          >
+            {proactiveHint.label}
           </div>
         )}
 
