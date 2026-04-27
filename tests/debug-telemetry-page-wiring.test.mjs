@@ -87,3 +87,22 @@ test("page is a Next.js client component (uses 'use client')", () => {
   const firstNonEmpty = SRC.split("\n").map((l) => l.trim()).find((l) => l.length > 0);
   assert.equal(firstNonEmpty, '"use client";');
 });
+
+test("Phase 7.108: rollup card uses the pure aggregator (no inline median math)", () => {
+  // The dashboard MUST go through aggregateSummaries — inline `nums.sort()`
+  // duplicates of the median logic in this page would drift away from the
+  // tested contract in tests/session-summary-aggregate.test.mjs.
+  assert.match(
+    STRIPPED,
+    /import\s*\{[^}]*\baggregateSummaries\b[^}]*\}\s*from\s*["'][^"']*session-summary-aggregate\.js["']/,
+  );
+  assert.match(STRIPPED, /aggregateSummaries\(\s*summaries\s*\)/);
+  assert.match(STRIPPED, /data-testid="telemetry-rollup"/);
+  // Exactly ONE call site — no copy-paste drift across render branches.
+  const calls = STRIPPED.match(/aggregateSummaries\(/g) ?? [];
+  assert.equal(calls.length, 1, `expected 1 aggregateSummaries call, got ${calls.length}`);
+  // Defense-in-depth: the page must NOT inline a sort+midpoint median.
+  // (Static-grep — a future regression replacing the import with inline math
+  // would either keep the import or trip this guard.)
+  assert.doesNotMatch(STRIPPED, /\.sort\(\(a,\s*b\)\s*=>\s*a\s*-\s*b\)/);
+});

@@ -22,6 +22,7 @@ import {
   clearSessionSummaries,
 } from "../../mirror/session-summary-log.js";
 import { summariesToCsv, CSV_COLUMNS } from "../../mirror/session-summary-csv.js";
+import { aggregateSummaries } from "../../mirror/session-summary-aggregate.js";
 
 type Summary = ReturnType<typeof readSessionSummaries>[number];
 
@@ -122,6 +123,52 @@ export default function DebugTelemetryPage() {
           </p>
         </div>
       )}
+
+      {loaded && summaries.length > 0 && (() => {
+        // Phase 7.108: at-a-glance reliability rollup. Pure derivation —
+        // re-runs every render, no memo needed (input is local-only and
+        // capped at 20 entries by the 7.105 ring buffer).
+        const agg = aggregateSummaries(summaries);
+        const ratio = (n: number | null) => (n == null ? "—" : `${(n * 100).toFixed(1)}%`);
+        const dist = agg.worstAxisDistribution;
+        return (
+          <section
+            data-testid="telemetry-rollup"
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              gap: 12, marginBottom: 24, padding: 16,
+              background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: 8,
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 12, color: "#666" }}>Sessions</div>
+              <div style={{ fontSize: 22, fontWeight: 700 }}>{agg.sessionCount}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: "#666" }}>Total frames</div>
+              <div style={{ fontSize: 22, fontWeight: 700 }}>{agg.totalFrames.toLocaleString()}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: "#666" }}>Median held %</div>
+              <div style={{ fontSize: 22, fontWeight: 700 }}>{ratio(agg.medianHeldRatio)}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: "#666" }}>Worst-axis distribution</div>
+              <div style={{ fontSize: 13, lineHeight: 1.5 }}>
+                yaw {dist.yaw} · pitch {dist.pitch} · roll {dist.roll} · depth {dist.depth}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: "#666" }}>Per-axis median held %</div>
+              <div style={{ fontSize: 13, lineHeight: 1.5 }}>
+                yaw {ratio(agg.perAxisMedianHeldRatio.yaw)} · pitch {ratio(agg.perAxisMedianHeldRatio.pitch)} ·
+                roll {ratio(agg.perAxisMedianHeldRatio.roll)} · depth {ratio(agg.perAxisMedianHeldRatio.depth)}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
 
       {loaded && summaries.length > 0 && (
         <div style={{ overflowX: "auto" }}>
