@@ -31,7 +31,7 @@ const NON_ROUTE = new Set(["lib", "api", "components"]);
 // is now a permanent redirect to /retailer/signup (Phase 7.61) — listing
 // the redirect source in the sitemap wastes crawl budget and confuses
 // canonical signal.
-const OMITTED_ROUTES = new Set(["/checkout/success/", "/retailer/"]);
+const OMITTED_ROUTES = new Set(["/checkout/success/", "/retailer/", "/debug/telemetry/"]);
 
 function discoverRoutes() {
   // Walk app/ and yield every directory that has a page.tsx in it. We treat
