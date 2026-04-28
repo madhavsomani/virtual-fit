@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node app/lib/build-style-index.mjs",
+    "prebuild": "node app/lib/build-style-index.mjs && node app/lib/build-openapi.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
