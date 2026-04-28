@@ -11,6 +11,7 @@ import { createTrackingTelemetry } from "./tracking-telemetry.js";
 import { deriveTrackingHeldChip } from "./tracking-held-chip.js";
 import { deriveProactiveGuidance } from "./proactive-guidance.js";
 import { createProactiveGuidanceTracker } from "./proactive-guidance-tracker.js";
+import { createLandmarkSmoother } from "./landmark-smoother.js";
 import { buildSessionSummary } from "./session-summary.js";
 import { appendSessionSummary } from "./session-summary-log.js";
 import { deriveSessionQuality } from "./session-quality.js";
@@ -889,6 +890,11 @@ function MirrorContent() {
   // Same lifetime as the telemetry instance — reset on session start so a
   // new session doesn't inherit the previous session's cooldown state.
   const proactiveGuidanceTracker = useRef(createProactiveGuidanceTracker());
+  // Phase 8.1: per-landmark EMA on the raw MediaPipe stream BEFORE downstream
+  // metrics (yaw/pitch/roll/depth/overlay/gestures/dev overlays) consume it.
+  // alpha=0.5 is mild (matches body-metrics smoothing tradition); visAlpha=0.7
+  // is stiffer so the downstream vis<0.4 gates still react quickly.
+  const landmarkSmoother = useRef(createLandmarkSmoother({ alpha: 0.5, visAlpha: 0.7 }));
 
   // Phase 7.102: derived state for the visible "tracking held" HUD chip.
   // Polled at ~5 Hz via setInterval (NOT rAF) — the inner loop runs at 60fps;
@@ -1463,6 +1469,9 @@ function MirrorContent() {
       sessionStartedAtRef.current = Date.now();
       trackingTelemetry.current.reset();
       proactiveGuidanceTracker.current.reset();
+      // Phase 8.1: forget last session's smoothed landmarks so a new session
+      // doesn't blend toward a stale pose for the first few frames.
+      landmarkSmoother.current.reset();
       setSessionQuality(null);
       setCoachingTips([]);
       setLoadingProgress(100);
@@ -1500,8 +1509,10 @@ function MirrorContent() {
         try {
           const result = poseLandmarkerRef.current.detectForVideo(videoRef.current, now);
           if (result?.landmarks?.[0]) {
-            updateGarmentFromLandmarks(result.landmarks[0]);
-            detectGestureRef.current?.(result.landmarks[0]);
+            // Phase 8.1: smooth raw landmarks BEFORE every downstream consumer.
+            const smoothed = landmarkSmoother.current.smooth(result.landmarks[0]);
+            updateGarmentFromLandmarks(smoothed);
+            detectGestureRef.current?.(smoothed);
           }
         } catch { /* skip frame */ }
 
