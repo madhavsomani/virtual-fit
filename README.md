@@ -4,7 +4,7 @@
 
 > ⚠️ **Known issue (Phase 7.85, 2026-04-25):** `virtualfit.app` DNS points at AWS Global Accelerator IPs serving a stale legacy `/lander` redirect stub. The CI pipeline deploys to a different Azure SWA origin (the `*.<azure-static>.net` hostname returned by Azure's deploy step — see `gh run view` logs) where the real Next.js app is live and correct. End users hitting `virtualfit.app/mirror` see the stub, not the camera/3D try-on. Operator action required: repoint DNS to the SWA origin, or move the SWA token to whichever Azure resource `virtualfit.app` is bound to. Run `VFIT_PROD_HEALTHCHECK=1 npm test` to verify status. See `tests/prod-deploy-divergence.test.mjs`.
 
-[![Tests](https://img.shields.io/badge/tests-786%20unit%20%2B%2013%20e2e-brightgreen)](https://github.com/madhavsomani/virtual-fit/actions)
+[![Tests](https://img.shields.io/badge/tests-796%20unit%20%2B%2013%20e2e-brightgreen)](https://github.com/madhavsomani/virtual-fit/actions)
 [![Deploy](https://img.shields.io/badge/deploy-Azure%20SWA-blue)](https://virtualfit.app)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
