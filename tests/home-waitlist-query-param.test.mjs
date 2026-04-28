@@ -68,27 +68,14 @@ test("home page guards the ?waitlist=1 effect with typeof window check (SSR safe
   );
 });
 
-test("pricing page still redirects to /?waitlist=1 (pair guard with home page consumer)", () => {
-  // Producer side. If a future agent removes this redirect, the home
-  // page's ?waitlist=1 effect becomes dead code and this test fires.
-  assert.match(
-    PRICING,
-    /window\.location\.href\s*=\s*["']\/\?waitlist=1["']/,
-    "pricing page must still redirect to /?waitlist=1 — pair guard with home page consumer",
-  );
+test("pricing page no longer needs the waitlist redirect (P8.15 shipped real Stripe wiring)", () => {
+  // Phase 8.15 replaced the placeholder pricing page with real plans +
+  // Stripe test-mode checkout links. The producer-side waitlist redirect
+  // is intentionally retired. The home-page consumer guard above still
+  // protects ?waitlist=1 if other callers ever emit it again.
+  assert.doesNotMatch(PRICING, /window\.location\.href\s*=\s*["']\/\?waitlist=1["']/);
 });
 
-test("pricing 'checkout not yet enabled' alert text is consistent with the redirect", () => {
-  // Pre-7.73 the alert said "join the waitlist on /mirror" but
-  // redirected to "/" — copy/destination mismatch that confused users.
-  assert.doesNotMatch(
-    PRICING,
-    /join the waitlist on \/mirror/,
-    "pricing alert must not say 'join the waitlist on /mirror' — the redirect goes to / (home), not /mirror",
-  );
-  assert.match(
-    PRICING,
-    /join the waitlist on the home page/,
-    "pricing alert must say 'join the waitlist on the home page' to match the redirect destination",
-  );
+test("pricing page does not contain the legacy 'join the waitlist on /mirror' alert (still bad copy)", () => {
+  assert.doesNotMatch(PRICING, /join the waitlist on \/mirror/);
 });

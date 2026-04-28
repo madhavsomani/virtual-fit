@@ -1,342 +1,130 @@
-"use client";
-
-import Link from "next/link";
-import { useState } from "react";
+// Phase 8.15 — /pricing page (server component, force-static).
 import { PRICING_FAQ } from "./faq-data";
+import { resolvePlans, formatUsdMonthly } from "../lib/pricing.mjs";
 
-const plans = [
-  {
-    name: "Free",
-    price: "$0",
-    period: "forever",
-    description: "Perfect for trying it out",
-    features: [
-      "3 try-ons per month",
-      "5 garments",
-      "Watermarked exports",
-      "Community support",
-    ],
-    cta: "Get Started",
-    href: "/mirror",
-    highlight: false,
-  },
-  {
-    name: "Creator",
-    price: "$9",
-    period: "/month",
-    description: "For influencers & content creators",
-    features: [
-      "Unlimited try-ons",
-      "50 garments",
-      "Watermark-free clip export",
-      "Priority support",
-      "Early access to new features",
-    ],
-    cta: "Start Free Trial",
-    href: "#checkout-creator",
-    highlight: true,
-  },
-  {
-    name: "Retailer",
-    price: "$49",
-    period: "/month",
-    description: "Embed virtual try-on in your store",
-    features: [
-      "Embeddable widget",
-      "Custom branding",
-      "500 garments",
-      "Analytics dashboard",
-      "API access",
-      "Dedicated support",
-    ],
-    cta: "Contact Sales",
-    href: "#checkout-retailer",
-    highlight: false,
-  },
-];
+export const dynamic = "force-static";
 
 export default function PricingPage() {
-  const [loading, setLoading] = useState<string | null>(null);
-
-  const handleCheckout = async (plan: string) => {
-    if (plan === "Free") {
-      window.location.href = "/mirror";
-      return;
-    }
-    
-    setLoading(plan);
-    
-    // Check for Stripe Payment Links (env vars)
-    const creatorLink = process.env.NEXT_PUBLIC_STRIPE_CREATOR_LINK;
-    const retailerLink = process.env.NEXT_PUBLIC_STRIPE_RETAILER_LINK;
-    
-    if (plan === "Creator" && creatorLink) {
-      window.location.href = creatorLink;
-      return;
-    }
-    if (plan === "Retailer" && retailerLink) {
-      window.location.href = retailerLink;
-      return;
-    }
-    
-    // No Payment Link configured — be honest, do NOT fake success
-    setLoading(null);
-    alert(
-      `Checkout for ${plan} is not yet enabled.\n\n` +
-      `Set NEXT_PUBLIC_STRIPE_${plan.toUpperCase()}_LINK in environment to activate.\n\n` +
-      `Meanwhile, join the waitlist on the home page to be notified when ${plan} goes live.`
-    );
-    window.location.href = "/?waitlist=1";
-  };
-
+  const plans = resolvePlans();
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "#0c0c0e",
-        color: "#e4e4e7",
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif",
-        padding: "48px 24px",
-      }}
-    >
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 64 }}>
-          <Link
-            href="/"
-            style={{
-              color: "#6C5CE7",
-              fontSize: 14,
-              textDecoration: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 4,
-              marginBottom: 24,
-            }}
-          >
-            ← Back to Home
-          </Link>
-          <h1
-            style={{
-              fontSize: 48,
-              fontWeight: 800,
-              margin: "0 0 16px",
-              letterSpacing: -1,
-            }}
-          >
-            Simple, transparent pricing
-          </h1>
-          <p style={{ fontSize: 18, color: "#a1a1aa", margin: 0 }}>
-            Start free. Upgrade when you&apos;re ready to grow.
-          </p>
-        </div>
+    <main className="mx-auto max-w-6xl px-6 py-16 text-slate-800">
+      <header className="mb-12 text-center">
+        <p className="mb-2 text-sm font-medium uppercase tracking-widest text-blue-600">
+          Phase 8 · Pricing
+        </p>
+        <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+          Built on free models. Priced honestly.
+        </h1>
+        <p className="mx-auto mt-3 max-w-2xl text-slate-600">
+          We use HF Spaces (TRELLIS) and HF Inference (segformer) — no paid
+          per-query AI fees. You pay for hosting, support, and the embed.
+          That&rsquo;s it.
+        </p>
+      </header>
 
-        {/* Pricing Cards */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-            gap: 24,
-            alignItems: "start",
-          }}
-        >
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              style={{
-                background: plan.highlight
-                  ? "linear-gradient(135deg, #6C5CE7 0%, #5B4BD5 100%)"
-                  : "#18181b",
-                border: plan.highlight ? "none" : "1px solid #27272a",
-                borderRadius: 20,
-                padding: 32,
-                position: "relative",
-                transform: plan.highlight ? "scale(1.02)" : "none",
-              }}
-            >
-              {plan.highlight && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: -12,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    background: "#fff",
-                    color: "#6C5CE7",
-                    fontSize: 12,
-                    fontWeight: 700,
-                    padding: "4px 12px",
-                    borderRadius: 20,
-                  }}
-                >
-                  MOST POPULAR
-                </div>
-              )}
+      <section className="grid gap-6 md:grid-cols-3">
+        {plans.map((p) => (
+          <PlanCard key={p.id} plan={p} />
+        ))}
+      </section>
 
-              <h2
-                style={{
-                  fontSize: 24,
-                  fontWeight: 700,
-                  margin: "0 0 8px",
-                  color: plan.highlight ? "#fff" : "#e4e4e7",
-                }}
-              >
-                {plan.name}
-              </h2>
+      <section className="mx-auto mt-16 max-w-3xl rounded-2xl bg-amber-50 p-6 ring-1 ring-amber-200">
+        <h2 className="mb-2 text-lg font-semibold text-amber-900">
+          Stripe Checkout — test mode only (until Madhav approves live keys)
+        </h2>
+        <p className="text-sm text-amber-900">
+          The Subscribe / Talk-to-sales buttons are wired through{" "}
+          <code>NEXT_PUBLIC_STRIPE_*_LINK</code> environment variables. The
+          codebase actively <em>rejects</em> any URL that contains a live-mode
+          marker — only Stripe test Payment Links resolve. If a tier shows a
+          &ldquo;coming soon&rdquo; pill, the env var is unset.
+        </p>
+      </section>
 
-              <div style={{ marginBottom: 8 }}>
-                <span
-                  style={{
-                    fontSize: 48,
-                    fontWeight: 800,
-                    color: plan.highlight ? "#fff" : "#e4e4e7",
-                  }}
-                >
-                  {plan.price}
-                </span>
-                <span
-                  style={{
-                    fontSize: 16,
-                    color: plan.highlight
-                      ? "rgba(255,255,255,0.8)"
-                      : "#71717a",
-                  }}
-                >
-                  {plan.period}
-                </span>
-              </div>
-
-              <p
-                style={{
-                  fontSize: 14,
-                  color: plan.highlight ? "rgba(255,255,255,0.8)" : "#71717a",
-                  margin: "0 0 24px",
-                }}
-              >
-                {plan.description}
-              </p>
-
-              <ul
-                style={{
-                  listStyle: "none",
-                  padding: 0,
-                  margin: "0 0 32px",
-                }}
-              >
-                {plan.features.map((feature) => (
-                  <li
-                    key={feature}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 10,
-                      fontSize: 14,
-                      color: plan.highlight ? "#fff" : "#a1a1aa",
-                      marginBottom: 12,
-                    }}
-                  >
-                    <span style={{ color: plan.highlight ? "#fff" : "#6C5CE7" }}>
-                      ✓
-                    </span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                onClick={() => handleCheckout(plan.name)}
-                disabled={loading === plan.name}
-                style={{
-                  width: "100%",
-                  padding: "14px 24px",
-                  fontSize: 16,
-                  fontWeight: 600,
-                  border: "none",
-                  borderRadius: 12,
-                  cursor: loading === plan.name ? "wait" : "pointer",
-                  background: plan.highlight ? "#fff" : "#6C5CE7",
-                  color: plan.highlight ? "#6C5CE7" : "#fff",
-                  transition: "opacity 0.15s",
-                  opacity: loading === plan.name ? 0.7 : 1,
-                }}
-              >
-                {loading === plan.name ? "Loading..." : plan.cta}
-              </button>
+      <section className="mx-auto mt-16 max-w-3xl">
+        <h2 className="mb-4 text-center text-2xl font-semibold text-slate-900">Frequently asked</h2>
+        <dl className="divide-y divide-slate-200 rounded-2xl bg-white ring-1 ring-slate-200">
+          {PRICING_FAQ.map((entry) => (
+            <div key={entry.q} className="px-6 py-4">
+              <dt className="text-sm font-semibold text-slate-900">{entry.q}</dt>
+              <dd className="mt-1 text-sm text-slate-600">{entry.a}</dd>
             </div>
           ))}
-        </div>
+        </dl>
+      </section>
 
-        {/* FAQ Section */}
-        <div style={{ marginTop: 80, textAlign: "center" }}>
-          <h3
-            style={{
-              fontSize: 24,
-              fontWeight: 700,
-              marginBottom: 32,
-            }}
-          >
-            Questions?
-          </h3>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-              gap: 24,
-              textAlign: "left",
-            }}
-          >
-            {PRICING_FAQ.map((faq) => (
-              <div
-                key={faq.q}
-                style={{
-                  background: "#18181b",
-                  border: "1px solid #27272a",
-                  borderRadius: 12,
-                  padding: 20,
-                }}
-              >
-                <div
-                  style={{
-                    fontWeight: 600,
-                    marginBottom: 8,
-                    color: "#e4e4e7",
-                  }}
-                >
-                  {faq.q}
-                </div>
-                <div style={{ fontSize: 14, color: "#71717a" }}>{faq.a}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Promo Code Link */}
-        <div style={{ textAlign: "center", marginTop: 32 }}>
-          <Link
-            href="/redeem"
-            style={{
-              color: "#6C5CE7",
-              fontSize: 14,
-              textDecoration: "none",
-            }}
-          >
-            Have a promo code? Redeem it here →
-          </Link>
-        </div>
-
-        {/* Footer */}
-        <p
-          style={{
-            textAlign: "center",
-            marginTop: 64,
-            fontSize: 12,
-            color: "#3f3f46",
-          }}
-        >
-          Built by Madhav Somani · VirtualFit © 2026
-        </p>
-      </div>
+      <p className="mt-12 text-center text-xs text-slate-400">
+        See also <a className="text-blue-600 underline" href="/api-docs">API docs</a> ·{" "}
+        <a className="text-blue-600 underline" href="/embed-docs">Shopify embed</a> ·{" "}
+        <a className="text-blue-600 underline" href="/showcase">Live showcase</a>
+      </p>
     </main>
+  );
+}
+
+function PlanCard({ plan }: { plan: ReturnType<typeof resolvePlans>[number] }) {
+  const popular = plan.badge === "Most popular";
+  return (
+    <article
+      className={[
+        "relative rounded-2xl bg-white p-6 ring-1",
+        popular ? "ring-2 ring-blue-500 shadow-xl" : "ring-slate-200",
+      ].join(" ")}
+    >
+      {plan.badge && (
+        <span className="absolute -top-3 left-6 rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-white">
+          {plan.badge}
+        </span>
+      )}
+      <h3 className="text-xl font-semibold text-slate-900">{plan.name}</h3>
+      <p className="mt-1 text-sm text-slate-500">{plan.tagline}</p>
+      <p className="mt-4 text-3xl font-bold text-slate-900">
+        {formatUsdMonthly(plan.priceUsdMonthly)}
+      </p>
+      <ul className="mt-6 space-y-2 text-sm text-slate-700">
+        {plan.features.map((f) => (
+          <li key={f} className="flex gap-2">
+            <span aria-hidden className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+            <span>{f}</span>
+          </li>
+        ))}
+      </ul>
+      <CtaButton plan={plan} />
+    </article>
+  );
+}
+
+function CtaButton({ plan }: { plan: ReturnType<typeof resolvePlans>[number] }) {
+  const popular = plan.badge === "Most popular";
+  const baseClass =
+    "mt-8 inline-flex w-full items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold transition";
+  if (plan.id === "free") {
+    return (
+      <a href="/mirror" className={`${baseClass} bg-slate-900 text-white hover:bg-slate-700`}>
+        {plan.cta}
+      </a>
+    );
+  }
+  if (plan.checkout?.mode === "test" && plan.checkout.value) {
+    return (
+      <a
+        href={plan.checkout.value}
+        rel="noopener noreferrer"
+        target="_blank"
+        className={`${baseClass} ${popular ? "bg-blue-600 text-white hover:bg-blue-700" : "bg-slate-900 text-white hover:bg-slate-700"}`}
+      >
+        {plan.cta} <span className="ml-2 rounded bg-white/20 px-2 py-0.5 text-xs">test</span>
+      </a>
+    );
+  }
+  return (
+    <button
+      disabled
+      aria-disabled
+      className={`${baseClass} cursor-not-allowed bg-slate-200 text-slate-500`}
+      title={(plan.checkout as { reason?: string } | undefined)?.reason || "Stripe link not configured"}
+    >
+      Coming soon
+    </button>
   );
 }

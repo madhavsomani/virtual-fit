@@ -124,7 +124,8 @@ test("client pages remain marked 'use client' (layouts handle metadata, not the 
   const PAGES = [
     resolve(APP, "retailer/signup/page.tsx"),
     resolve(APP, "build-in-public/page.tsx"),
-    resolve(APP, "pricing/page.tsx"),
+    // pricing/page.tsx was promoted to a server component in P8.15 (no
+    // interactive client work — reads env at build time + renders).
     resolve(APP, "redeem/page.tsx"),
     resolve(APP, "checkout/success/page.tsx"),
     resolve(APP, "generate-3d/page.tsx"),
