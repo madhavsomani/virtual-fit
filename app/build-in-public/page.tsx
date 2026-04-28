@@ -15,12 +15,12 @@ export default function BuildInPublicPage() {
   // Days computed live from a fixed start date; commits + lines snapshot
   // bumped at each meaningful build-progress refactor.
   const publicMetrics = {
-    commits: 542,
+    commits: 593,
     daysBuilding: Math.floor(
       (Date.now() - new Date("2026-04-01").getTime()) / (1000 * 60 * 60 * 24),
     ),
     linesOfCode: "18K+",
-    tests: 871,
+    tests: 885,
     techStack: ["Next.js", "MediaPipe", "Three.js", "TypeScript"],
   };
 
