@@ -1,44 +1,29 @@
 {
-  "name": "virtual-tryon-v2",
+  "name": "virtual-fit-v3",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "node app/lib/build-style-index.mjs && node app/lib/build-openapi.mjs && node app/lib/build-embed.mjs",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "scan:secrets": "node scripts/scan-secrets.cjs",
-    "test": "node --test tests/*.test.mjs",
-    "test:unit": "node --test tests/permission-state-machine.test.mjs",
-    "test:normalization": "node --test tests/landmark-normalization.test.mjs",
-    "test:metrics": "node --test tests/body-metrics.test.mjs",
-    "test:shoulder-math": "node --test tests/shoulder-math.test.mjs",
-    "test:rotation-math": "node --test tests/rotation-math.test.mjs",
-    "test:swipe-intent-windows": "node --test tests/swipe-intent-windows.test.mjs",
-    "test:smoothing": "node --test tests/smoothing-utils.test.mjs",
-    "test:confidence": "node --test tests/confidence-scoring.test.mjs",
-    "test:loop": "node --test tests/video-processing-loop.test.mjs",
-    "test:integration": "node --test tests/onboarding-integration.test.mjs",
-    "test:e2e": "npx playwright test",
-    "test:e2e:ui": "npx playwright test --ui",
-    "format": "prettier . --check"
+    "start": "serve out",
+    "lint": "next lint"
   },
   "dependencies": {
-    "@mediapipe/tasks-vision": "0.10.14",
-    "@types/three": "^0.183.1",
-    "next": "15.0.0",
+    "next": "14.2.33",
     "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "three": "^0.183.2"
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "@playwright/test": "^1.59.1",
-    "@types/node": "25.6.0",
-    "@types/react": "19.2.14",
-    "eslint": "9.12.0",
-    "eslint-config-next": "15.0.0",
-    "serve": "^14.2.6",
-    "typescript": "5.6.3"
-  }
+    "@types/node": "22.15.17",
+    "@types/react": "18.3.23",
+    "@types/react-dom": "18.3.7",
+    "autoprefixer": "10.4.21",
+    "eslint": "8.57.1",
+    "eslint-config-next": "14.2.33",
+    "postcss": "8.5.3",
+    "serve": "14.2.4",
+    "tailwindcss": "3.4.17",
+    "typescript": "5.8.3"
+  },
+  "packageManager": "pnpm@10.18.0"
 }

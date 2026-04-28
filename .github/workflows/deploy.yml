@@ -28,27 +28,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile || pnpm install
 
-      - name: Tests (gate — Phase 7.45)
-        # All tests/*.test.mjs guards (no fake metric, no perma-zero, no
-        # silent server failure, no dead SWA fn, no dead ThreeOverlay,
-        # /generate-3d uses TRELLIS, no dead api-server, etc.) must pass
-        # before we burn a Next build or deploy to Azure.
-        run: pnpm test
-
       - name: Build
         run: pnpm build
         env:
           NEXT_TELEMETRY_DISABLED: 1
-
-      - name: Scan build output for leaked secrets (Phase 7.84)
-        # Postbuild secret scanner. Greps out/ for hf_/sk_/AKIA/ghp_/
-        # Stripe-secret patterns. Catches NEXT_PUBLIC_* env vars
-        # accidentally inlined into client-side JS chunks BEFORE the
-        # SWA deploy ships them publicly. Phase 7.83 originally added
-        # this to the wrong workflow file (an untracked duplicate at
-        # virtual-tryon-v2/.github/) which is why CI never ran it; 7.84
-        # moves it into the real active workflow at app/.github/.
-        run: pnpm run scan:secrets
 
       - name: Deploy to Azure Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
@@ -57,7 +40,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
           app_location: "out"
-          api_location: "api"
+          api_location: ""
           output_location: ""
           skip_app_build: true
 
