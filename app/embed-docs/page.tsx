@@ -85,7 +85,11 @@ export default function EmbedDocsPage() {
 
       <p className="mt-8 text-xs text-slate-400">
         See also: <a className="text-blue-600 underline" href="/api-docs">/api-docs</a>{" "}
-        for the server-side <code>/api/v1/tryOn</code> endpoint.
+        for the server-side <code>/api/v1/tryOn</code> endpoint &middot;{" "}
+        <a className="text-blue-600 underline" href="https://github.com/madhavsomani/virtual-fit/blob/master/docs/hardware-kit.md">
+          BYO Hardware Kit
+        </a>{" "}
+        for in-store kiosk recommendations.
       </p>
     </main>
   );
