@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { GARMENT_LIBRARY, hasAsset } from "@/lib/garment-library";
 import { canCapture, getStatusChip } from "@/lib/mirror-ui";
 import { getCameraConstraints, mapCameraError, stopMediaStream } from "@/lib/webcam";
 
@@ -26,48 +27,45 @@ const STATUS_DOT_STYLES = {
   rose: "bg-rose-300"
 } as const;
 
-const GARMENTS = [
-  "Tailored Blazer",
-  "Soft Trench",
-  "Studio Knit",
-  "Evening Shell",
-  "Wide-Leg Set",
-  "Weekend Layer"
-] as const;
-
 function GarmentTray() {
+  const garments = GARMENT_LIBRARY.slice(0, 8);
+
   return (
     <aside className="absolute inset-x-3 top-3 z-20 md:inset-x-auto md:right-3 md:top-3 md:h-[calc(100%-1.5rem)] md:w-32">
       <div className="rounded-[1.8rem] border border-white/10 bg-black/35 p-3 backdrop-blur-xl md:flex md:h-full md:flex-col">
         <div className="mb-3 hidden md:block">
           <p className="text-[11px] uppercase tracking-[0.28em] text-cyan-100/80">Wardrobe</p>
-          <p className="mt-1 text-xs text-mist">Phase 1 placeholders</p>
+          <p className="mt-1 text-xs text-mist">Mapped garments</p>
         </div>
         <div className="flex gap-3 overflow-x-auto md:grid md:flex-1 md:auto-rows-[minmax(0,1fr)] md:gap-3 md:overflow-y-auto md:overflow-x-hidden pr-1">
-          {GARMENTS.map((garment, index) => (
-            <button
-              key={garment}
-              type="button"
-              aria-label={`${garment} coming soon`}
-              disabled
-              title="Coming in Phase 2"
-              className="group relative min-h-24 min-w-24 flex-1 overflow-hidden rounded-[1.3rem] border border-white/10 bg-white/5 p-0 text-left opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:cursor-not-allowed md:min-h-0 md:min-w-0"
-            >
-              <span
-                className={`absolute inset-0 ${
-                  index % 3 === 0
-                    ? "bg-gradient-to-br from-cyan-300/45 via-cyan-400/20 to-surface"
-                    : index % 3 === 1
-                      ? "bg-gradient-to-br from-emerald-300/40 via-white/10 to-surface"
-                      : "bg-gradient-to-br from-white/20 via-cyan-300/10 to-surface"
-                }`}
-              />
-              <span className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/70 to-transparent" />
-              <span className="absolute bottom-2 left-2 right-2 text-[11px] font-medium leading-tight text-white">
-                {garment}
-              </span>
-            </button>
-          ))}
+          {garments.map((garment) => {
+            const looksMapped = hasAsset(garment);
+
+            return (
+              <button
+                key={garment.id}
+                type="button"
+                aria-label={`Try ${garment.name}`}
+                onClick={() => {
+                  console.warn(`Try-on for ${garment.id} lands in VF-9`);
+                }}
+                title={looksMapped ? "3D mapping manifest ready" : "Coming soon"}
+                className="group relative min-h-24 min-w-24 flex-1 overflow-hidden rounded-[1.3rem] border border-white/10 bg-white/5 p-0 text-left opacity-95 transition hover:border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-surface md:min-h-0 md:min-w-0"
+              >
+                <span
+                  className={`absolute inset-0 bg-gradient-to-br ${garment.previewGradient[0]} ${garment.previewGradient[1]} opacity-80`}
+                />
+                <span className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.24),transparent_55%)]" />
+                <span className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
+                <span className="absolute left-2 top-2 inline-flex rounded-full border border-white/15 bg-black/45 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-cyan-100">
+                  Coming soon
+                </span>
+                <span className="absolute bottom-2 left-2 right-2 text-[11px] font-medium leading-tight text-white">
+                  {garment.name}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </aside>

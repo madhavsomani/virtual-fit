@@ -1,0 +1,82 @@
+[
+  {
+    "id": "core-crew-tee",
+    "name": "Core Crew Tee",
+    "category": "tshirt",
+    "anchor": "torso",
+    "assetUrl": "/garments/core-crew-tee.glb",
+    "previewGradient": ["from-cyan-300", "to-emerald-400"],
+    "sizes": ["XS", "S", "M", "L", "XL"],
+    "createdAt": "2026-04-28T00:00:00.000Z"
+  },
+  {
+    "id": "city-bomber-jacket",
+    "name": "City Bomber Jacket",
+    "category": "jacket",
+    "anchor": "torso",
+    "assetUrl": "/garments/city-bomber-jacket.glb",
+    "previewGradient": ["from-amber-300", "to-rose-400"],
+    "sizes": ["S", "M", "L", "XL"],
+    "createdAt": "2026-04-28T00:05:00.000Z"
+  },
+  {
+    "id": "tailored-straight-pants",
+    "name": "Tailored Straight Pants",
+    "category": "pants",
+    "anchor": "legs",
+    "assetUrl": "/garments/tailored-straight-pants.glb",
+    "previewGradient": ["from-slate-300", "to-zinc-500"],
+    "sizes": ["28", "30", "32", "34", "36"],
+    "createdAt": "2026-04-28T00:10:00.000Z"
+  },
+  {
+    "id": "studio-wrap-dress",
+    "name": "Studio Wrap Dress",
+    "category": "dress",
+    "anchor": "full-body",
+    "assetUrl": "/garments/studio-wrap-dress.glb",
+    "previewGradient": ["from-fuchsia-300", "to-orange-400"],
+    "sizes": ["XS", "S", "M", "L"],
+    "createdAt": "2026-04-28T00:15:00.000Z"
+  },
+  {
+    "id": "weekend-pullover-hoodie",
+    "name": "Weekend Pullover Hoodie",
+    "category": "hoodie",
+    "anchor": "torso",
+    "assetUrl": "/garments/weekend-pullover-hoodie.glb",
+    "previewGradient": ["from-indigo-300", "to-cyan-400"],
+    "sizes": ["S", "M", "L", "XL", "XXL"],
+    "createdAt": "2026-04-28T00:20:00.000Z"
+  },
+  {
+    "id": "track-runner-shorts",
+    "name": "Track Runner Shorts",
+    "category": "shorts",
+    "anchor": "legs",
+    "assetUrl": "/garments/track-runner-shorts.glb",
+    "previewGradient": ["from-lime-300", "to-emerald-500"],
+    "sizes": ["S", "M", "L"],
+    "createdAt": "2026-04-28T00:25:00.000Z"
+  },
+  {
+    "id": "pleated-midi-skirt",
+    "name": "Pleated Midi Skirt",
+    "category": "skirt",
+    "anchor": "legs",
+    "assetUrl": "/garments/pleated-midi-skirt.glb",
+    "previewGradient": ["from-pink-300", "to-red-400"],
+    "sizes": ["XS", "S", "M", "L"],
+    "createdAt": "2026-04-28T00:30:00.000Z"
+  },
+  {
+    "id": "resort-lounge-tee",
+    "name": "Resort Lounge Tee",
+    "category": "tshirt",
+    "anchor": "torso",
+    "assetUrl": "/garments/resort-lounge-tee.glb",
+    "previewGradient": ["from-sky-300", "to-violet-400"],
+    "sizes": ["S", "M", "L", "XL"],
+    "createdAt": "2026-04-28T00:35:00.000Z"
+  }
+]
