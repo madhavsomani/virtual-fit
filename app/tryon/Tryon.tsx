@@ -13,6 +13,7 @@ import { computeArmorTransform } from "@/lib/armor";
 import { describeCameraError } from "@/lib/camera-error";
 import { computeGauntletTransforms } from "@/lib/gauntlet";
 import { computeHelmetTransform } from "@/lib/helmet";
+import { buildOverlayPoints, visibleEdges, type OverlayPoint } from "@/lib/landmark-overlay";
 import { createPoseTracker } from "@/lib/pose";
 import { createTransformSmoother } from "@/lib/smooth";
 import { captureSnapshot, downloadBlob, snapshotFilename } from "@/lib/snapshot";
@@ -207,6 +208,13 @@ export default function Tryon() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [snapBusy, setSnapBusy] = useState(false);
+  const [debugLandmarks, setDebugLandmarks] = useState(false);
+  const [overlayPoints, setOverlayPoints] = useState<OverlayPoint[]>([]);
+  const debugRef = useRef(false);
+  useEffect(() => {
+    debugRef.current = debugLandmarks;
+    if (!debugLandmarks) setOverlayPoints([]);
+  }, [debugLandmarks]);
 
   const handleSnapshot = async () => {
     const video = videoRef.current;
@@ -409,6 +417,12 @@ export default function Tryon() {
       leftGauntletOpacity = applyGauntlet(leftGauntlet, leftG, leftGauntletOpacity);
       rightGauntletOpacity = applyGauntlet(rightGauntlet, rightG, rightGauntletOpacity);
 
+      if (debugRef.current) {
+        setOverlayPoints(
+          detection.landmarks ? buildOverlayPoints(detection.landmarks, { mirrorX: true }) : []
+        );
+      }
+
       renderer.render(scene, camera);
     };
 
@@ -493,6 +507,57 @@ export default function Tryon() {
           <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/55 to-transparent" />
+
+          <button
+            type="button"
+            onClick={() => setDebugLandmarks((v) => !v)}
+            className={`absolute bottom-3 left-3 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium backdrop-blur transition ${
+              debugLandmarks
+                ? "border-emerald-400/60 bg-emerald-400/20 text-emerald-200 hover:bg-emerald-400/30"
+                : "border-white/30 bg-white/10 text-white/80 hover:bg-white/20"
+            }`}
+            aria-pressed={debugLandmarks}
+            aria-label="Toggle landmark overlay"
+          >
+            {debugLandmarks ? "Landmarks: on" : "Landmarks: off"}
+          </button>
+
+          {debugLandmarks && overlayPoints.length > 0 ? (
+            <svg
+              className="pointer-events-none absolute inset-0 h-full w-full"
+              viewBox="0 0 1 1"
+              preserveAspectRatio="none"
+              aria-hidden
+            >
+              {visibleEdges(overlayPoints).map((edge, i) => {
+                const a = overlayPoints.find((p) => p.id === edge.from);
+                const b = overlayPoints.find((p) => p.id === edge.to);
+                if (!a || !b) return null;
+                return (
+                  <line
+                    key={`e${i}`}
+                    x1={a.x}
+                    y1={a.y}
+                    x2={b.x}
+                    y2={b.y}
+                    stroke="rgba(110,231,183,0.7)"
+                    strokeWidth={0.0035}
+                  />
+                );
+              })}
+              {overlayPoints.map((p) => (
+                <circle
+                  key={`p${p.id}`}
+                  cx={p.x}
+                  cy={p.y}
+                  r={0.008}
+                  fill="rgba(110,231,183,0.95)"
+                  stroke="rgba(0,0,0,0.6)"
+                  strokeWidth={0.001}
+                />
+              ))}
+            </svg>
+          ) : null}
 
           <button
             type="button"
