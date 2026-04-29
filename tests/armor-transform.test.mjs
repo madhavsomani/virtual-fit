@@ -114,3 +114,26 @@ test('shoulders missing → null (cannot anchor)', () => {
 
   assert.equal(computeArmorTransform(landmarks), null);
 });
+
+test('confidence: full visibility + hips visible → ~1.0', () => {
+  const landmarks = createLandmarks({
+    [POSE_LANDMARKS.leftShoulder]: { x: 0.38, y: 0.28, z: -0.1, visibility: 1 },
+    [POSE_LANDMARKS.rightShoulder]: { x: 0.62, y: 0.28, z: -0.12, visibility: 1 },
+    [POSE_LANDMARKS.leftHip]: { x: 0.43, y: 0.58, z: -0.08 },
+    [POSE_LANDMARKS.rightHip]: { x: 0.57, y: 0.58, z: -0.09 }
+  });
+  const t = computeArmorTransform(landmarks);
+  assert.ok(t.confidence > 0.99 && t.confidence <= 1.0);
+});
+
+test('confidence: hip-fallback path lowers confidence (~0.55x)', () => {
+  const landmarks = createLandmarks({
+    [POSE_LANDMARKS.leftShoulder]: { x: 0.38, y: 0.28, z: -0.1, visibility: 1 },
+    [POSE_LANDMARKS.rightShoulder]: { x: 0.62, y: 0.28, z: -0.12, visibility: 1 },
+    [POSE_LANDMARKS.leftHip]: { x: 0.5, y: 0.95, z: 0, visibility: 0.0 },
+    [POSE_LANDMARKS.rightHip]: { x: 0.5, y: 0.95, z: 0, visibility: 0.0 }
+  });
+  const t = computeArmorTransform(landmarks);
+  assert.ok(t, 'still anchors');
+  assert.ok(t.confidence > 0.5 && t.confidence < 0.6, `expected ~0.55, got ${t.confidence}`);
+});

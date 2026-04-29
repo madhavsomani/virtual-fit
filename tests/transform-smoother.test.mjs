@@ -7,6 +7,7 @@ const baseTransform = (overrides = {}) => ({
   position: { x: 0, y: 0, z: 0 },
   scale: 1,
   rotation: { x: 0, y: 0, z: 0 },
+  confidence: 1,
   ...overrides
 });
 
@@ -62,4 +63,11 @@ test("reset() clears prior state same as null push", () => {
   s.reset();
   const out = s.push(baseTransform({ position: { x: 50, y: 0, z: 0 } }));
   assert.equal(out.position.x, 50);
+});
+
+test("confidence is smoothed alongside position", () => {
+  const s = createTransformSmoother({ positionAlpha: 0.5 });
+  s.push(baseTransform({ confidence: 1.0 }));
+  const out = s.push(baseTransform({ confidence: 0.4 }));
+  assert.ok(Math.abs(out.confidence - 0.7) < 1e-9);
 });

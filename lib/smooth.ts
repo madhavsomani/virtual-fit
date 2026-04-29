@@ -78,7 +78,8 @@ export function createTransformSmoother(
           x: lerpAngle(prev.rotation.x, next.rotation.x, rotAlpha),
           y: lerpAngle(prev.rotation.y, next.rotation.y, rotAlpha),
           z: lerpAngle(prev.rotation.z, next.rotation.z, rotAlpha)
-        }
+        },
+        confidence: lerp(prev.confidence, next.confidence, posAlpha)
       };
       prev = cloneTransform(blended);
       return blended;
@@ -93,6 +94,7 @@ function cloneTransform(t: ArmorTransform): ArmorTransform {
   return {
     position: { x: t.position.x, y: t.position.y, z: t.position.z },
     scale: t.scale,
-    rotation: { x: t.rotation.x, y: t.rotation.y, z: t.rotation.z }
+    rotation: { x: t.rotation.x, y: t.rotation.y, z: t.rotation.z },
+    confidence: t.confidence
   };
 }

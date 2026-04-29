@@ -18,6 +18,13 @@ export interface ArmorTransform {
     y: number;
     z: number;
   };
+  /**
+   * 0..1 — anchor confidence. 1.0 = all four landmarks visible at full
+   * visibility. Drops when hips are synthesized via the chest-up fallback,
+   * or when shoulder visibility is borderline. Renderer can use this to
+   * dim the armor so the user sees that tracking quality has degraded.
+   */
+  confidence: number;
 }
 
 export const POSE_LANDMARKS = {
@@ -127,6 +134,12 @@ export function computeArmorTransform(
       x: pitch,
       y: yaw,
       z: roll
-    }
+    },
+    confidence: clamp(
+      ((leftShoulder.visibility ?? 1) + (rightShoulder.visibility ?? 1)) * 0.5 *
+        (hipsVisible ? 1 : 0.55),
+      0,
+      1
+    )
   };
 }

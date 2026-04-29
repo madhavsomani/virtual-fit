@@ -207,7 +207,9 @@ export default function Tryon() {
         );
         armor.scale.setScalar(pixelScale / 140);
         armor.rotation.set(transform.rotation.x, transform.rotation.y, transform.rotation.z);
-        targetOpacity = 1;
+        // Confidence-driven opacity ceiling: hip-fallback path soft-anchors
+        // at ~0.55, full-quality at 1.0. Floor at 0.45 so user still sees armor.
+        targetOpacity = Math.max(0.45, transform.confidence);
 
         setStatus((current) => (current === "locked" ? current : "locked"));
       } else {
