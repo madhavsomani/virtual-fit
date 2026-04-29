@@ -11,6 +11,7 @@
     "scan:secrets": "node scripts/scan-secrets.cjs",
     "test": "node --test tests/*.test.mjs",
     "bench": "node scripts/bench.mjs",
+    "stress": "node scripts/stress.mjs",
     "test:unit": "node --test tests/permission-state-machine.test.mjs",
     "test:normalization": "node --test tests/landmark-normalization.test.mjs",
     "test:metrics": "node --test tests/body-metrics.test.mjs",
