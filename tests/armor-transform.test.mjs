@@ -89,3 +89,28 @@ test('coincident shoulders return null safely', () => {
 
   assert.equal(computeArmorTransform(landmarks), null);
 });
+
+test('hip-fallback: chest-up framing (low hip visibility) still anchors armor', () => {
+  const landmarks = createLandmarks({
+    [POSE_LANDMARKS.leftShoulder]: { x: 0.38, y: 0.28, z: -0.1 },
+    [POSE_LANDMARKS.rightShoulder]: { x: 0.62, y: 0.28, z: -0.12 },
+    [POSE_LANDMARKS.leftHip]: { x: 0.5, y: 0.95, z: 0, visibility: 0.0 },
+    [POSE_LANDMARKS.rightHip]: { x: 0.5, y: 0.95, z: 0, visibility: 0.0 }
+  });
+
+  const transform = computeArmorTransform(landmarks);
+
+  assert.ok(transform, 'armor should still anchor with hips occluded');
+  assert.ok(transform.position.x > 0.49 && transform.position.x < 0.51);
+  // pitch should default to ~0 since synthesized hip has same z as shoulder
+  assert.ok(Math.abs(transform.rotation.x) < 0.05);
+});
+
+test('shoulders missing → null (cannot anchor)', () => {
+  const landmarks = createLandmarks({
+    [POSE_LANDMARKS.leftShoulder]: { x: 0.38, y: 0.28, z: -0.1, visibility: 0 },
+    [POSE_LANDMARKS.rightShoulder]: { x: 0.62, y: 0.28, z: -0.12, visibility: 0 }
+  });
+
+  assert.equal(computeArmorTransform(landmarks), null);
+});

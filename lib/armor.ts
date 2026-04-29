@@ -62,20 +62,32 @@ export function computeArmorTransform(
 ): ArmorTransform | null {
   const leftShoulder = landmarks[POSE_LANDMARKS.leftShoulder];
   const rightShoulder = landmarks[POSE_LANDMARKS.rightShoulder];
-  const leftHip = landmarks[POSE_LANDMARKS.leftHip];
-  const rightHip = landmarks[POSE_LANDMARKS.rightHip];
+  const leftHipRaw = landmarks[POSE_LANDMARKS.leftHip];
+  const rightHipRaw = landmarks[POSE_LANDMARKS.rightHip];
 
-  if (
-    !isUsableLandmark(leftShoulder) ||
-    !isUsableLandmark(rightShoulder) ||
-    !isUsableLandmark(leftHip) ||
-    !isUsableLandmark(rightHip)
-  ) {
+  if (!isUsableLandmark(leftShoulder) || !isUsableLandmark(rightShoulder)) {
     return null;
   }
 
   const shoulderMid = average(leftShoulder, rightShoulder);
-  const hipMid = average(leftHip, rightHip);
+
+  // Hip-fallback: when the user is sitting at a desk or framed chest-up, hips
+  // fall below MIN_VISIBILITY. Synthesize a hip midpoint directly below the
+  // shoulder midpoint at ~1.4x shoulder distance so the chest piece can still
+  // anchor (pitch defaults to 0; yaw/roll still come from real shoulders).
+  const hipsVisible = isUsableLandmark(leftHipRaw) && isUsableLandmark(rightHipRaw);
+  const shoulderSpan = Math.hypot(
+    rightShoulder.x - leftShoulder.x,
+    rightShoulder.y - leftShoulder.y
+  );
+  const hipMid: PoseLandmark = hipsVisible
+    ? average(leftHipRaw, rightHipRaw)
+    : {
+        x: shoulderMid.x,
+        y: Math.min(1, shoulderMid.y + shoulderSpan * 1.4),
+        z: shoulderMid.z,
+        visibility: 0.5
+      };
 
   const leftX = options.mirrorX ? 1 - leftShoulder.x : leftShoulder.x;
   const rightX = options.mirrorX ? 1 - rightShoulder.x : rightShoulder.x;
