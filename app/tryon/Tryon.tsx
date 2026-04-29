@@ -12,6 +12,7 @@ import * as THREE from "three";
 import { computeArmorTransform } from "@/lib/armor";
 import { createPoseTracker } from "@/lib/pose";
 import { createTransformSmoother } from "@/lib/smooth";
+import { createTrackingGate } from "@/lib/tracking-gate";
 
 type TrackingStatus = "initializing" | "searching" | "locked" | "error";
 
@@ -124,6 +125,7 @@ export default function Tryon() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<TrackingStatus>("initializing");
+  const [hud, setHud] = useState<{ fps: number; conf: number; phase: string } | null>(null);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -179,6 +181,9 @@ export default function Tryon() {
     };
 
     const smoother = createTransformSmoother();
+    const gate = createTrackingGate();
+    let frameTimes: number[] = [];
+    let lastHudPush = 0;
     const animate = () => {
       frameId = window.requestAnimationFrame(animate);
 
@@ -211,10 +216,31 @@ export default function Tryon() {
         // at ~0.55, full-quality at 1.0. Floor at 0.45 so user still sees armor.
         targetOpacity = Math.max(0.45, transform.confidence);
 
-        setStatus((current) => (current === "locked" ? current : "locked"));
+        const phase = gate.push(true);
+        if (phase === "locked") {
+          setStatus((current) => (current === "locked" ? current : "locked"));
+        } else {
+          setStatus((current) => (current === "error" ? current : "searching"));
+        }
       } else {
         targetOpacity = 0;
+        gate.push(false);
         setStatus((current) => (current === "error" ? current : "searching"));
+      }
+
+      // HUD: rolling-window fps + last confidence + gate phase, throttled to 4 Hz
+      const now = performance.now();
+      frameTimes.push(now);
+      while (frameTimes.length > 0 && now - frameTimes[0] > 1000) {
+        frameTimes.shift();
+      }
+      if (now - lastHudPush > 250) {
+        lastHudPush = now;
+        setHud({
+          fps: frameTimes.length,
+          conf: transform ? Math.round(transform.confidence * 100) / 100 : 0,
+          phase: transform ? "valid" : "none"
+        });
       }
 
       currentOpacity = THREE.MathUtils.lerp(currentOpacity, targetOpacity, 0.18);
@@ -300,6 +326,14 @@ export default function Tryon() {
           <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/55 to-transparent" />
+
+          {hud ? (
+            <div className="pointer-events-none absolute right-3 top-3 rounded-md border border-white/10 bg-black/55 px-2.5 py-1.5 font-mono text-[11px] leading-tight text-white/85 backdrop-blur">
+              <div>fps {hud.fps}</div>
+              <div>conf {hud.conf.toFixed(2)}</div>
+              <div>{hud.phase}</div>
+            </div>
+          ) : null}
 
           <div className="absolute left-4 top-4 max-w-xs rounded-2xl border border-white/10 bg-black/35 px-4 py-3 text-xs leading-5 text-white/65 backdrop-blur">
             Raise your shoulders into frame and keep your torso visible from upper chest to hips for the
