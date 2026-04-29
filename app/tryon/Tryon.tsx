@@ -15,6 +15,7 @@ import { computeGauntletTransforms } from "@/lib/gauntlet";
 import { computeHelmetTransform } from "@/lib/helmet";
 import { createPoseTracker } from "@/lib/pose";
 import { createTransformSmoother } from "@/lib/smooth";
+import { captureSnapshot, downloadBlob, snapshotFilename } from "@/lib/snapshot";
 import { createTrackingGate } from "@/lib/tracking-gate";
 
 type TrackingStatus = "initializing" | "searching" | "locked" | "error";
@@ -205,6 +206,22 @@ export default function Tryon() {
   const [hud, setHud] = useState<{ fps: number; conf: number; phase: string } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
+  const [snapBusy, setSnapBusy] = useState(false);
+
+  const handleSnapshot = async () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || snapBusy) return;
+    setSnapBusy(true);
+    try {
+      const blob = await captureSnapshot({ video, glCanvas: canvas, mirrorX: true });
+      downloadBlob(blob, snapshotFilename());
+    } catch (e) {
+      console.error("Snapshot failed", e);
+    } finally {
+      setSnapBusy(false);
+    }
+  };
 
   useEffect(() => {
     const video = videoRef.current;
@@ -224,7 +241,8 @@ export default function Tryon() {
     const renderer = new THREE.WebGLRenderer({
       canvas,
       alpha: true,
-      antialias: true
+      antialias: true,
+      preserveDrawingBuffer: true // required for snapshot canvas readback
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -475,6 +493,16 @@ export default function Tryon() {
           <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" />
 
           <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/55 to-transparent" />
+
+          <button
+            type="button"
+            onClick={handleSnapshot}
+            disabled={snapBusy || status !== "locked"}
+            className="absolute bottom-3 right-3 inline-flex items-center gap-2 rounded-full border border-[#f6d17d]/40 bg-[#f6d17d]/15 px-3.5 py-1.5 text-xs font-medium text-[#f6d17d] backdrop-blur transition hover:bg-[#f6d17d]/25 disabled:cursor-not-allowed disabled:opacity-40"
+            aria-label="Capture snapshot"
+          >
+            {snapBusy ? "Saving…" : "Snapshot"}
+          </button>
 
           {hud ? (
             <div className="pointer-events-none absolute right-3 top-3 rounded-md border border-white/10 bg-black/55 px-2.5 py-1.5 font-mono text-[11px] leading-tight text-white/85 backdrop-blur">
