@@ -77,6 +77,12 @@ export default function Home() {
                 Start Your Try-On
               </a>
               <a
+                href="/mirror"
+                className="inline-flex items-center justify-center rounded-full border border-white/[0.12] bg-white/5 px-6 py-3.5 text-sm font-semibold text-white transition hover:border-white/25 hover:bg-white/10"
+              >
+                Try the live mirror →
+              </a>
+              <a
                 href="#gallery"
                 className="inline-flex items-center justify-center rounded-full border border-white/[0.12] bg-white/5 px-6 py-3.5 text-sm font-semibold text-white transition hover:border-white/25 hover:bg-white/10"
               >
