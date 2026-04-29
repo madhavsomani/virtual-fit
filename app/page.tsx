@@ -71,6 +71,12 @@ export default function Home() {
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <a
+                href="/tryon"
+                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#cf2a2a] via-[#e24b2e] to-[#d4af37] px-6 py-3.5 text-sm font-semibold text-white transition hover:scale-[1.01] hover:shadow-[0_0_30px_rgba(212,175,55,0.28)]"
+              >
+                Try the armor →
+              </a>
+              <a
                 href="#how-it-works"
                 className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-accent-cyan to-accent-emerald px-6 py-3.5 text-sm font-semibold text-slate-950 transition hover:scale-[1.01] hover:shadow-halo"
               >

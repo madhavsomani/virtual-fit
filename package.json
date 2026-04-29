@@ -6,17 +6,21 @@
     "dev": "next dev",
     "build": "next build",
     "start": "serve out",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --experimental-strip-types --test tests/armor-transform.test.mjs"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "0.10.34",
     "next": "14.2.33",
     "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "react-dom": "18.3.1",
+    "three": "0.183.2"
   },
   "devDependencies": {
     "@types/node": "22.15.17",
     "@types/react": "18.3.23",
     "@types/react-dom": "18.3.7",
+    "@types/three": "0.183.1",
     "autoprefixer": "10.4.21",
     "eslint": "8.57.1",
     "eslint-config-next": "14.2.33",
