@@ -19,8 +19,8 @@ export default function BuildInPublicPage() {
     daysBuilding: Math.floor(
       (Date.now() - new Date("2026-04-01").getTime()) / (1000 * 60 * 60 * 24),
     ),
-    linesOfCode: "18K+",
-    tests: 1009,
+    linesOfCode: "29K+",
+    tests: 1025,
     techStack: ["Next.js", "MediaPipe", "Three.js", "TypeScript"],
   };
 
