@@ -11,6 +11,7 @@ import * as THREE from "three";
 
 import { computeArmorTransform } from "@/lib/armor";
 import { describeCameraError } from "@/lib/camera-error";
+import { computeGauntletTransforms } from "@/lib/gauntlet";
 import { computeHelmetTransform } from "@/lib/helmet";
 import { createPoseTracker } from "@/lib/pose";
 import { createTransformSmoother } from "@/lib/smooth";
@@ -159,6 +160,43 @@ function createHelmetGroup(): THREE.Group {
   return helmet;
 }
 
+function createGauntletGroup(): THREE.Group {
+  // Iron-Man-style forearm cuff: tapered cylinder with a gold knuckle band.
+  const gauntlet = new THREE.Group();
+  const shellMaterial = new THREE.MeshStandardMaterial({
+    color: "#cf2a2a",
+    emissive: "#280506",
+    metalness: 0.92,
+    roughness: 0.32,
+    transparent: true,
+    opacity: 0
+  });
+  const bandMaterial = new THREE.MeshStandardMaterial({
+    color: "#d4af37",
+    emissive: "#7a5d05",
+    emissiveIntensity: 0.5,
+    metalness: 0.7,
+    roughness: 0.25,
+    transparent: true,
+    opacity: 0
+  });
+
+  // Cylinder is unit length 1 along Y by default; we set scale.y at runtime
+  // to match forearm length. Origin sits at center of forearm.
+  const cuff = new THREE.Mesh(new THREE.CylinderGeometry(18, 22, 1, 18, 1, false), shellMaterial);
+  gauntlet.add(cuff);
+
+  const knuckle = new THREE.Mesh(new THREE.TorusGeometry(20, 4, 12, 24), bandMaterial);
+  knuckle.rotation.x = Math.PI / 2;
+  knuckle.position.y = -0.5; // wrist end (cylinder local space; we override via group scale.y)
+  gauntlet.add(knuckle);
+
+  gauntlet.userData.materials = [shellMaterial, bandMaterial];
+  gauntlet.userData.cuff = cuff;
+  gauntlet.userData.knuckle = knuckle;
+  return gauntlet;
+}
+
 export default function Tryon() {
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -209,6 +247,10 @@ export default function Tryon() {
     scene.add(armor);
     const helmet = createHelmetGroup();
     scene.add(helmet);
+    const leftGauntlet = createGauntletGroup();
+    const rightGauntlet = createGauntletGroup();
+    scene.add(leftGauntlet);
+    scene.add(rightGauntlet);
 
     const syncRendererSize = () => {
       const rect = video.getBoundingClientRect();
@@ -226,6 +268,10 @@ export default function Tryon() {
     const smoother = createTransformSmoother();
     const helmetSmoother = createTransformSmoother();
     let helmetCurrentOpacity = 0;
+    const leftGauntletSmoother = createTransformSmoother();
+    const rightGauntletSmoother = createTransformSmoother();
+    let leftGauntletOpacity = 0;
+    let rightGauntletOpacity = 0;
     const gate = createTrackingGate();
     let frameTimes: number[] = [];
     let lastHudPush = 0;
@@ -314,6 +360,36 @@ export default function Tryon() {
       }
       helmetCurrentOpacity = THREE.MathUtils.lerp(helmetCurrentOpacity, helmetTarget, 0.18);
       setArmorOpacity(helmet, helmetCurrentOpacity);
+
+      // Gauntlets: per-arm pipeline (own smoother, own opacity, own scale.y).
+      const rawGauntlets = detection.landmarks
+        ? computeGauntletTransforms(detection.landmarks, { mirrorX: true })
+        : { left: null, right: null };
+      const leftG = leftGauntletSmoother.push(rawGauntlets.left);
+      const rightG = rightGauntletSmoother.push(rawGauntlets.right);
+      const applyGauntlet = (group: THREE.Group, t: typeof leftG, prevOpacity: number): number => {
+        let target = 0;
+        if (t) {
+          const width = camera.right - camera.left;
+          const height = camera.top - camera.bottom;
+          const lengthPx = Math.max(t.scale * height, 1);
+          group.position.set(
+            t.position.x * width - width / 2,
+            height / 2 - t.position.y * height,
+            t.position.z * 100
+          );
+          // Cylinder geometry has unit Y length; map forearm length to scale.y.
+          // X/Z scales held at 1 so the cuff radius stays human-arm-sized.
+          group.scale.set(1, lengthPx, 1);
+          group.rotation.set(t.rotation.x, t.rotation.y, t.rotation.z);
+          target = Math.max(0.4, t.confidence);
+        }
+        const next = THREE.MathUtils.lerp(prevOpacity, target, 0.18);
+        setArmorOpacity(group, next);
+        return next;
+      };
+      leftGauntletOpacity = applyGauntlet(leftGauntlet, leftG, leftGauntletOpacity);
+      rightGauntletOpacity = applyGauntlet(rightGauntlet, rightG, rightGauntletOpacity);
 
       renderer.render(scene, camera);
     };
