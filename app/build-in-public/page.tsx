@@ -20,7 +20,7 @@ export default function BuildInPublicPage() {
       (Date.now() - new Date("2026-04-01").getTime()) / (1000 * 60 * 60 * 24),
     ),
     linesOfCode: "29K+",
-    tests: 1049,
+    tests: 1054,
     techStack: ["Next.js", "MediaPipe", "Three.js", "TypeScript"],
   };
 

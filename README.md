@@ -4,7 +4,7 @@
 
 > ⚠️ **Known issue (Phase 7.85, 2026-04-25):** `virtualfit.app` DNS points at AWS Global Accelerator IPs serving a stale legacy `/lander` redirect stub. The CI pipeline deploys to a different Azure SWA origin (the `*.<azure-static>.net` hostname returned by Azure's deploy step — see `gh run view` logs) where the real Next.js app is live and correct. End users hitting `virtualfit.app/mirror` see the stub, not the camera/3D try-on. Operator action required: repoint DNS to the SWA origin, or move the SWA token to whichever Azure resource `virtualfit.app` is bound to. Run `VFIT_PROD_HEALTHCHECK=1 npm test` to verify status. See `tests/prod-deploy-divergence.test.mjs`.
 
-[![Tests](https://img.shields.io/badge/tests-1049%20unit%20%2B%2013%20e2e-brightgreen)](https://github.com/madhavsomani/virtual-fit/actions)
+[![Tests](https://img.shields.io/badge/tests-1054%20unit%20%2B%2013%20e2e-brightgreen)](https://github.com/madhavsomani/virtual-fit/actions)
 [![Deploy](https://img.shields.io/badge/deploy-Azure%20SWA-blue)](https://virtualfit.app)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
@@ -12,12 +12,20 @@
 
 **[Try it now →](https://virtualfit.app)**
 
+## Phase 8 complete — ZERO10 parity push (2026-04-28)
+
+20 of 20 P8.x items shipped. Wrap doc with side-by-side capability table, real-device QA procedure, and performance envelope: [`docs/phase-8-wrap.md`](../docs/phase-8-wrap.md). 1062 unit tests passing. Latency budget headroom: 3+ orders of magnitude under p99 on Mac mini M4 ([`docs/stress-5-users.md`](../docs/stress-5-users.md)).
+
 ## Features
 
 - 🧊 **3D Virtual Mirror** — Upload a garment photo → TRELLIS generates a GLB → Three.js overlays it on your body. MediaPipe Pose drives the overlay (rotation, position, scale). No 2D fallback.
 - 📱 **Mobile Ready** — Works on phones and tablets
-- 🏪 **Embeddable Widget** — One-line script for retailers
+- 🥽 **WebXR TrueDepth** — iPhone 13+ front-camera depth via WebXR ([P8.17](../docs/phase-8-wrap.md))
+- 🏪 **Embeddable Widget** — `<virtualfit-mirror>` web component, one-line script for retailers
+- 🛠 **Public Try-On API** — OpenAPI spec at `/api-docs`
 - 💳 **Stripe Integration** — Payment links for Creator/Retailer plans
+- 📐 **BYO Hardware Kit** — Mac mini reference build at [`docs/hardware-kit.md`](../docs/hardware-kit.md)
+- ⏱ **Latency benchmarks** — `npm run bench` and `npm run stress` regression harnesses
 
 ## Quick Start
 
