@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 import { computeArmorTransform } from "@/lib/armor";
+import { describeCameraError } from "@/lib/camera-error";
 import { createPoseTracker } from "@/lib/pose";
 import { createTransformSmoother } from "@/lib/smooth";
 import { createTrackingGate } from "@/lib/tracking-gate";
@@ -126,6 +127,8 @@ export default function Tryon() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [status, setStatus] = useState<TrackingStatus>("initializing");
   const [hud, setHud] = useState<{ fps: number; conf: number; phase: string } | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -274,10 +277,13 @@ export default function Tryon() {
         animate();
       } catch (error) {
         console.error("Unable to initialize try-on prototype", error);
+        setErrorMsg(describeCameraError(error));
         setStatus("error");
       }
     };
 
+    setErrorMsg(null);
+    setStatus("initializing");
     start();
     window.addEventListener("resize", syncRendererSize);
 
@@ -289,7 +295,7 @@ export default function Tryon() {
       renderer.dispose();
       stream?.getTracks().forEach((track) => track.stop());
     };
-  }, []);
+  }, [attempt]);
 
   const statusStyle = STATUS_STYLES[status];
 
@@ -332,6 +338,21 @@ export default function Tryon() {
               <div>fps {hud.fps}</div>
               <div>conf {hud.conf.toFixed(2)}</div>
               <div>{hud.phase}</div>
+            </div>
+          ) : null}
+
+          {status === "error" ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/70 backdrop-blur">
+              <div className="max-w-sm rounded-2xl border border-rose-300/30 bg-rose-950/40 p-5 text-center">
+                <p className="text-sm font-medium text-rose-100">{errorMsg ?? "Camera unavailable."}</p>
+                <button
+                  type="button"
+                  onClick={() => setAttempt((n) => n + 1)}
+                  className="mt-4 inline-flex items-center justify-center rounded-full border border-rose-200/40 bg-rose-100/10 px-4 py-1.5 text-sm font-medium text-rose-50 transition hover:bg-rose-100/20"
+                >
+                  Retry
+                </button>
+              </div>
             </div>
           ) : null}
 
