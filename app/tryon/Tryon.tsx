@@ -11,6 +11,7 @@ import * as THREE from "three";
 
 import { computeArmorTransform } from "@/lib/armor";
 import { describeCameraError } from "@/lib/camera-error";
+import { computeHelmetTransform } from "@/lib/helmet";
 import { createPoseTracker } from "@/lib/pose";
 import { createTransformSmoother } from "@/lib/smooth";
 import { createTrackingGate } from "@/lib/tracking-gate";
@@ -121,6 +122,43 @@ function setArmorOpacity(armor: THREE.Group, opacity: number) {
   });
 }
 
+function createHelmetGroup(): THREE.Group {
+  // Iron-Man-ish placeholder helmet: faceplate (rounded box) + visor slit (gold).
+  const helmet = new THREE.Group();
+  const shellMaterial = new THREE.MeshStandardMaterial({
+    color: "#cf2a2a",
+    emissive: "#280506",
+    metalness: 0.95,
+    roughness: 0.28,
+    transparent: true,
+    opacity: 0
+  });
+  const visorMaterial = new THREE.MeshStandardMaterial({
+    color: "#f6d17d",
+    emissive: "#7a5d05",
+    emissiveIntensity: 0.8,
+    metalness: 0.6,
+    roughness: 0.2,
+    transparent: true,
+    opacity: 0
+  });
+
+  const shell = new THREE.Mesh(new THREE.SphereGeometry(56, 28, 24, 0, Math.PI * 2, 0, Math.PI * 0.65), shellMaterial);
+  shell.scale.set(1, 1.12, 0.95);
+  helmet.add(shell);
+
+  const jaw = new THREE.Mesh(new THREE.BoxGeometry(72, 26, 60), shellMaterial);
+  jaw.position.set(0, -42, 0);
+  helmet.add(jaw);
+
+  const visor = new THREE.Mesh(new THREE.BoxGeometry(78, 12, 8), visorMaterial);
+  visor.position.set(0, 4, 38);
+  helmet.add(visor);
+
+  helmet.userData.materials = [shellMaterial, visorMaterial];
+  return helmet;
+}
+
 export default function Tryon() {
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -169,6 +207,8 @@ export default function Tryon() {
 
     const armor = createArmorGroup();
     scene.add(armor);
+    const helmet = createHelmetGroup();
+    scene.add(helmet);
 
     const syncRendererSize = () => {
       const rect = video.getBoundingClientRect();
@@ -184,6 +224,8 @@ export default function Tryon() {
     };
 
     const smoother = createTransformSmoother();
+    const helmetSmoother = createTransformSmoother();
+    let helmetCurrentOpacity = 0;
     const gate = createTrackingGate();
     let frameTimes: number[] = [];
     let lastHudPush = 0;
@@ -248,6 +290,31 @@ export default function Tryon() {
 
       currentOpacity = THREE.MathUtils.lerp(currentOpacity, targetOpacity, 0.18);
       setArmorOpacity(armor, currentOpacity);
+
+      // Helmet pipeline (sibling to chest pipeline; same smoother + opacity grammar).
+      const rawHelmet = detection.landmarks
+        ? computeHelmetTransform(detection.landmarks, { mirrorX: true })
+        : null;
+      const helmetT = helmetSmoother.push(rawHelmet);
+      let helmetTarget = 0;
+      if (helmetT) {
+        const width = camera.right - camera.left;
+        const height = camera.top - camera.bottom;
+        // Helmet pixel scale: ear-span normalized; tune divisor so the helmet
+        // sits roughly head-sized over the nose anchor.
+        const helmetPixel = Math.max(helmetT.scale * width * 1.05, 1);
+        helmet.position.set(
+          helmetT.position.x * width - width / 2,
+          height / 2 - helmetT.position.y * height,
+          helmetT.position.z * 120 + 20 // slight forward bias so it draws over chest
+        );
+        helmet.scale.setScalar(helmetPixel / 110);
+        helmet.rotation.set(helmetT.rotation.x, helmetT.rotation.y, helmetT.rotation.z);
+        helmetTarget = Math.max(0.45, helmetT.confidence);
+      }
+      helmetCurrentOpacity = THREE.MathUtils.lerp(helmetCurrentOpacity, helmetTarget, 0.18);
+      setArmorOpacity(helmet, helmetCurrentOpacity);
+
       renderer.render(scene, camera);
     };
 
