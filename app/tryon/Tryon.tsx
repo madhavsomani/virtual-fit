@@ -11,6 +11,7 @@ import * as THREE from "three";
 
 import { computeArmorTransform } from "@/lib/armor";
 import { createPoseTracker } from "@/lib/pose";
+import { createTransformSmoother } from "@/lib/smooth";
 
 type TrackingStatus = "initializing" | "searching" | "locked" | "error";
 
@@ -177,6 +178,7 @@ export default function Tryon() {
       camera.updateProjectionMatrix();
     };
 
+    const smoother = createTransformSmoother();
     const animate = () => {
       frameId = window.requestAnimationFrame(animate);
 
@@ -188,9 +190,10 @@ export default function Tryon() {
       syncRendererSize();
 
       const detection = tracker.detect(video, performance.now());
-      const transform = detection.landmarks
+      const rawTransform = detection.landmarks
         ? computeArmorTransform(detection.landmarks, { mirrorX: true })
         : null;
+      const transform = smoother.push(rawTransform);
 
       if (transform) {
         const width = camera.right - camera.left;

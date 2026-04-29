@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "serve out",
     "lint": "next lint",
-    "test": "node --experimental-strip-types --test tests/armor-transform.test.mjs"
+    "test": "node --experimental-strip-types --test tests/armor-transform.test.mjs tests/transform-smoother.test.mjs"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "0.10.34",
