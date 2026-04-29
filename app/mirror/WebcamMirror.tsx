@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { GARMENT_LIBRARY, hasAsset } from "@/lib/garment-library";
+import { GARMENT_LIBRARY } from "@/lib/garment-library";
 import { canCapture, getStatusChip } from "@/lib/mirror-ui";
 import { getCameraConstraints, mapCameraError, stopMediaStream } from "@/lib/webcam";
 
@@ -27,7 +27,11 @@ const STATUS_DOT_STYLES = {
   rose: "bg-rose-300"
 } as const;
 
-function GarmentTray() {
+type WebcamMirrorProps = {
+  availableMeshIds: string[];
+};
+
+function GarmentTray({ availableMeshIds }: WebcamMirrorProps) {
   const garments = GARMENT_LIBRARY.slice(0, 8);
 
   return (
@@ -39,7 +43,7 @@ function GarmentTray() {
         </div>
         <div className="flex gap-3 overflow-x-auto md:grid md:flex-1 md:auto-rows-[minmax(0,1fr)] md:gap-3 md:overflow-y-auto md:overflow-x-hidden pr-1">
           {garments.map((garment) => {
-            const looksMapped = hasAsset(garment);
+            const hasReadyMesh = availableMeshIds.includes(garment.id);
 
             return (
               <button
@@ -49,7 +53,7 @@ function GarmentTray() {
                 onClick={() => {
                   console.warn(`Try-on for ${garment.id} lands in VF-9`);
                 }}
-                title={looksMapped ? "3D mapping manifest ready" : "Coming soon"}
+                title={hasReadyMesh ? "3D mesh ready" : "Coming soon"}
                 className="group relative min-h-24 min-w-24 flex-1 overflow-hidden rounded-[1.3rem] border border-white/10 bg-white/5 p-0 text-left opacity-95 transition hover:border-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-surface md:min-h-0 md:min-w-0"
               >
                 <span
@@ -57,9 +61,15 @@ function GarmentTray() {
                 />
                 <span className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.24),transparent_55%)]" />
                 <span className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/75 via-black/35 to-transparent" />
-                <span className="absolute left-2 top-2 inline-flex rounded-full border border-white/15 bg-black/45 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-cyan-100">
-                  Coming soon
-                </span>
+                {hasReadyMesh ? (
+                  <span className="absolute left-2 top-2 inline-flex rounded-full border border-emerald-300/25 bg-emerald-300/20 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-emerald-100">
+                    Ready
+                  </span>
+                ) : (
+                  <span className="absolute left-2 top-2 inline-flex rounded-full border border-white/15 bg-black/45 px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-cyan-100">
+                    Coming soon
+                  </span>
+                )}
                 <span className="absolute bottom-2 left-2 right-2 text-[11px] font-medium leading-tight text-white">
                   {garment.name}
                 </span>
@@ -72,7 +82,7 @@ function GarmentTray() {
   );
 }
 
-export function WebcamMirror() {
+export function WebcamMirror({ availableMeshIds }: WebcamMirrorProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [isStarting, setIsStarting] = useState(false);
@@ -209,7 +219,7 @@ export function WebcamMirror() {
             </div>
           </div>
 
-          <GarmentTray />
+          <GarmentTray availableMeshIds={availableMeshIds} />
         </div>
       </div>
       <div className="hidden">{STATUS_LABELS.join(" ")}</div>

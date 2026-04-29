@@ -1,8 +1,18 @@
 import { getBuildInfo } from "@/lib/build-info";
+import { hasMesh } from "@/lib/garment-asset";
+import { GARMENT_LIBRARY } from "@/lib/garment-library";
 import { WebcamMirror } from "./WebcamMirror";
 
-export default function MirrorPage() {
+export default async function MirrorPage() {
   const { buildNumber, commitShaShort } = getBuildInfo();
+  const availableMeshIds = (
+    await Promise.all(
+      GARMENT_LIBRARY.map(async (garment) => {
+        const ready = await hasMesh(garment.id);
+        return ready ? garment.id : null;
+      })
+    )
+  ).filter((garmentId): garmentId is string => garmentId !== null);
 
   return (
     <main className="relative flex min-h-screen flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(57,208,255,0.18),transparent_24%),radial-gradient(circle_at_85%_18%,rgba(88,242,176,0.12),transparent_20%),linear-gradient(180deg,#0b1020_0%,#050814_100%)] text-ink">
@@ -35,7 +45,7 @@ export default function MirrorPage() {
       </header>
 
       <section className="relative z-10 flex-1 overflow-hidden px-4 pb-3 sm:px-6 lg:px-8">
-        <WebcamMirror />
+        <WebcamMirror availableMeshIds={availableMeshIds} />
       </section>
 
       <footer className="relative z-10 px-4 pb-5 pt-2 text-center text-sm text-mist sm:px-6 lg:px-8">

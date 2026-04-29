@@ -7,3 +7,4 @@ out
 .env
 .env.local
 tsconfig.tsbuildinfo
+public/garments/*.glb
