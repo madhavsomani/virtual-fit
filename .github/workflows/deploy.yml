@@ -2,14 +2,18 @@ name: Deploy to Azure Static Web Apps
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+      - 'ca1/**'
+      - 'feat/**'
+      - 'fix/**'
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches: [main]
 
 jobs:
   build_and_deploy:
-    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
+    if: (github.event_name == 'push' && github.ref_name == 'main') || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy
     steps:
@@ -26,6 +30,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile || pnpm install
 
+      # Gate the build and deploy path on tests so broken branches never publish artifacts.
+      - name: Tests (gate)
+        run: pnpm test
+
       - name: Build
         run: pnpm build
         env:
@@ -41,6 +49,33 @@ jobs:
           api_location: ""
           output_location: ""
           skip_app_build: true
+
+  ci_only:
+    if: github.event_name == 'push' && (startsWith(github.ref_name, 'ca1/') || startsWith(github.ref_name, 'feat/') || startsWith(github.ref_name, 'fix/'))
+    runs-on: ubuntu-latest
+    name: CI Only
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile || pnpm install
+
+      # Gate branch validation on tests before spending time on the build.
+      - name: Tests (gate)
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+        env:
+          NEXT_TELEMETRY_DISABLED: 1
 
   close_pull_request:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

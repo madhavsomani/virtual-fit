@@ -1,6 +1,9 @@
+import { getBuildInfo } from "@/lib/build-info";
 import { WebcamMirror } from "./WebcamMirror";
 
 export default function MirrorPage() {
+  const { buildNumber, commitShaShort } = getBuildInfo();
+
   return (
     <main className="relative flex min-h-screen flex-col overflow-hidden bg-[radial-gradient(circle_at_top,rgba(57,208,255,0.18),transparent_24%),radial-gradient(circle_at_85%_18%,rgba(88,242,176,0.12),transparent_20%),linear-gradient(180deg,#0b1020_0%,#050814_100%)] text-ink">
       <div className="pointer-events-none absolute inset-0 bg-grid bg-[size:40px_40px] opacity-10" />
@@ -23,8 +26,11 @@ export default function MirrorPage() {
           </div>
         </div>
 
-        <div className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs uppercase tracking-[0.26em] text-white/70 backdrop-blur">
-          VirtualFit v3
+        <div className="flex items-center gap-3 rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs uppercase tracking-[0.26em] text-white/70 backdrop-blur">
+          <span>VirtualFit v3</span>
+          <span className="text-[11px] uppercase tracking-[0.18em] text-mist">
+            Build #{buildNumber} · {commitShaShort}
+          </span>
         </div>
       </header>
 
