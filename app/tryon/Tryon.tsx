@@ -12,6 +12,7 @@ import * as THREE from "three";
 import { computeArmorTransform } from "@/lib/armor";
 import { computeBicepTransforms } from "@/lib/bicep";
 import { computeCalibration, type CalibrationState } from "@/lib/calibration";
+import { OUTFIT_PRESETS, getOutfit, nextOutfit, type OutfitId, type OutfitMask } from "@/lib/outfit";
 import { describeCameraError } from "@/lib/camera-error";
 import { computeGauntletTransforms } from "@/lib/gauntlet";
 import { computeHelmetTransform } from "@/lib/helmet";
@@ -217,6 +218,11 @@ export default function Tryon() {
     message: "Step in front of the camera so we can see your shoulders.",
     shoulderSpan: 0
   });
+  const [outfitId, setOutfitId] = useState<OutfitId>("full");
+  const outfitMaskRef = useRef<OutfitMask>(getOutfit("full").mask);
+  useEffect(() => {
+    outfitMaskRef.current = getOutfit(outfitId).mask;
+  }, [outfitId]);
   const debugRef = useRef(false);
   useEffect(() => {
     debugRef.current = debugLandmarks;
@@ -346,7 +352,7 @@ export default function Tryon() {
         armor.rotation.set(transform.rotation.x, transform.rotation.y, transform.rotation.z);
         // Confidence-driven opacity ceiling: hip-fallback path soft-anchors
         // at ~0.55, full-quality at 1.0. Floor at 0.45 so user still sees armor.
-        targetOpacity = Math.max(0.45, transform.confidence);
+        targetOpacity = Math.max(0.45, transform.confidence) * outfitMaskRef.current.chest;
 
         const phase = gate.push(true);
         if (phase === "locked") {
@@ -397,7 +403,7 @@ export default function Tryon() {
         );
         helmet.scale.setScalar(helmetPixel / 110);
         helmet.rotation.set(helmetT.rotation.x, helmetT.rotation.y, helmetT.rotation.z);
-        helmetTarget = Math.max(0.45, helmetT.confidence);
+        helmetTarget = Math.max(0.45, helmetT.confidence) * outfitMaskRef.current.helmet;
       }
       helmetCurrentOpacity = THREE.MathUtils.lerp(helmetCurrentOpacity, helmetTarget, 0.18);
       setArmorOpacity(helmet, helmetCurrentOpacity);
@@ -408,7 +414,7 @@ export default function Tryon() {
         : { left: null, right: null };
       const leftG = leftGauntletSmoother.push(rawGauntlets.left);
       const rightG = rightGauntletSmoother.push(rawGauntlets.right);
-      const applyGauntlet = (group: THREE.Group, t: typeof leftG, prevOpacity: number): number => {
+      const applyGauntlet = (group: THREE.Group, t: typeof leftG, prevOpacity: number, maskMul = 1): number => {
         let target = 0;
         if (t) {
           const width = camera.right - camera.left;
@@ -423,22 +429,22 @@ export default function Tryon() {
           // X/Z scales held at 1 so the cuff radius stays human-arm-sized.
           group.scale.set(1, lengthPx, 1);
           group.rotation.set(t.rotation.x, t.rotation.y, t.rotation.z);
-          target = Math.max(0.4, t.confidence);
+          target = Math.max(0.4, t.confidence) * maskMul;
         }
         const next = THREE.MathUtils.lerp(prevOpacity, target, 0.18);
         setArmorOpacity(group, next);
         return next;
       };
-      leftGauntletOpacity = applyGauntlet(leftGauntlet, leftG, leftGauntletOpacity);
-      rightGauntletOpacity = applyGauntlet(rightGauntlet, rightG, rightGauntletOpacity);
+      leftGauntletOpacity = applyGauntlet(leftGauntlet, leftG, leftGauntletOpacity, outfitMaskRef.current.gauntlet);
+      rightGauntletOpacity = applyGauntlet(rightGauntlet, rightG, rightGauntletOpacity, outfitMaskRef.current.gauntlet);
 
       const rawBiceps = detection.landmarks
         ? computeBicepTransforms(detection.landmarks, { mirrorX: true })
         : { left: null, right: null };
       const leftB = leftBicepSmoother.push(rawBiceps.left);
       const rightB = rightBicepSmoother.push(rawBiceps.right);
-      leftBicepOpacity = applyGauntlet(leftBicep, leftB, leftBicepOpacity);
-      rightBicepOpacity = applyGauntlet(rightBicep, rightB, rightBicepOpacity);
+      leftBicepOpacity = applyGauntlet(leftBicep, leftB, leftBicepOpacity, outfitMaskRef.current.bicep);
+      rightBicepOpacity = applyGauntlet(rightBicep, rightB, rightBicepOpacity, outfitMaskRef.current.bicep);
 
       if (debugRef.current) {
         setOverlayPoints(
@@ -601,6 +607,15 @@ export default function Tryon() {
               <div className="mt-1 text-sm font-medium">{calibration.message}</div>
             </div>
           ) : null}
+
+          <button
+            type="button"
+            onClick={() => setOutfitId((id) => nextOutfit(id).id)}
+            className="absolute bottom-3 right-32 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3.5 py-1.5 text-xs font-medium text-white/90 backdrop-blur transition hover:bg-white/20"
+            aria-label="Cycle outfit preset"
+          >
+            {getOutfit(outfitId).label}
+          </button>
 
           <button
             type="button"
