@@ -263,6 +263,12 @@ export default function Tryon() {
     if (!debugLandmarks) setOverlayPoints([]);
   }, [debugLandmarks]);
 
+  const [frozen, setFrozen] = useState(false);
+  const frozenRef = useRef(false);
+  useEffect(() => {
+    frozenRef.current = frozen;
+  }, [frozen]);
+
   const handleSnapshot = async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -398,6 +404,14 @@ export default function Tryon() {
       frameId = window.requestAnimationFrame(animate);
 
       if (!tracker || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+        renderer.render(scene, camera);
+        return;
+      }
+
+      // Freeze-pose: render last computed scene state without re-running
+      // detection or transform writes. Lets users inspect/screenshot a
+      // chosen pose. Keep reactor pulse alive (renderer.render at end).
+      if (frozenRef.current) {
         renderer.render(scene, camera);
         return;
       }
@@ -726,6 +740,19 @@ export default function Tryon() {
             aria-label="Cycle outfit preset"
           >
             {getOutfit(outfitId).label}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setFrozen((f) => !f)}
+            className={`absolute bottom-12 right-3 inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-medium backdrop-blur transition ${
+              frozen
+                ? "border-sky-300/50 bg-sky-300/20 text-sky-100 hover:bg-sky-300/30"
+                : "border-white/30 bg-white/10 text-white/90 hover:bg-white/20"
+            }`}
+            aria-label={frozen ? "Resume tracking" : "Freeze pose"}
+          >
+            {frozen ? "Resume" : "Freeze pose"}
           </button>
 
           <button
