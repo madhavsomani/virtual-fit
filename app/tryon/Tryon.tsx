@@ -11,6 +11,7 @@ import * as THREE from "three";
 
 import { computeArmorTransform } from "@/lib/armor";
 import { computeBicepTransforms } from "@/lib/bicep";
+import { computeCalibration, type CalibrationState } from "@/lib/calibration";
 import { describeCameraError } from "@/lib/camera-error";
 import { computeGauntletTransforms } from "@/lib/gauntlet";
 import { computeHelmetTransform } from "@/lib/helmet";
@@ -211,6 +212,11 @@ export default function Tryon() {
   const [snapBusy, setSnapBusy] = useState(false);
   const [debugLandmarks, setDebugLandmarks] = useState(false);
   const [overlayPoints, setOverlayPoints] = useState<OverlayPoint[]>([]);
+  const [calibration, setCalibration] = useState<CalibrationState>({
+    status: "no_pose",
+    message: "Step in front of the camera so we can see your shoulders.",
+    shoulderSpan: 0
+  });
   const debugRef = useRef(false);
   useEffect(() => {
     debugRef.current = debugLandmarks;
@@ -440,6 +446,13 @@ export default function Tryon() {
         );
       }
 
+      setCalibration((prev) => {
+        const next = computeCalibration(detection.landmarks ?? null);
+        return next.status === prev.status && Math.abs(next.shoulderSpan - prev.shoulderSpan) < 0.01
+          ? prev
+          : next;
+      });
+
       renderer.render(scene, camera);
     };
 
@@ -574,6 +587,19 @@ export default function Tryon() {
                 />
               ))}
             </svg>
+          ) : null}
+
+          {status !== "error" && calibration.status !== "ok" ? (
+            <div
+              className="pointer-events-none absolute left-1/2 top-1/2 z-10 w-[min(86%,420px)] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-white/15 bg-black/55 px-5 py-4 text-center text-white shadow-lg backdrop-blur"
+              role="status"
+              aria-live="polite"
+            >
+              <div className="text-[10px] uppercase tracking-[0.2em] text-white/50">
+                Calibration
+              </div>
+              <div className="mt-1 text-sm font-medium">{calibration.message}</div>
+            </div>
           ) : null}
 
           <button
