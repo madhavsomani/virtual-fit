@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 import { computeArmorTransform } from "@/lib/armor";
+import { computeBicepTransforms } from "@/lib/bicep";
 import { describeCameraError } from "@/lib/camera-error";
 import { computeGauntletTransforms } from "@/lib/gauntlet";
 import { computeHelmetTransform } from "@/lib/helmet";
@@ -277,6 +278,10 @@ export default function Tryon() {
     const rightGauntlet = createGauntletGroup();
     scene.add(leftGauntlet);
     scene.add(rightGauntlet);
+    const leftBicep = createGauntletGroup();
+    const rightBicep = createGauntletGroup();
+    scene.add(leftBicep);
+    scene.add(rightBicep);
 
     const syncRendererSize = () => {
       const rect = video.getBoundingClientRect();
@@ -298,6 +303,10 @@ export default function Tryon() {
     const rightGauntletSmoother = createTransformSmoother();
     let leftGauntletOpacity = 0;
     let rightGauntletOpacity = 0;
+    const leftBicepSmoother = createTransformSmoother();
+    const rightBicepSmoother = createTransformSmoother();
+    let leftBicepOpacity = 0;
+    let rightBicepOpacity = 0;
     const gate = createTrackingGate();
     let frameTimes: number[] = [];
     let lastHudPush = 0;
@@ -416,6 +425,14 @@ export default function Tryon() {
       };
       leftGauntletOpacity = applyGauntlet(leftGauntlet, leftG, leftGauntletOpacity);
       rightGauntletOpacity = applyGauntlet(rightGauntlet, rightG, rightGauntletOpacity);
+
+      const rawBiceps = detection.landmarks
+        ? computeBicepTransforms(detection.landmarks, { mirrorX: true })
+        : { left: null, right: null };
+      const leftB = leftBicepSmoother.push(rawBiceps.left);
+      const rightB = rightBicepSmoother.push(rawBiceps.right);
+      leftBicepOpacity = applyGauntlet(leftBicep, leftB, leftBicepOpacity);
+      rightBicepOpacity = applyGauntlet(rightBicep, rightB, rightBicepOpacity);
 
       if (debugRef.current) {
         setOverlayPoints(
