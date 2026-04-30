@@ -13,6 +13,7 @@ export interface OutfitMask {
   helmet: number;
   bicep: number;
   gauntlet: number;
+  shoulderPad: number;
 }
 
 export interface OutfitPreset {
@@ -22,10 +23,10 @@ export interface OutfitPreset {
 }
 
 export const OUTFIT_PRESETS: readonly OutfitPreset[] = [
-  { id: "full",       label: "Full armor",  mask: { chest: 1, helmet: 1, bicep: 1, gauntlet: 1 } },
-  { id: "chestOnly",  label: "Chest only",  mask: { chest: 1, helmet: 0, bicep: 0, gauntlet: 0 } },
-  { id: "armsOnly",   label: "Arms only",   mask: { chest: 0, helmet: 0, bicep: 1, gauntlet: 1 } },
-  { id: "helmetOnly", label: "Helmet only", mask: { chest: 0, helmet: 1, bicep: 0, gauntlet: 0 } }
+  { id: "full",       label: "Full armor",  mask: { chest: 1, helmet: 1, bicep: 1, gauntlet: 1, shoulderPad: 1 } },
+  { id: "chestOnly",  label: "Chest only",  mask: { chest: 1, helmet: 0, bicep: 0, gauntlet: 0, shoulderPad: 0 } },
+  { id: "armsOnly",   label: "Arms only",   mask: { chest: 0, helmet: 0, bicep: 1, gauntlet: 1, shoulderPad: 1 } },
+  { id: "helmetOnly", label: "Helmet only", mask: { chest: 0, helmet: 1, bicep: 0, gauntlet: 0, shoulderPad: 0 } }
 ];
 
 export function nextOutfit(id: OutfitId): OutfitPreset {

@@ -11,6 +11,7 @@ import * as THREE from "three";
 
 import { computeArmorTransform } from "@/lib/armor";
 import { computeBicepTransforms } from "@/lib/bicep";
+import { computeShoulderPadTransforms } from "@/lib/shoulder-pad";
 import { computeCalibration, type CalibrationState } from "@/lib/calibration";
 import { OUTFIT_PRESETS, getOutfit, nextOutfit, type OutfitId, type OutfitMask } from "@/lib/outfit";
 import { describeCameraError } from "@/lib/camera-error";
@@ -295,6 +296,40 @@ export default function Tryon() {
     scene.add(leftBicep);
     scene.add(rightBicep);
 
+    // Shoulder pads — hemispherical caps with a gold rim (Iron Man deltoid look).
+    const createShoulderPad = (): THREE.Group => {
+      const group = new THREE.Group();
+      const cap = new THREE.Mesh(
+        new THREE.SphereGeometry(22, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2),
+        new THREE.MeshStandardMaterial({
+          color: "#cf2a2a",
+          metalness: 0.78,
+          roughness: 0.32,
+          transparent: true,
+          opacity: 0
+        })
+      );
+      cap.rotation.x = Math.PI; // open side faces down (sits on shoulder)
+      group.add(cap);
+      const rim = new THREE.Mesh(
+        new THREE.TorusGeometry(22, 2.2, 12, 24),
+        new THREE.MeshStandardMaterial({
+          color: "#d4af37",
+          metalness: 1,
+          roughness: 0.18,
+          transparent: true,
+          opacity: 0
+        })
+      );
+      rim.rotation.x = Math.PI / 2;
+      group.add(rim);
+      return group;
+    };
+    const leftShoulderPad = createShoulderPad();
+    const rightShoulderPad = createShoulderPad();
+    scene.add(leftShoulderPad);
+    scene.add(rightShoulderPad);
+
     const syncRendererSize = () => {
       const rect = video.getBoundingClientRect();
       const width = Math.max(1, Math.round(rect.width));
@@ -317,6 +352,10 @@ export default function Tryon() {
     let rightGauntletOpacity = 0;
     const leftBicepSmoother = createTransformSmoother();
     const rightBicepSmoother = createTransformSmoother();
+    const leftPadSmoother = createTransformSmoother();
+    const rightPadSmoother = createTransformSmoother();
+    let leftPadOpacity = 0;
+    let rightPadOpacity = 0;
     let leftBicepOpacity = 0;
     let rightBicepOpacity = 0;
     const gate = createTrackingGate();
@@ -445,6 +484,34 @@ export default function Tryon() {
       const rightB = rightBicepSmoother.push(rawBiceps.right);
       leftBicepOpacity = applyGauntlet(leftBicep, leftB, leftBicepOpacity, outfitMaskRef.current.bicep);
       rightBicepOpacity = applyGauntlet(rightBicep, rightB, rightBicepOpacity, outfitMaskRef.current.bicep);
+
+      // Shoulder pads — sphere-cap, scale.setScalar(radiusPx) like helmet/chest.
+      const rawPads = detection.landmarks
+        ? computeShoulderPadTransforms(detection.landmarks, { mirrorX: true })
+        : { left: null, right: null };
+      const leftPad = leftPadSmoother.push(rawPads.left);
+      const rightPad = rightPadSmoother.push(rawPads.right);
+      const applyPad = (group: THREE.Group, t: typeof leftPad, prevOpacity: number, maskMul: number): number => {
+        let target = 0;
+        if (t) {
+          const width = camera.right - camera.left;
+          const height = camera.top - camera.bottom;
+          const radiusPx = Math.max(t.scale * width, 1);
+          group.position.set(
+            t.position.x * width - width / 2,
+            height / 2 - t.position.y * height,
+            t.position.z * 110 + 6
+          );
+          group.scale.setScalar(radiusPx / 22); // 22 = sphere base radius
+          group.rotation.set(t.rotation.x, t.rotation.y, t.rotation.z);
+          target = Math.max(0.4, t.confidence) * maskMul;
+        }
+        const next = THREE.MathUtils.lerp(prevOpacity, target, 0.18);
+        setArmorOpacity(group, next);
+        return next;
+      };
+      leftPadOpacity = applyPad(leftShoulderPad, leftPad, leftPadOpacity, outfitMaskRef.current.shoulderPad);
+      rightPadOpacity = applyPad(rightShoulderPad, rightPad, rightPadOpacity, outfitMaskRef.current.shoulderPad);
 
       if (debugRef.current) {
         setOverlayPoints(
