@@ -13,6 +13,11 @@ import { computeArmorTransform } from "@/lib/armor";
 import { computeBicepTransforms } from "@/lib/bicep";
 import { computeShoulderPadTransforms } from "@/lib/shoulder-pad";
 import { reactorPulse } from "@/lib/reactor-pulse";
+import {
+  getVariant,
+  nextVariant,
+  type ArmorVariantId
+} from "@/lib/armor-variant";
 import { computeCalibration, type CalibrationState } from "@/lib/calibration";
 import { OUTFIT_PRESETS, getOutfit, nextOutfit, type OutfitId, type OutfitMask } from "@/lib/outfit";
 import { describeCameraError } from "@/lib/camera-error";
@@ -269,6 +274,14 @@ export default function Tryon() {
     frozenRef.current = frozen;
   }, [frozen]);
 
+  const [variantId, setVariantId] = useState<ArmorVariantId>("classic");
+  const variantRef = useRef(getVariant("classic"));
+  const recolorRef = useRef<((id: ArmorVariantId) => void) | null>(null);
+  useEffect(() => {
+    variantRef.current = getVariant(variantId);
+    recolorRef.current?.(variantId);
+  }, [variantId]);
+
   const handleSnapshot = async () => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -368,6 +381,41 @@ export default function Tryon() {
     const rightShoulderPad = createShoulderPad();
     scene.add(leftShoulderPad);
     scene.add(rightShoulderPad);
+
+    // Variant recolor: traverse scene, swap materials whose color matches
+    // the original primary/accent palette. Reactor (#f6d17d) and halo
+    // (#fff4dd) are intentionally left as-is to keep the glow legible.
+    const PRIMARY_HEX = "cf2a2a";
+    const ACCENT_HEX = "d4af37";
+    const recolorScene = (id: ArmorVariantId) => {
+      const variant = getVariant(id);
+      const newPrimary = new THREE.Color(variant.primary);
+      const newAccent = new THREE.Color(variant.accent);
+      const newEmissive = new THREE.Color(variant.emissive);
+      const visit = (mat: THREE.MeshStandardMaterial) => {
+        const hex = mat.color.getHexString();
+        if (hex === PRIMARY_HEX || mat.userData.role === "primary") {
+          mat.color.copy(newPrimary);
+          mat.emissive.copy(newEmissive);
+          mat.userData.role = "primary";
+          mat.needsUpdate = true;
+        } else if (hex === ACCENT_HEX || mat.userData.role === "accent") {
+          mat.color.copy(newAccent);
+          mat.userData.role = "accent";
+          mat.needsUpdate = true;
+        }
+      };
+      scene.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        const m = mesh.material;
+        if (Array.isArray(m)) m.forEach((mm) => visit(mm as THREE.MeshStandardMaterial));
+        else if (m) visit(m as THREE.MeshStandardMaterial);
+      });
+    };
+    recolorRef.current = recolorScene;
+    // Apply currently-selected variant on mount (defaults are classic).
+    recolorScene(variantRef.current.id);
 
     const syncRendererSize = () => {
       const rect = video.getBoundingClientRect();
@@ -475,10 +523,11 @@ export default function Tryon() {
       const reactorParts = (armor.userData as { reactor?: { reactor: THREE.Mesh; halo: THREE.Mesh; baseR: number; baseH: number } }).reactor;
       if (reactorParts) {
         const k = reactorPulse(now);
+        const boost = variantRef.current.reactorBoost;
         const reactorMat = reactorParts.reactor.material as THREE.MeshStandardMaterial;
         const haloMat = reactorParts.halo.material as THREE.MeshStandardMaterial;
-        reactorMat.emissiveIntensity = reactorParts.baseR * k * Math.max(0.4, currentOpacity);
-        haloMat.emissiveIntensity = reactorParts.baseH * k * Math.max(0.4, currentOpacity);
+        reactorMat.emissiveIntensity = reactorParts.baseR * k * boost * Math.max(0.4, currentOpacity);
+        haloMat.emissiveIntensity = reactorParts.baseH * k * boost * Math.max(0.4, currentOpacity);
       }
 
       // Helmet pipeline (sibling to chest pipeline; same smoother + opacity grammar).
@@ -740,6 +789,15 @@ export default function Tryon() {
             aria-label="Cycle outfit preset"
           >
             {getOutfit(outfitId).label}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setVariantId((id) => nextVariant(id).id)}
+            className="absolute bottom-12 right-32 inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3.5 py-1.5 text-xs font-medium text-white/90 backdrop-blur transition hover:bg-white/20"
+            aria-label="Cycle armor variant"
+          >
+            {getVariant(variantId).label}
           </button>
 
           <button
