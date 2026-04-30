@@ -18,6 +18,7 @@ import {
   nextVariant,
   type ArmorVariantId
 } from "@/lib/armor-variant";
+import { loadPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { computeCalibration, type CalibrationState } from "@/lib/calibration";
 import { OUTFIT_PRESETS, getOutfit, nextOutfit, type OutfitId, type OutfitMask } from "@/lib/outfit";
 import { describeCameraError } from "@/lib/camera-error";
@@ -250,14 +251,20 @@ export default function Tryon() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
   const [snapBusy, setSnapBusy] = useState(false);
-  const [debugLandmarks, setDebugLandmarks] = useState(false);
+  const [debugLandmarks, setDebugLandmarks] = useState<boolean>(() => {
+    if (typeof window === "undefined") return DEFAULT_PREFS.debugLandmarks;
+    return loadPrefs(window.localStorage).debugLandmarks;
+  });
   const [overlayPoints, setOverlayPoints] = useState<OverlayPoint[]>([]);
   const [calibration, setCalibration] = useState<CalibrationState>({
     status: "no_pose",
     message: "Step in front of the camera so we can see your shoulders.",
     shoulderSpan: 0
   });
-  const [outfitId, setOutfitId] = useState<OutfitId>("full");
+  const [outfitId, setOutfitId] = useState<OutfitId>(() => {
+    if (typeof window === "undefined") return DEFAULT_PREFS.outfitId;
+    return loadPrefs(window.localStorage).outfitId;
+  });
   const outfitMaskRef = useRef<OutfitMask>(getOutfit("full").mask);
   useEffect(() => {
     outfitMaskRef.current = getOutfit(outfitId).mask;
@@ -274,13 +281,23 @@ export default function Tryon() {
     frozenRef.current = frozen;
   }, [frozen]);
 
-  const [variantId, setVariantId] = useState<ArmorVariantId>("classic");
+  const [variantId, setVariantId] = useState<ArmorVariantId>(() => {
+    if (typeof window === "undefined") return DEFAULT_PREFS.variantId;
+    return loadPrefs(window.localStorage).variantId;
+  });
   const variantRef = useRef(getVariant("classic"));
   const recolorRef = useRef<((id: ArmorVariantId) => void) | null>(null);
   useEffect(() => {
     variantRef.current = getVariant(variantId);
     recolorRef.current?.(variantId);
   }, [variantId]);
+
+  // Persist outfit/variant/landmark-overlay choices so demos survive refresh.
+  // Use a ref-style early-skip on first render? not needed — write is cheap.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    savePrefs(window.localStorage, { outfitId, variantId, debugLandmarks });
+  }, [outfitId, variantId, debugLandmarks]);
 
   const handleSnapshot = async () => {
     const video = videoRef.current;
