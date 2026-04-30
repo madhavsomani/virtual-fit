@@ -137,3 +137,37 @@ test('confidence: hip-fallback path lowers confidence (~0.55x)', () => {
   assert.ok(t, 'still anchors');
   assert.ok(t.confidence > 0.5 && t.confidence < 0.6, `expected ~0.55, got ${t.confidence}`);
 });
+
+test('shoulder z-skew (twist) increases yaw beyond pure x-displacement yaw', () => {
+  // Identical x-positions for shoulders and hips (no torso x-offset),
+  // but right shoulder is closer to camera (more negative z) → user twisted.
+  const flat = createLandmarks({
+    [POSE_LANDMARKS.leftShoulder]:  { x: 0.4, y: 0.3, z: 0,    visibility: 1 },
+    [POSE_LANDMARKS.rightShoulder]: { x: 0.6, y: 0.3, z: 0,    visibility: 1 },
+    [POSE_LANDMARKS.leftHip]:       { x: 0.45, y: 0.6, z: 0 },
+    [POSE_LANDMARKS.rightHip]:      { x: 0.55, y: 0.6, z: 0 }
+  });
+  const twisted = createLandmarks({
+    [POSE_LANDMARKS.leftShoulder]:  { x: 0.4, y: 0.3, z: 0,    visibility: 1 },
+    [POSE_LANDMARKS.rightShoulder]: { x: 0.6, y: 0.3, z: -0.2, visibility: 1 },
+    [POSE_LANDMARKS.leftHip]:       { x: 0.45, y: 0.6, z: 0 },
+    [POSE_LANDMARKS.rightHip]:      { x: 0.55, y: 0.6, z: 0 }
+  });
+  const f = computeArmorTransform(flat);
+  const t = computeArmorTransform(twisted);
+  assert.ok(f && t);
+  assert.ok(Math.abs(t.rotation.y) > Math.abs(f.rotation.y) + 0.1,
+    `twisted yaw ${t.rotation.y} should exceed flat yaw ${f.rotation.y} by >0.1`);
+});
+
+test('yaw stays within widened clamp ±0.6 even at extreme twist', () => {
+  const extreme = createLandmarks({
+    [POSE_LANDMARKS.leftShoulder]:  { x: 0.45, y: 0.3, z: 0.5,  visibility: 1 },
+    [POSE_LANDMARKS.rightShoulder]: { x: 0.55, y: 0.3, z: -0.5, visibility: 1 },
+    [POSE_LANDMARKS.leftHip]:       { x: 0.7, y: 0.6, z: 0 },
+    [POSE_LANDMARKS.rightHip]:      { x: 0.55, y: 0.6, z: 0 }
+  });
+  const t = computeArmorTransform(extreme);
+  assert.ok(t);
+  assert.ok(Math.abs(t.rotation.y) <= 0.6 + 1e-9, `yaw ${t.rotation.y} clamp violated`);
+});

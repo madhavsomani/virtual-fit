@@ -117,9 +117,19 @@ export function computeArmorTransform(
     return null;
   }
 
+  // Shoulder-line normal yaw: rotating the chest about Y also tilts the
+  // shoulder line in z (left shoulder closer than right when twisting toward
+  // camera-left). Project (shoulderDx, shoulderDz) and fold into yaw with a
+  // small weight so tests remain stable but real torso twist is captured.
+  const shoulderDz = (options.mirrorX ? -1 : 1) * (rightShoulder.z - leftShoulder.z);
+  const shoulderYaw = Math.abs(shoulderDx) > MIN_SEGMENT
+    ? Math.atan2(shoulderDz, Math.abs(shoulderDx))
+    : 0;
+
   const positionZ = clamp((-shoulderMid.z - hipMid.z) * 0.5, -1, 1);
   const pitch = clamp(Math.atan2(-torsoDz, Math.hypot(torsoDx, torsoDy)), -0.75, 0.75);
-  const yaw = clamp(Math.atan2(torsoDx, torsoDy), -0.45, 0.45);
+  const torsoYaw = Math.atan2(torsoDx, torsoDy);
+  const yaw = clamp(torsoYaw + 0.5 * shoulderYaw, -0.6, 0.6);
   const baseRoll = Math.atan2(shoulderDy, Math.abs(shoulderDx));
   const roll = clamp(options.mirrorX ? -baseRoll : baseRoll, -0.9, 0.9);
 
