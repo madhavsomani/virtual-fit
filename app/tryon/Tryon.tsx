@@ -12,6 +12,7 @@ import * as THREE from "three";
 import { computeArmorTransform } from "@/lib/armor";
 import { computeBicepTransforms } from "@/lib/bicep";
 import { computeShoulderPadTransforms } from "@/lib/shoulder-pad";
+import { reactorPulse } from "@/lib/reactor-pulse";
 import { computeCalibration, type CalibrationState } from "@/lib/calibration";
 import { OUTFIT_PRESETS, getOutfit, nextOutfit, type OutfitId, type OutfitMask } from "@/lib/outfit";
 import { describeCameraError } from "@/lib/camera-error";
@@ -101,6 +102,38 @@ function createArmorGroup(): THREE.Group {
   arc.rotation.x = Math.PI;
   arc.position.set(0, -18, 14);
   armor.add(arc);
+
+  // Arc reactor core — glowing emissive disk that pulses each frame.
+  // Stored as armor.userData.reactor so the renderer can drive its intensity.
+  const reactorMaterial = new THREE.MeshStandardMaterial({
+    color: "#f6d17d",
+    emissive: "#f6d17d",
+    emissiveIntensity: 1.4,
+    metalness: 0.4,
+    roughness: 0.18,
+    transparent: true,
+    opacity: 0
+  });
+  const reactor = new THREE.Mesh(
+    new THREE.CircleGeometry(18, 32),
+    reactorMaterial
+  );
+  reactor.position.set(0, -32, 17);
+  armor.add(reactor);
+  // Halo ring for soft outer bloom feel
+  const haloMaterial = new THREE.MeshStandardMaterial({
+    color: "#fff4dd",
+    emissive: "#fff4dd",
+    emissiveIntensity: 0.8,
+    metalness: 0.4,
+    roughness: 0.25,
+    transparent: true,
+    opacity: 0
+  });
+  const halo = new THREE.Mesh(new THREE.RingGeometry(18, 22, 32), haloMaterial);
+  halo.position.set(0, -32, 16.5);
+  armor.add(halo);
+  armor.userData.reactor = { reactor, halo, baseR: 1.4, baseH: 0.8 };
 
   const shoulderPadGeometry = new THREE.SphereGeometry(28, 24, 24, 0, Math.PI);
   const leftShoulder = new THREE.Mesh(shoulderPadGeometry, primaryMaterial);
@@ -422,6 +455,17 @@ export default function Tryon() {
 
       currentOpacity = THREE.MathUtils.lerp(currentOpacity, targetOpacity, 0.18);
       setArmorOpacity(armor, currentOpacity);
+
+      // Arc-reactor pulse — modulate emissive intensity each frame so the
+      // reactor 'breathes'. Multiply by chest opacity so it fades together.
+      const reactorParts = (armor.userData as { reactor?: { reactor: THREE.Mesh; halo: THREE.Mesh; baseR: number; baseH: number } }).reactor;
+      if (reactorParts) {
+        const k = reactorPulse(now);
+        const reactorMat = reactorParts.reactor.material as THREE.MeshStandardMaterial;
+        const haloMat = reactorParts.halo.material as THREE.MeshStandardMaterial;
+        reactorMat.emissiveIntensity = reactorParts.baseR * k * Math.max(0.4, currentOpacity);
+        haloMat.emissiveIntensity = reactorParts.baseH * k * Math.max(0.4, currentOpacity);
+      }
 
       // Helmet pipeline (sibling to chest pipeline; same smoother + opacity grammar).
       const rawHelmet = detection.landmarks
