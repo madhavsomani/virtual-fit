@@ -7,4 +7,4 @@ out
 .env
 .env.local
 tsconfig.tsbuildinfo
-public/garments/*.glb
+# public/garments/*.glb — tracked: base garment meshes required for CA-13
