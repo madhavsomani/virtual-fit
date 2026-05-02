@@ -5,7 +5,7 @@ import process from "node:process";
 import garments from "../data/garments.json" with { type: "json" };
 import { createJob, transitionJob } from "../lib/garment-pipeline.ts";
 import { stubAdapter } from "../lib/garment-pipeline-stub-adapter.mjs";
-import { trellisAdapter } from "../lib/garment-pipeline-trellis-adapter.ts";
+import { trellisAdapter } from "../lib/garment-pipeline-trellis-adapter.mjs";
 
 const USAGE =
   "Usage: node scripts/generate-garment-mesh.mjs --garment <id> --image <url-or-path> [--adapter stub|trellis]";

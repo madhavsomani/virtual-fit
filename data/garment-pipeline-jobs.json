@@ -1,1 +1,123 @@
-[]
+[
+  {
+    "id": "b7d828f8-45fa-4e62-a28a-ca5995dbcd91",
+    "garmentId": "core-crew-tee",
+    "sourceImageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=512",
+    "adapter": "trellis",
+    "status": "failed",
+    "createdAt": "2026-05-02T13:04:42.778Z",
+    "startedAt": "2026-05-02T13:04:42.779Z",
+    "error": "TRELLIS completed without a GLB path",
+    "finishedAt": "2026-05-02T13:04:43.937Z"
+  },
+  {
+    "id": "dc2b48af-d9e6-4e60-95bb-79792c211444",
+    "garmentId": "core-crew-tee",
+    "sourceImageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=512",
+    "adapter": "trellis",
+    "status": "failed",
+    "createdAt": "2026-05-02T13:04:55.768Z",
+    "startedAt": "2026-05-02T13:04:55.769Z",
+    "error": "Cannot read properties of undefined (reading 'slice')",
+    "finishedAt": "2026-05-02T13:04:56.848Z"
+  },
+  {
+    "id": "b31a4dc0-a8ed-4b83-9fe5-a4a4993ede88",
+    "garmentId": "core-crew-tee",
+    "sourceImageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=512",
+    "adapter": "trellis",
+    "status": "failed",
+    "createdAt": "2026-05-02T13:05:12.962Z",
+    "startedAt": "2026-05-02T13:05:12.963Z",
+    "error": "TRELLIS completed without a GLB path",
+    "finishedAt": "2026-05-02T13:05:14.051Z"
+  },
+  {
+    "id": "6e67c638-d248-48f1-8606-f589c76c6df9",
+    "garmentId": "core-crew-tee",
+    "sourceImageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=512",
+    "adapter": "trellis",
+    "status": "failed",
+    "createdAt": "2026-05-02T13:06:48.207Z",
+    "startedAt": "2026-05-02T13:06:48.207Z",
+    "error": "TRELLIS endpoint /preprocess_image not found in /config. Available: load_example, load_example_1, load_example_2, load_example_3, start_session, end_session, lambda, lambda_1, preprocess_image, preprocess_images, get_seed, image_to_3d, lambda_2, lambda_3, extract_glb, lambda_4, extract_gaussian, lambda_5, lambda_6",
+    "finishedAt": "2026-05-02T13:06:49.305Z"
+  },
+  {
+    "id": "f8be8832-47ed-4959-a051-8c17253b925f",
+    "garmentId": "core-crew-tee",
+    "sourceImageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=512",
+    "adapter": "trellis",
+    "status": "failed",
+    "createdAt": "2026-05-02T13:07:01.104Z",
+    "startedAt": "2026-05-02T13:07:01.105Z",
+    "error": "TRELLIS /image_to_3d failed: process failed (success=false)",
+    "finishedAt": "2026-05-02T13:07:02.733Z"
+  },
+  {
+    "id": "400b9f2a-818d-44ad-a80b-14cf1482d223",
+    "garmentId": "core-crew-tee",
+    "sourceImageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=512",
+    "adapter": "trellis",
+    "status": "failed",
+    "createdAt": "2026-05-02T13:07:59.791Z",
+    "startedAt": "2026-05-02T13:07:59.792Z",
+    "error": "TRELLIS /image_to_3d failed: process failed (success=false)",
+    "finishedAt": "2026-05-02T13:08:01.619Z"
+  },
+  {
+    "id": "d0b55975-f43a-4da1-80d6-2fda7d103149",
+    "garmentId": "core-crew-tee",
+    "sourceImageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=512",
+    "adapter": "trellis",
+    "status": "failed",
+    "createdAt": "2026-05-02T13:08:12.889Z",
+    "startedAt": "2026-05-02T13:08:12.889Z",
+    "error": "TRELLIS /image_to_3d failed: process failed (success=false)",
+    "finishedAt": "2026-05-02T13:08:14.729Z"
+  },
+  {
+    "id": "07417432-a194-4e56-888e-718d853c0d92",
+    "garmentId": "core-crew-tee",
+    "sourceImageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=512",
+    "adapter": "trellis",
+    "status": "failed",
+    "createdAt": "2026-05-02T13:09:09.021Z",
+    "startedAt": "2026-05-02T13:09:09.022Z",
+    "error": "TRELLIS /image_to_3d failed: process failed (success=false)",
+    "finishedAt": "2026-05-02T13:09:27.091Z"
+  },
+  {
+    "id": "d159efd3-6cb1-4459-997a-bc0e9e3475cf",
+    "garmentId": "core-crew-tee",
+    "sourceImageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=512",
+    "adapter": "trellis",
+    "status": "failed",
+    "createdAt": "2026-05-02T13:10:45.571Z",
+    "startedAt": "2026-05-02T13:10:45.573Z",
+    "error": "TRELLIS extract_glb completed but no GLB path in output: undefined",
+    "finishedAt": "2026-05-02T13:10:46.846Z"
+  },
+  {
+    "id": "b579875d-f579-4665-9e3b-489cd09b5393",
+    "garmentId": "core-crew-tee",
+    "sourceImageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=512",
+    "adapter": "trellis",
+    "status": "failed",
+    "createdAt": "2026-05-02T13:11:00.737Z",
+    "startedAt": "2026-05-02T13:11:00.738Z",
+    "error": "TRELLIS extract_glb completed but no GLB path in output: undefined",
+    "finishedAt": "2026-05-02T13:11:01.934Z"
+  },
+  {
+    "id": "c3b6d151-a46f-4c50-871a-b4b6a3f8f043",
+    "garmentId": "core-crew-tee",
+    "sourceImageUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=512",
+    "adapter": "trellis",
+    "status": "failed",
+    "createdAt": "2026-05-02T13:11:56.436Z",
+    "startedAt": "2026-05-02T13:11:56.436Z",
+    "error": "TRELLIS /image_to_3d failed (success=false, error=null)",
+    "finishedAt": "2026-05-02T13:12:14.298Z"
+  }
+]
